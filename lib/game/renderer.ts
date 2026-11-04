@@ -111,6 +111,20 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
     })
   }
 
+  for (const other of game.remotePlayers) {
+    const otherJob = JOBS[other.classId] ?? JOBS.novice
+    ents.push({
+      y: other.y,
+      draw: () => {
+        shadow(ctx, other.x, other.y, 6)
+        const img = humanSprite(otherJob.colors, 'down', 0)
+        ctx.globalAlpha = 0.92
+        ctx.drawImage(img, Math.round(other.x - img.width / 2), Math.round(other.y - img.height))
+        ctx.globalAlpha = 1
+      },
+    })
+  }
+
   const job = JOBS[p.jobId]
   const weapon = p.equipment.weapon ? ITEMS[p.equipment.weapon.itemId] : null
   ents.push({
@@ -259,6 +273,11 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
       ctx.fillStyle = '#e5484d'
       ctx.fillRect(x - bw / 2, y, bw * Math.max(0, m.hp / m.maxHp), bh)
     }
+  }
+
+  for (const other of game.remotePlayers) {
+    const [x, y] = toS(other.x, other.y - 24)
+    text(`${other.displayName} Lv.${other.level}`, x, y, '#8be9fd', 9)
   }
 
   {

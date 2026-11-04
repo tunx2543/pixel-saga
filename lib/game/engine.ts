@@ -50,6 +50,16 @@ export interface SaveData {
   savedAt: number
 }
 
+export interface RemotePlayer {
+  userId: string
+  displayName: string
+  classId: string
+  x: number
+  y: number
+  level: number
+  lastSeen: number
+}
+
 export interface Monster {
   uid: string
   defId: string
@@ -117,6 +127,7 @@ export interface ChatMsg {
 export const game = {
   p: null as SaveData | null,
   monsters: [] as Monster[],
+  remotePlayers: [] as RemotePlayer[],
   floats: [] as FloatText[],
   effects: [] as Effect[],
   projectiles: [] as Projectile[],
