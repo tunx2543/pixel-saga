@@ -10,6 +10,11 @@ export const metadata: Metadata = {
   title: 'Pixel Quest - เกม RPG พิกเซล',
   description: 'เกม Pixel RPG ผจญภัย ล่ามอนสเตอร์ เปลี่ยนอาชีพ ตีบวกอาวุธ พร้อมระบบบันทึกอัตโนมัติ',
   generator: 'v0.app',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Pixel Quest',
+  },
   icons: {
     icon: [
       { url: '/icon-light-32x32.png', media: '(prefers-color-scheme: light)' },
@@ -25,7 +30,9 @@ export const viewport: Viewport = {
   themeColor: '#0e0f1a',
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 1,
   userScalable: false,
+  viewportFit: 'cover', // ช่วยให้เว็บขยายเต็มพื้นที่จอรวมถึงส่วนขอบโค้ง/รอยบาก
 }
 
 export default function RootLayout({
@@ -34,8 +41,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="th" className={`${pixel.variable} ${thai.variable} bg-background`}>
-      <body className="font-sans antialiased">
+    <html lang="th" className={`${pixel.variable} ${thai.variable} h-full bg-background`}>
+      <body className="font-sans antialiased h-full overflow-hidden select-none">
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
