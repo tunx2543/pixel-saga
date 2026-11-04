@@ -43,8 +43,12 @@ export function GachaPanel() {
             const item = ITEMS[entry.itemId]
             return (
               <div key={entry.itemId} className="border-2 border-border bg-muted/60 p-2 text-center">
-                <div className="mx-auto mb-2 grid size-12 place-items-center rounded-lg border-2 border-white/20 bg-card text-2xl" style={{ color: item.color }}>
-                  {entry.label.slice(0, 1)}
+                <div className="mx-auto mb-2 grid size-12 place-items-center overflow-hidden rounded-lg border-2 border-white/20 bg-card text-2xl" style={{ color: item.color }}>
+                  {entry.itemId === 'flame_sword' ? (
+                    <img src="/images/art/rare-crystal.png" alt="ภาพไอเทมหายาก" className="size-full object-cover" />
+                  ) : (
+                    <span aria-hidden="true">{entry.label.slice(0, 1)}</span>
+                  )}
                 </div>
                 <p className="truncate text-xs text-foreground">{item.name}</p>
                 <p className="mt-1 text-xs text-primary">{entry.rate}%</p>
