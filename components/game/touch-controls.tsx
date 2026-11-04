@@ -5,6 +5,22 @@ import { basicAttack, castSkill, currentJob, drinkPotion, game, skillCooldown } 
 import { useGame } from '@/lib/game/use-game'
 import { cn } from '@/lib/utils'
 
+const SKILL_ICONS: Record<string, string> = {
+  firebolt: '/images/skills/firebolt.png',
+  meteor: '/images/skills/firebolt.png',
+  bash: '/images/skills/whirl.png',
+  whirl: '/images/skills/whirl.png',
+  double: '/images/skills/rain.png',
+  rain: '/images/skills/rain.png',
+  dblatk: '/images/skills/shadow.png',
+  backstab: '/images/skills/shadow.png',
+  shadow: '/images/skills/shadow.png',
+  holy: '/images/skills/whirl.png',
+  sniper: '/images/skills/rain.png',
+  blizzard: '/images/skills/firebolt.png',
+  power: '/images/skills/whirl.png',
+}
+
 function HoldButton({
   onDown,
   onUp,
@@ -52,39 +68,21 @@ export function TouchControls() {
   const g = useGame()
   const job = currentJob()
 
-  // ฟังก์ชันคำนวณการเดินเมื่อจิ้มหน้าจอ (เฉพาะพื้นที่ว่าง)
   const handlePointerMoveOrDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.buttons === 0) return
-    if ((e.target as HTMLElement).closest('button')) {
-      game.keys.clear()
-      return
-    }
+    if ((e.target as HTMLElement).closest('button')) return
+    if (e.type === 'pointermove' && e.buttons === 0) return
 
     const rect = e.currentTarget.getBoundingClientRect()
-    const clientX = e.clientX - rect.left
-    const clientY = e.clientY - rect.top
-    const centerX = rect.width / 2
-    const centerY = rect.height / 2
-
-    const dx = clientX - centerX
-    const dy = clientY - centerY
-
+    const dx = e.clientX - (rect.left + rect.width / 2)
+    const dy = e.clientY - (rect.top + rect.height / 2)
     game.keys.clear()
+    if (Math.hypot(dx, dy) < 24) return
 
-    if (Math.hypot(dx, dy) < 25) return
-
-    if (Math.abs(dx) > Math.abs(dy)) {
-      if (dx < 0) game.keys.add('arrowleft')
-      else game.keys.add('arrowright')
-    } else {
-      if (dy < 0) game.keys.add('arrowup')
-      else game.keys.add('arrowdown')
-    }
+    if (Math.abs(dx) >= Math.abs(dy)) game.keys.add(dx < 0 ? 'arrowleft' : 'arrowright')
+    else game.keys.add(dy < 0 ? 'arrowup' : 'arrowdown')
   }
 
-  const handlePointerUp = () => {
-    game.keys.clear()
-  }
+  const handlePointerUp = () => game.keys.clear()
 
   return (
     <div 
@@ -114,9 +112,14 @@ export function TouchControls() {
                 key={sk.id}
                 label={sk.name}
                 onDown={() => castSkill(i)}
-                className={cn('relative size-10 overflow-hidden bg-card/90 text-[8px] leading-tight', g.p && g.p.mp < sk.mp && 'opacity-50')}
+                className={cn('relative size-12 rounded-full border-2 border-white/30 bg-card/90 p-1 text-[8px] leading-tight shadow-lg', g.p && g.p.mp < sk.mp && 'opacity-50')}
               >
-                <span style={{ color: sk.color }}>{sk.name}</span>
+                {SKILL_ICONS[sk.id] ? (
+                  <img src={SKILL_ICONS[sk.id]} alt="" className="size-full rounded-full object-cover" />
+                ) : (
+                  <span style={{ color: sk.color }}>{sk.name}</span>
+                )}
+                <span className="sr-only">{sk.name}</span>
                 {skillCooldown(sk) > 0 && (
                   <span
                     className="absolute inset-x-0 bottom-0 bg-black/60"
@@ -136,7 +139,7 @@ export function TouchControls() {
             onUp={() => {
               game.attackHeld = false
             }}
-            className="size-14 rounded-full bg-primary text-xs text-primary-foreground"
+            className="size-16 rounded-full border-4 border-primary-foreground/30 bg-primary text-xs font-bold text-primary-foreground shadow-[0_4px_0_rgba(0,0,0,0.35)]"
           >
             โจมตี
           </HoldButton>
