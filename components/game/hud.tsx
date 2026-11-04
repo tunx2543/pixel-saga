@@ -58,13 +58,10 @@ export function Hud() {
             <Bar label="EXP" value={p.level >= MAX_LEVEL ? need : p.exp} max={need} color="bg-exp" />
           </div>
           <p className="mt-1 text-[11px] text-gold">{formatNum(p.gold)} G</p>
-          <button
-            type="button"
-            onClick={() => openPanel('gacha')}
-            className="pixel-btn mt-2 w-full bg-primary/20 px-2 py-1 text-[10px] text-primary hover:bg-primary/30"
-          >
-            เปิดตู้กาชา
-          </button>
+          <div className="mt-2 grid grid-cols-2 gap-1">
+            <button type="button" onClick={() => openPanel('gacha')} className="pixel-btn bg-primary/20 px-2 py-1 text-[10px] text-primary hover:bg-primary/30">เปิดตู้กาชา</button>
+            <button type="button" onClick={() => openPanel('friends')} className="pixel-btn bg-accent/20 px-2 py-1 text-[10px] text-accent hover:bg-accent/30">แอดเพื่อน</button>
+          </div>
         </div>
       )}
     </div>
