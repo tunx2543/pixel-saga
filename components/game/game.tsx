@@ -7,6 +7,7 @@ import { Hud } from './hud'
 import { Panels } from './panels/panels'
 import { TitleScreen } from './title-screen'
 import { TouchControls } from './touch-controls'
+import { PresenceSync } from './presence-sync'
 
 export function Game() {
   const g = useGame()
@@ -17,6 +18,7 @@ export function Game() {
       <Hud />
       <ChatBox />
       <TouchControls />
+      <PresenceSync />
       <Panels />
     </div>
   )

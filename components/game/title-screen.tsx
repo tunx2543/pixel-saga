@@ -5,6 +5,7 @@ import { JOBS } from '@/lib/game/data'
 import { deleteSave, loadGame, newGame, readSave } from '@/lib/game/engine'
 import { MAPS } from '@/lib/game/maps'
 import { formatPlayTime } from './format'
+import { AccountPanel } from './account-panel'
 
 export function TitleScreen() {
   const [save] = useState(() => readSave())
@@ -106,8 +107,10 @@ export function TitleScreen() {
           )}
         </div>
 
+        <AccountPanel />
+
         <p className="text-center text-xs text-foreground/80 drop-shadow-[1px_1px_0_#1a1423]">
-          เกมบันทึกอัตโนมัติทุก 10 วินาที ออกเกมแล้วกลับมาเล่นต่อได้ทันที
+          เล่นแบบผู้มาเยือนได้ทันที ข้อมูลจะถูกแยกตามเครื่อง • เข้าสู่ระบบเพื่อซิงค์ตัวละครและพบผู้เล่นอื่น
         </p>
       </div>
     </div>
