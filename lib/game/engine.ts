@@ -115,7 +115,7 @@ interface Projectile {
   delay: number
 }
 
-export type PanelId = 'shop' | 'enhance' | 'job' | 'storage' | 'character'
+export type PanelId = 'shop' | 'enhance' | 'job' | 'storage' | 'character' | 'gacha'
 export type ChatType = 'system' | 'player' | 'gm' | 'loot' | 'error' | 'npc'
 export interface ChatMsg {
   id: number

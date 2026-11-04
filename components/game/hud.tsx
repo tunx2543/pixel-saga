@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { useGame } from '@/lib/game/use-game'
-import { currentJob, getStats } from '@/lib/game/engine'
+import { currentJob, getStats, openPanel } from '@/lib/game/engine'
 import { expToNext } from '@/lib/game/data'
 import { MAX_LEVEL } from '@/lib/game/data'
 import { formatNum } from './format'
@@ -58,6 +58,13 @@ export function Hud() {
             <Bar label="EXP" value={p.level >= MAX_LEVEL ? need : p.exp} max={need} color="bg-exp" />
           </div>
           <p className="mt-1 text-[11px] text-gold">{formatNum(p.gold)} G</p>
+          <button
+            type="button"
+            onClick={() => openPanel('gacha')}
+            className="pixel-btn mt-2 w-full bg-primary/20 px-2 py-1 text-[10px] text-primary hover:bg-primary/30"
+          >
+            เปิดตู้กาชา
+          </button>
         </div>
       )}
     </div>

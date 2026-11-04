@@ -92,7 +92,7 @@ export function TitleScreen() {
                 type="submit"
                 className="pixel-btn bg-primary px-4 py-3 text-lg text-primary-foreground hover:brightness-110"
               >
-                เริ่มผจญภัย
+                เข้าเล่นแบบ Guest
               </button>
               {save && (
                 <button
