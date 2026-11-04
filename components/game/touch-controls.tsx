@@ -23,13 +23,23 @@ function HoldButton({
       type="button"
       aria-label={label}
       onPointerDown={(e) => {
+        e.stopPropagation()
         e.preventDefault()
         ;(e.target as HTMLElement).setPointerCapture?.(e.pointerId)
         onDown()
       }}
-      onPointerUp={onUp}
-      onPointerCancel={onUp}
-      onLostPointerCapture={onUp}
+      onPointerUp={(e) => {
+        e.stopPropagation()
+        onUp?.()
+      }}
+      onPointerCancel={(e) => {
+        e.stopPropagation()
+        onUp?.()
+      }}
+      onLostPointerCapture={(e) => {
+        e.stopPropagation()
+        onUp?.()
+      }}
       onContextMenu={(e) => e.preventDefault()}
       className={cn('pixel-btn flex touch-none items-center justify-center text-foreground', className)}
     >
@@ -42,9 +52,8 @@ export function TouchControls() {
   const g = useGame()
   const job = currentJob()
 
-  // ฟังก์ชันคำนวณทิศทางจากการจิ้มหน้าจอ แล้วจำลองการกดปุ่มทิศทาง (Keys)
+  // ฟังก์ชันคำนวณการเดินเมื่อจิ้มหน้าจอ (เฉพาะพื้นที่ว่าง)
   const handlePointerMoveOrDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    // ถ้านิ้วไม่ได้กดลงมา (แค่ลากผ่านเฉยๆ โดยไม่ได้แตะ) หรือจิ้มโดนปุ่ม UI ให้ข้าม
     if (e.buttons === 0) return
     if ((e.target as HTMLElement).closest('button')) {
       game.keys.clear()
@@ -52,7 +61,6 @@ export function TouchControls() {
     }
 
     const rect = e.currentTarget.getBoundingClientRect()
-    // คำนวณพิกัดเทียบกับกึ่งกลางจอ หรือตำแหน่งตัวละครโดยประมาณ
     const clientX = e.clientX - rect.left
     const clientY = e.clientY - rect.top
     const centerX = rect.width / 2
@@ -61,13 +69,10 @@ export function TouchControls() {
     const dx = clientX - centerX
     const dy = clientY - centerY
 
-    // เคลียร์ปุ่มเก่าก่อน
     game.keys.clear()
 
-    // ถ้าจุดที่จิ้มอยู่ใกล้จุดศูนย์กลางมาก ให้ปล่อยตัวยืนนิ่ง
-    if (Math.hypot(dx, dy) < 20) return
+    if (Math.hypot(dx, dy) < 25) return
 
-    // ตรวจสอบว่าเอียงไปทางแนวตั้งหรือแนวนอนมากกว่ากัน
     if (Math.abs(dx) > Math.abs(dy)) {
       if (dx < 0) game.keys.add('arrowleft')
       else game.keys.add('arrowright')
@@ -78,66 +83,65 @@ export function TouchControls() {
   }
 
   const handlePointerUp = () => {
-    // ปล่อยมือแล้วให้หยุดเดิน (เคลียร์ปุ่มทั้งหมด)
     game.keys.clear()
   }
 
   return (
     <div 
-      className="pointer-events-auto absolute inset-0 touch-none"
+      className="pointer-events-none absolute inset-0 touch-none"
       onPointerDown={handlePointerMoveOrDown}
       onPointerMove={handlePointerMoveOrDown}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
     >
-      {/* ส่วนควบคุมด้านขวา (ยา, สกิล และปุ่มโจมตี) ยังคงใช้งานปกติ */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-end p-3 md:hidden">
-        <div className="pointer-events-auto flex items-end gap-2">
-          <div className="flex flex-col gap-1.5">
-            <HoldButton label="ยา HP" onDown={() => drinkPotion('hp')} className="size-11 bg-hp/80 text-[10px]">
-              HP
-            </HoldButton>
-            <HoldButton label="ยา MP" onDown={() => drinkPotion('mp')} className="size-11 bg-mp/80 text-[10px]">
-              MP
-            </HoldButton>
+      {/* จัดระเบียบ UI ด้านขวาให้กระชับ ไม่บังจอตอนเล่นแนวนอน */}
+      <div className="pointer-events-auto absolute inset-x-0 bottom-2 right-2 flex items-end justify-end gap-2 p-2">
+        {/* ปุ่มยา HP / MP ขนาดเล็กด้านข้าง */}
+        <div className="flex flex-col gap-1">
+          <HoldButton label="ยา HP" onDown={() => drinkPotion('hp')} className="size-9 bg-hp/80 text-[9px]">
+            HP
+          </HoldButton>
+          <HoldButton label="ยา MP" onDown={() => drinkPotion('mp')} className="size-9 bg-mp/80 text-[9px]">
+            MP
+          </HoldButton>
+        </div>
+
+        {/* แถวสกิลและปุ่มโจมตี */}
+        <div className="flex flex-col items-end gap-1">
+          <div className="flex gap-1">
+            {job.skills.map((sk, i) => (
+              <HoldButton
+                key={sk.id}
+                label={sk.name}
+                onDown={() => castSkill(i)}
+                className={cn('relative size-10 overflow-hidden bg-card/90 text-[8px] leading-tight', g.p && g.p.mp < sk.mp && 'opacity-50')}
+              >
+                <span style={{ color: sk.color }}>{sk.name}</span>
+                {skillCooldown(sk) > 0 && (
+                  <span
+                    className="absolute inset-x-0 bottom-0 bg-black/60"
+                    style={{ height: `${(skillCooldown(sk) / sk.cooldown) * 100}%` }}
+                    aria-hidden
+                  />
+                )}
+              </HoldButton>
+            ))}
           </div>
-          <div className="flex flex-col items-end gap-1.5">
-            <div className="flex gap-1.5">
-              {job.skills.map((sk, i) => (
-                <HoldButton
-                  key={sk.id}
-                  label={sk.name}
-                  onDown={() => castSkill(i)}
-                  className={cn('relative size-12 overflow-hidden bg-card/90 text-[9px] leading-tight', g.p && g.p.mp < sk.mp && 'opacity-50')}
-                >
-                  <span style={{ color: sk.color }}>{sk.name}</span>
-                  {skillCooldown(sk) > 0 && (
-                    <span
-                      className="absolute inset-x-0 bottom-0 bg-black/60"
-                      style={{ height: `${(skillCooldown(sk) / sk.cooldown) * 100}%` }}
-                      aria-hidden
-                    />
-                  )}
-                </HoldButton>
-              ))}
-            </div>
-            <HoldButton
-              label="โจมตี"
-              onDown={() => {
-                game.attackHeld = true
-                basicAttack()
-              }}
-              onUp={() => {
-                game.attackHeld = false
-              }}
-              className="size-16 rounded-full bg-primary text-sm text-primary-foreground"
-            >
-              โจมตี
-            </HoldButton>
-          </div>
+          <HoldButton
+            label="โจมตี"
+            onDown={() => {
+              game.attackHeld = true
+              basicAttack()
+            }}
+            onUp={() => {
+              game.attackHeld = false
+            }}
+            className="size-14 rounded-full bg-primary text-xs text-primary-foreground"
+          >
+            โจมตี
+          </HoldButton>
         </div>
       </div>
     </div>
   )
 }
-
