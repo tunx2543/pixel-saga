@@ -499,7 +499,7 @@ function damageMonster(m: Monster, mult: number) {
   m.provoked = true
   m.hitFlash = 0.15
   game.combatT = 0
-  addFloat(m.x, m.y - 20, crit ? `${amount}!` : `${amount}`, crit ? '#ffd60a' : '#ffffff', crit ? 13 : 10)
+  addFloat(m.x, m.y - 20, crit ? `${amount}!` : `${amount}`, crit ? '#ffd60a' : '#ffffff', crit ? 20 : 16)
   if (m.hp <= 0) killMonster(m)
 }
 
@@ -1293,9 +1293,15 @@ function updateMonsters(dt: number, map: MapDef) {
       m.flip = dx < 0
       if (d > 14) moveEntity(map, m, (dx / d) * def.speed * dt, (dy / d) * def.speed * dt, 5, 4)
       else if (m.attackCd <= 0) {
-        m.attackCd = def.boss ? 1 : 1.4
+        m.attackCd = def.boss ? 2 : 1.4
         m.lunge = 0.15
         hurtPlayer(def.atk)
+        if (def.boss && Math.random() < 0.45) {
+          addEffect({ type: 'ring', x: p.x, y: p.y - 6, r: 34, color: def.color, max: 0.55 })
+          addEffect({ type: 'burst', x: p.x, y: p.y - 6, r: 22, color: '#ff4d6d', max: 0.35 })
+          hurtPlayer(def.atk * 0.65)
+          addFloat(p.x, p.y - 34, 'BOSS SKILL', '#ff4d6d', 13)
+        }
         if (!game.p || game.p.mapId !== map.id) return
       }
     } else {

@@ -13,7 +13,6 @@ const THEME_BG: Record<string, string> = {
 
 const MONSTER_ART: Record<string, string> = {
   poring: '/images/monsters/poring.png',
-  wolf: '/images/monsters/forest-wolf.png',
   undead: '/images/monsters/undead-knight.png',
   demon: '/images/monsters/abyss-demon.png',
   demon_lord: '/images/monsters/abyss-demon.png',
@@ -112,7 +111,7 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         const frame = Math.floor(m.animT * 3) % 2
         const asset = monsterArt(m.defId)
         const img = asset ?? monsterSprite(def.sprite, def.color, frame)
-        const assetScale = asset ? Math.min(1, (def.boss ? 46 : 28) / Math.max(img.width, img.height)) : 1
+        const assetScale = asset ? Math.min(1, (def.boss ? 38 : 22) / Math.max(img.width, img.height)) : 1
         const scale = (def.boss ? 1.7 : 1) * assetScale
         const w = img.width * scale
         const h = img.height * scale

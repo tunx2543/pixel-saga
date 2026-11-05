@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 
 const SKILL_ICONS: Record<string, string> = {
   firebolt: '/images/skills/firebolt.png',
-  meteor: '/images/skills/firebolt.png',
+  meteor: '/images/skills/meteor.png',
   bash: '/images/skills/whirl.png',
   whirl: '/images/skills/whirl.png',
   double: '/images/skills/rain.png',
@@ -15,9 +15,9 @@ const SKILL_ICONS: Record<string, string> = {
   dblatk: '/images/skills/shadow.png',
   backstab: '/images/skills/shadow.png',
   shadow: '/images/skills/shadow.png',
-  holy: '/images/skills/whirl.png',
+  holy: '/images/skills/thunderstorm.png',
   sniper: '/images/skills/rain.png',
-  blizzard: '/images/skills/firebolt.png',
+  blizzard: '/images/skills/ice-wall.png',
   power: '/images/skills/whirl.png',
 }
 
