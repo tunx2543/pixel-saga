@@ -21,6 +21,8 @@ export function CharacterPanel() {
   const stats: [string, string][] = [
     ['อาชีพ', job.name],
     ['เลเวล', String(p.level)],
+    ['แต้มสเตตัส', String(p.statPoints ?? 0)],
+    ['แต้มสกิล', String(p.skillPoints ?? 0)],
     ['HP สูงสุด', formatNum(s.maxHp)],
     ['MP สูงสุด', formatNum(s.maxMp)],
     ['พลังโจมตี', formatNum(s.atk)],

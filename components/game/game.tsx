@@ -16,12 +16,13 @@ export function Game() {
   return (
     <div className="relative h-full w-full select-none overflow-hidden">
       <GameCanvas />
-      <TouchControls />
-      <Hud />
-
-      <ChatBox />
-      <PresenceSync />
-      <Panels />
+      <div className="game-ui pointer-events-none absolute inset-0">
+        <TouchControls />
+        <Hud />
+        <ChatBox />
+        <PresenceSync />
+        <Panels />
+      </div>
     </div>
   )
 }

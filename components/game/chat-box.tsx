@@ -29,7 +29,7 @@ export function ChatBox() {
   const [text, setText] = useState('')
   const [isOpen, setIsOpen] = useState(true)
   const [position, setPosition] = useState({ x: 8, y: 0 })
-  const dragRef = useRef({ active: false, offsetX: 0, offsetY: 0 })
+  const dragRef = useRef({ active: false, moved: false, offsetX: 0, offsetY: 0 })
   const listRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -37,6 +37,7 @@ export function ChatBox() {
       if (!dragRef.current.active) return
       event.preventDefault()
       event.stopPropagation()
+      dragRef.current.moved = true
       setPosition({
         x: Math.max(4, Math.min(window.innerWidth - 260, event.clientX - dragRef.current.offsetX)),
         y: Math.max(4, Math.min(window.innerHeight - 96, event.clientY - dragRef.current.offsetY)),
@@ -56,7 +57,7 @@ export function ChatBox() {
     event.stopPropagation()
     const rect = event.currentTarget.parentElement?.getBoundingClientRect()
     if (!rect) return
-    dragRef.current = { active: true, offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top }
+    dragRef.current = { active: true, moved: false, offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top }
     event.currentTarget.setPointerCapture?.(event.pointerId)
   }
   const lastId = g.chat.at(-1)?.id ?? 0
@@ -69,14 +70,17 @@ export function ChatBox() {
   return (
     <div
       onPointerDown={(event) => event.stopPropagation()}
-      className="pixel-panel absolute z-20 flex w-[min(16rem,calc(100vw-1rem))] touch-none flex-col bg-card/90 shadow-lg"
+      className="pointer-events-auto pixel-panel absolute z-20 flex w-[min(16rem,calc(100vw-1rem))] touch-none flex-col bg-card/90 shadow-lg"
       style={{ left: position.x, top: position.y || undefined, bottom: position.y ? undefined : '7rem' }}
     >
       
       {/* แถบหัวข้อแชท + ปุ่มกดพับ/ขยาย */}
       <div
         onPointerDown={startDrag}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          if (!dragRef.current.moved) setIsOpen((open) => !open)
+          dragRef.current.moved = false
+        }}
         className="flex items-center justify-between px-2.5 py-1 bg-secondary/70 border-b border-border text-[11px] font-semibold cursor-pointer select-none text-foreground"
       >
         <span>💬 แชท ({g.chat.length})</span>

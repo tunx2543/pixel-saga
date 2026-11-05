@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 
 const SKILL_ICONS: Record<string, string> = {
   firebolt: '/images/skills/firebolt.png',
-  meteor: '/images/skills/firebolt.png',
+  meteor: '/images/skills/meteor.png',
   bash: '/images/skills/whirl.png',
   whirl: '/images/skills/whirl.png',
   double: '/images/skills/rain.png',
@@ -15,9 +15,9 @@ const SKILL_ICONS: Record<string, string> = {
   dblatk: '/images/skills/shadow.png',
   backstab: '/images/skills/shadow.png',
   shadow: '/images/skills/shadow.png',
-  holy: '/images/skills/whirl.png',
+  holy: '/images/skills/thunderstorm.png',
   sniper: '/images/skills/rain.png',
-  blizzard: '/images/skills/firebolt.png',
+  blizzard: '/images/skills/ice-wall.png',
   power: '/images/skills/whirl.png',
 }
 
@@ -110,7 +110,7 @@ export function TouchControls() {
                 className={cn('relative size-12 rounded-full border-2 border-white/30 bg-card/90 p-1 text-[8px] leading-tight shadow-lg', g.p && g.p.mp < sk.mp && 'opacity-50')}
               >
                 {SKILL_ICONS[sk.id] ? (
-                  <img src={SKILL_ICONS[sk.id]} alt="" className="size-full rounded-full object-cover" />
+                  <img src={SKILL_ICONS[sk.id]} alt="" className="asset-no-bg size-full rounded-full object-cover" />
                 ) : (
                   <span style={{ color: sk.color }}>{sk.name}</span>
                 )}

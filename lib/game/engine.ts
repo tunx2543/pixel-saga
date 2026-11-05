@@ -48,6 +48,9 @@ export interface SaveData {
   playTime: number
   kills: number
   savedAt: number
+  statPoints?: number
+  skillPoints?: number
+  skillLevels?: Record<string, number>
 }
 
 export interface RemotePlayer {
@@ -499,7 +502,7 @@ function damageMonster(m: Monster, mult: number) {
   m.provoked = true
   m.hitFlash = 0.15
   game.combatT = 0
-  addFloat(m.x, m.y - 20, crit ? `${amount}!` : `${amount}`, crit ? '#ffd60a' : '#ffffff', crit ? 13 : 10)
+  addFloat(m.x, m.y - 20, crit ? `${amount}!` : `${amount}`, crit ? '#ffd60a' : '#ffffff', crit ? 20 : 16)
   if (m.hp <= 0) killMonster(m)
 }
 
@@ -529,6 +532,7 @@ export function gainExp(n: number) {
   if (p.level >= MAX_LEVEL) return
   p.exp += n
   addFloat(p.x, p.y - 34, `+${n} EXP`, '#c77dff', 9)
+  const beforeStats = getStats()
   let leveled = false
   while (p.level < MAX_LEVEL && p.exp >= expToNext(p.level)) {
     p.exp -= expToNext(p.level)
@@ -536,17 +540,26 @@ export function gainExp(n: number) {
     leveled = true
   }
   if (p.level >= MAX_LEVEL) p.exp = 0
-  if (leveled) onLevelUp()
+  if (leveled) onLevelUp(beforeStats)
 }
 
-function onLevelUp() {
+function onLevelUp(beforeStats: ReturnType<typeof getStats>) {
   const p = player()
   const s = getStats()
   p.hp = s.maxHp
   p.mp = s.maxMp
+  p.statPoints = (p.statPoints ?? 0) + 3
+  p.skillPoints = (p.skillPoints ?? 0) + 1
+  p.skillLevels ??= {}
+  const autoSkill = currentJob().skills[(p.level - 1) % currentJob().skills.length]
+  if (autoSkill) {
+    p.skillLevels[autoSkill.id] = (p.skillLevels[autoSkill.id] ?? 1) + 1
+    say('system', `${autoSkill.name} อัปเป็น Lv.${p.skillLevels[autoSkill.id]} อัตโนมัติ`)
+  }
   addEffect({ type: 'levelup', x: p.x, y: p.y, r: 20, color: '#ffd60a', max: 1.2 })
   addFloat(p.x, p.y - 40, 'LEVEL UP!', '#ffd60a', 14)
   say('system', `ยินดีด้วย! เลเวลอัพเป็น Lv.${p.level}`)
+  say('system', `ค่าสถานะเพิ่ม: HP +${s.maxHp - beforeStats.maxHp}, MP +${s.maxMp - beforeStats.maxMp}, ATK +${s.atk - beforeStats.atk}, DEF +${s.def - beforeStats.def}`)
   const next = Object.values(JOBS).find((j) => j.from === p.jobId && j.reqLevel === p.level)
   if (next) say('system', `คุณสามารถเปลี่ยนอาชีพได้แล้ว! ไปหา ปรมาจารย์อาร์ค ที่เมือง`)
   saveGame()
@@ -588,6 +601,8 @@ export function castSkill(index: number) {
   const job = currentJob()
   const skill = job.skills[index]
   if (!skill) return
+  const skillLevel = p.skillLevels?.[skill.id] ?? 1
+  const skillMult = skill.mult * (1 + (skillLevel - 1) * 0.08)
   if (skillCooldown(skill) > 0) return
   if (p.mp < skill.mp) {
     warn('MP ไม่พอ!')
@@ -597,7 +612,7 @@ export function castSkill(index: number) {
   if (skill.kind === 'aoe-self') {
     const r = skill.radius ?? 40
     addEffect({ type: 'ring', x: p.x, y: p.y - 6, r, color: skill.color, max: 0.45 })
-    for (const m of game.monsters) if (!m.dead && Math.hypot(m.x - p.x, m.y - p.y) <= r) damageMonster(m, skill.mult)
+    for (const m of game.monsters) if (!m.dead && Math.hypot(m.x - p.x, m.y - p.y) <= r) damageMonster(m, skillMult)
   } else {
     const t = nearestMonster(range)
     if (!t) {
@@ -606,23 +621,23 @@ export function castSkill(index: number) {
     }
     faceToward(t.x, t.y)
     if (skill.kind === 'single') {
-      if (job.ranged) shoot(t, [skill.mult], skill.color, 4)
+      if (job.ranged) shoot(t, [skillMult], skill.color, 4)
       else {
-        damageMonster(t, skill.mult)
+        damageMonster(t, skillMult)
         addEffect({ type: 'slash', x: t.x, y: t.y - 8, r: 16, color: skill.color, max: 0.3, angle: Math.random() * Math.PI })
       }
     } else if (skill.kind === 'multi') {
       const hits = skill.hits ?? 2
-      if (job.ranged) for (let i = 0; i < hits; i++) shoot(t, [skill.mult], skill.color, 2, 0, i * 0.1)
+      if (job.ranged) for (let i = 0; i < hits; i++) shoot(t, [skillMult], skill.color, 2, 0, i * 0.1)
       else
         for (let i = 0; i < hits; i++) {
-          damageMonster(t, skill.mult)
+          damageMonster(t, skillMult)
           addEffect({ type: 'slash', x: t.x + i * 3, y: t.y - 8 - i * 3, r: 12, color: skill.color, max: 0.25, angle: i })
         }
     } else if (skill.kind === 'aoe-target') {
       const r = skill.radius ?? 48
       addEffect({ type: 'burst', x: t.x, y: t.y - 6, r, color: skill.color, max: 0.55 })
-      for (const m of game.monsters) if (!m.dead && Math.hypot(m.x - t.x, m.y - t.y) <= r) damageMonster(m, skill.mult)
+      for (const m of game.monsters) if (!m.dead && Math.hypot(m.x - t.x, m.y - t.y) <= r) damageMonster(m, skillMult)
     }
   }
   p.mp -= skill.mp
@@ -923,7 +938,7 @@ function runCommand(text: string) {
       const lv = Math.max(1, Math.min(MAX_LEVEL, Math.floor(num(0, p.level))))
       p.level = lv
       p.exp = 0
-      onLevelUp()
+      onLevelUp(getStats())
       say('gm', `ตั้งเลเวลเป็น ${lv}`)
     },
     '/exp': () => {
@@ -1291,9 +1306,15 @@ function updateMonsters(dt: number, map: MapDef) {
       m.flip = dx < 0
       if (d > 14) moveEntity(map, m, (dx / d) * def.speed * dt, (dy / d) * def.speed * dt, 5, 4)
       else if (m.attackCd <= 0) {
-        m.attackCd = def.boss ? 1 : 1.4
+        m.attackCd = def.boss ? 2 : 1.4
         m.lunge = 0.15
         hurtPlayer(def.atk)
+        if (def.boss && Math.random() < 0.45) {
+          addEffect({ type: 'ring', x: p.x, y: p.y - 6, r: 34, color: def.color, max: 0.55 })
+          addEffect({ type: 'burst', x: p.x, y: p.y - 6, r: 22, color: '#ff4d6d', max: 0.35 })
+          hurtPlayer(def.atk * 0.65)
+          addFloat(p.x, p.y - 34, 'BOSS SKILL', '#ff4d6d', 13)
+        }
         if (!game.p || game.p.mapId !== map.id) return
       }
     } else {

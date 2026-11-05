@@ -33,7 +33,7 @@ export function Hud() {
   const need = expToNext(p.level)
 
   return (
-    <div className="pixel-panel absolute left-2 top-2 z-20 w-[min(14rem,calc(100vw-1rem))] p-2 shadow-lg md:left-3 md:top-3">
+    <div className="pointer-events-auto pixel-panel absolute left-2 top-2 z-20 w-[min(14rem,calc(100vw-1rem))] p-2 shadow-lg md:left-3 md:top-3">
       <div
         onClick={() => setIsOpenProfile(!isOpenProfile)}
         className="flex cursor-pointer select-none items-center justify-between gap-1"

@@ -14,7 +14,7 @@ export function WorldBanner() {
       <img
         src={isAbyss ? '/images/art/dungeon-banner.png' : '/images/art/demon-lord.png'}
         alt={isAbyss ? 'ภาพดันเจี้ยน Abyss' : 'ภาพราชาปีศาจ'}
-        className="h-16 w-full object-cover opacity-80"
+        className="asset-no-bg h-16 w-full object-cover opacity-80"
       />
       <div className="px-2 py-1 text-[10px] font-semibold tracking-wide text-white/90">
         {isAbyss ? 'ABYSS DUNGEON' : 'DEMON LORD CITADEL'}

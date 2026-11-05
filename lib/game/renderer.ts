@@ -11,14 +11,60 @@ const THEME_BG: Record<string, string> = {
   volcano: '#140808',
 }
 
+const CHARACTER_ART: Record<string, string> = {
+  novice: '/images/classes/novice-sheet.png',
+  swordsman: '/images/classes/swordsman-sheet.png',
+  mage: '/images/classes/mage-sheet.png',
+  archer: '/images/classes/archer-sheet.png',
+  thief: '/images/classes/thief-sheet.png',
+  knight: '/images/classes/knight-sheet.png',
+  wizard: '/images/classes/wizard-sheet.png',
+  hunter: '/images/classes/hunter-sheet.png',
+  assassin: '/images/classes/assassin-sheet.png',
+}
+
 const MONSTER_ART: Record<string, string> = {
   poring: '/images/monsters/poring.png',
-  wolf: '/images/monsters/forest-wolf.png',
   undead: '/images/monsters/undead-knight.png',
   demon: '/images/monsters/abyss-demon.png',
   demon_lord: '/images/monsters/abyss-demon.png',
 }
 const artCache = new Map<string, HTMLImageElement>()
+const transparentArtCache = new Map<string, HTMLCanvasElement>()
+
+function removeLightBackground(key: string, image: HTMLImageElement | HTMLCanvasElement) {
+  const cached = transparentArtCache.get(key)
+  if (cached) return cached
+  const canvas = document.createElement('canvas')
+  canvas.width = image.width
+  canvas.height = image.height
+  const offscreen = canvas.getContext('2d')
+  if (!offscreen) return image
+  offscreen.drawImage(image, 0, 0)
+  const pixels = offscreen.getImageData(0, 0, canvas.width, canvas.height)
+  for (let i = 0; i < pixels.data.length; i += 4) {
+    const r = pixels.data[i]
+    const g = pixels.data[i + 1]
+    const b = pixels.data[i + 2]
+    const neutralLight = Math.max(r, g, b) - Math.min(r, g, b) < 28
+    if (r > 190 && g > 190 && b > 190 && neutralLight) pixels.data[i + 3] = 0
+  }
+  offscreen.putImageData(pixels, 0, 0)
+  transparentArtCache.set(key, canvas)
+  return canvas
+}
+
+function characterArt(jobId: string) {
+  const src = CHARACTER_ART[jobId]
+  if (!src) return null
+  const cached = artCache.get(src)
+  if (cached) return cached.complete ? cached : null
+  const image = new Image()
+  image.crossOrigin = 'anonymous'
+  image.src = src
+  artCache.set(src, image)
+  return null
+}
 
 function monsterArt(defId: string) {
   const src = MONSTER_ART[defId]
@@ -109,26 +155,31 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
     ents.push({
       y: m.y,
       draw: () => {
-        const scale = def.boss ? 1.7 : 1
         const frame = Math.floor(m.animT * 3) % 2
-const asset = monsterArt(m.defId)
-  const img = asset ?? monsterSprite(def.sprite, def.color, frame)
-  const w = img.width * scale
-  const h = img.height * scale
+        const asset = monsterArt(m.defId)
+        const rawImage = asset ?? monsterSprite(def.sprite, def.color, frame)
+        const img = asset ? removeLightBackground(m.defId, rawImage) : rawImage
+        const assetScale = asset ? Math.min(1, (def.boss ? 38 : 22) / Math.max(img.width, img.height)) : 1
+        const scale = (def.boss ? 1.7 : 1) * assetScale
+        const w = img.width * scale
+        const h = img.height * scale
         shadow(ctx, m.x, m.y, 5 * scale)
         const flying = def.sprite === 'bat' || def.sprite === 'ghost'
         const hover = flying ? Math.round(Math.sin(m.animT * 3) * 2) - 4 : 0
+        const walkBob = flying ? 0 : Math.round(Math.sin(m.animT * (def.boss ? 5 : 8)) * (def.boss ? 1.4 : 0.8))
+        const attackBob = m.lunge > 0 ? (m.flip ? -3 : 3) : 0
         const lunge = m.lunge > 0 ? (m.flip ? -2 : 2) : 0
+        const stride = Math.sin(m.animT * (def.boss ? 5 : 9))
+        const squash = 1 + stride * (def.boss ? 0.035 : 0.06)
+        const stretch = 1 - stride * (def.boss ? 0.035 : 0.06)
+        const attackTilt = m.lunge > 0 ? (m.flip ? -0.12 : 0.12) : stride * 0.025
         ctx.save()
         if (m.hitFlash > 0) ctx.globalAlpha = 0.5
         if (def.sprite === 'ghost') ctx.globalAlpha *= 0.8
-        const dx = Math.round(m.x - w / 2 + lunge)
-        const dy = Math.round(m.y - h + hover)
-        if (m.flip && (def.sprite === 'wolf' || def.sprite === 'golem')) {
-          ctx.translate(dx + w, dy)
-          ctx.scale(-1, 1)
-          ctx.drawImage(img, 0, 0, w, h)
-        } else ctx.drawImage(img, dx, dy, w, h)
+        ctx.translate(m.x + lunge + attackBob, m.y - h / 2 + hover + walkBob)
+        ctx.rotate(attackTilt)
+        ctx.scale(m.flip ? -squash : squash, stretch)
+        ctx.drawImage(img, -w / 2, -h / 2, w, h)
         ctx.restore()
       },
     })
@@ -156,6 +207,8 @@ const asset = monsterArt(m.defId)
       shadow(ctx, p.x, p.y, 6)
       const frame = game.moving ? Math.floor(game.walkT * 8) % 4 : 0
       const img = humanSprite(job.colors, game.facing, frame, weapon?.weaponType ?? null, weapon?.color)
+      const rawSheet = characterArt(p.jobId)
+      const sheet = rawSheet ? removeLightBackground(`character:${p.jobId}`, rawSheet) : null
       let ox = 0
       let oy = 0
       if (game.attackAnim > 0) {
@@ -172,7 +225,33 @@ const asset = monsterArt(m.defId)
         ctx.ellipse(p.x, p.y, 10, 4, 0, 0, Math.PI * 2)
         ctx.fill()
       }
-      ctx.drawImage(img, Math.round(p.x - img.width / 2 + ox), Math.round(p.y - img.height + bob + oy))
+      if (sheet) {
+        const frameWidth = sheet.width / 4
+        const frameHeight = sheet.height / 4
+        const row = game.attackAnim > 0 ? 2 : game.facing === 'up' ? 3 : game.facing === 'down' ? 0 : 1
+        const cellPadX = frameWidth * 0.12
+        const cellPadY = frameHeight * 0.08
+        const sx = frame * frameWidth + cellPadX
+        const sy = row * frameHeight + cellPadY
+        const sourceWidth = frameWidth - cellPadX * 2
+        const sourceHeight = frameHeight - cellPadY * 2
+        const drawW = 24
+        const drawH = 28
+        const drawX = Math.round(p.x - drawW / 2 + ox)
+        const drawY = Math.round(p.y - drawH + bob + oy)
+        ctx.save()
+        ctx.imageSmoothingEnabled = false
+        if (game.facing === 'left') {
+          ctx.translate(drawX + drawW, drawY)
+          ctx.scale(-1, 1)
+          ctx.drawImage(sheet, sx, sy, sourceWidth, sourceHeight, 0, 0, drawW, drawH)
+        } else {
+          ctx.drawImage(sheet, sx, sy, sourceWidth, sourceHeight, drawX, drawY, drawW, drawH)
+        }
+        ctx.restore()
+      } else {
+        ctx.drawImage(img, Math.round(p.x - img.width / 2 + ox), Math.round(p.y - img.height + bob + oy))
+      }
     },
   })
 

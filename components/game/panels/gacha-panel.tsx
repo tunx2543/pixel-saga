@@ -64,7 +64,7 @@ export function GachaPanel() {
               <div key={entry.itemId} className="border-2 border-border bg-muted/60 p-2 text-center">
                 <div className="mx-auto mb-2 grid size-12 place-items-center overflow-hidden rounded-lg border-2 border-white/20 bg-card text-2xl" style={{ color: item.color }}>
                   {entry.itemId === 'flame_sword' ? (
-                    <img src="/images/art/rare-crystal.png" alt="ภาพไอเทมหายาก" className="size-full object-cover" />
+                    <img src="/images/art/rare-crystal.png" alt="ภาพไอเทมหายาก" className="asset-no-bg size-full object-cover" />
                   ) : (
                     <span aria-hidden="true">{entry.label.slice(0, 1)}</span>
                   )}
