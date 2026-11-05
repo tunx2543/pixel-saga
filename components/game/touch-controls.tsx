@@ -1,7 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { basicAttack, castSkill, currentJob, drinkPotion, game, skillCooldown } from '@/lib/game/engine'
+import { basicAttack, castSkill, currentJob, drinkPotion, game, interact, skillCooldown } from '@/lib/game/engine'
 import { useGame } from '@/lib/game/use-game'
 import { cn } from '@/lib/utils'
 
@@ -131,10 +131,10 @@ export function TouchControls() {
             ))}
           </div>
           <HoldButton
-            label="โจมตี"
+            label="โจมตีหรือคุยกับ NPC"
             onDown={() => {
               game.attackHeld = true
-              basicAttack()
+              if (!interact()) basicAttack()
             }}
             onUp={() => {
               game.attackHeld = false

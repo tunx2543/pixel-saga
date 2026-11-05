@@ -8,6 +8,7 @@ import { Panels } from './panels/panels'
 import { TitleScreen } from './title-screen'
 import { PresenceSync } from './presence-sync'
 import { WorldBanner } from './world-banner'
+import { TouchControls } from './touch-controls'
 
 export function Game() {
   const g = useGame()
@@ -15,8 +16,9 @@ export function Game() {
   return (
     <div className="relative h-full w-full select-none overflow-hidden">
       <GameCanvas />
-      <WorldBanner />
+      <TouchControls />
       <Hud />
+
       <ChatBox />
       <PresenceSync />
       <Panels />
