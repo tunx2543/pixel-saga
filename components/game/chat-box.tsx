@@ -35,6 +35,8 @@ export function ChatBox() {
   useEffect(() => {
     const move = (event: PointerEvent) => {
       if (!dragRef.current.active) return
+      event.preventDefault()
+      event.stopPropagation()
       setPosition({
         x: Math.max(4, Math.min(window.innerWidth - 260, event.clientX - dragRef.current.offsetX)),
         y: Math.max(4, Math.min(window.innerHeight - 96, event.clientY - dragRef.current.offsetY)),
@@ -50,6 +52,8 @@ export function ChatBox() {
   }, [])
 
   const startDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    event.stopPropagation()
     const rect = event.currentTarget.parentElement?.getBoundingClientRect()
     if (!rect) return
     dragRef.current = { active: true, offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top }
@@ -64,7 +68,8 @@ export function ChatBox() {
 
   return (
     <div
-      className="pixel-panel absolute z-20 flex w-[min(16rem,calc(100vw-1rem))] flex-col bg-card/90 shadow-lg"
+      onPointerDownCapture={(event) => event.stopPropagation()}
+      className="pixel-panel absolute z-20 flex w-[min(16rem,calc(100vw-1rem))] touch-none flex-col bg-card/90 shadow-lg"
       style={{ left: position.x, top: position.y || undefined, bottom: position.y ? undefined : '7rem' }}
     >
       
