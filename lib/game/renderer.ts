@@ -11,6 +11,27 @@ const THEME_BG: Record<string, string> = {
   volcano: '#140808',
 }
 
+const MONSTER_ART: Record<string, string> = {
+  poring: '/images/monsters/poring.png',
+  wolf: '/images/monsters/forest-wolf.png',
+  undead: '/images/monsters/undead-knight.png',
+  demon: '/images/monsters/abyss-demon.png',
+  demon_lord: '/images/monsters/abyss-demon.png',
+}
+const artCache = new Map<string, HTMLImageElement>()
+
+function monsterArt(defId: string) {
+  const src = MONSTER_ART[defId]
+  if (!src) return null
+  const cached = artCache.get(src)
+  if (cached) return cached.complete ? cached : null
+  const image = new Image()
+  image.crossOrigin = 'anonymous'
+  image.src = src
+  artCache.set(src, image)
+  return null
+}
+
 export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dpr: number, font: string) {
   const p = game.p
   if (!p) return
@@ -89,9 +110,10 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
       draw: () => {
         const scale = def.boss ? 1.7 : 1
         const frame = Math.floor(m.animT * 3) % 2
-        const img = monsterSprite(def.sprite, def.color, frame)
-        const w = img.width * scale
-        const h = img.height * scale
+const asset = monsterArt(m.defId)
+  const img = asset ?? monsterSprite(def.sprite, def.color, frame)
+  const w = img.width * scale
+  const h = img.height * scale
         shadow(ctx, m.x, m.y, 5 * scale)
         const flying = def.sprite === 'bat' || def.sprite === 'ghost'
         const hover = flying ? Math.round(Math.sin(m.animT * 3) * 2) - 4 : 0
