@@ -7,6 +7,9 @@ import { useGame } from '@/lib/game/use-game'
 import { formatNum } from '../format'
 import { CharacterPanel } from './character-panel'
 import { EnhancePanel } from './enhance-panel'
+import { GachaPanel } from './gacha-panel'
+import { FriendsPanel } from './friends-panel'
+import { InventoryPanel } from './inventory-panel'
 import { JobPanel } from './job-panel'
 import { ShopPanel } from './shop-panel'
 import { StoragePanel } from './storage-panel'
@@ -18,6 +21,12 @@ export function Panels() {
       return <ShopPanel />
     case 'enhance':
       return <EnhancePanel />
+    case 'gacha':
+      return <GachaPanel />
+    case 'friends':
+      return <FriendsPanel game={g} />
+    case 'inventory':
+      return <InventoryPanel />
     case 'job':
       return <JobPanel />
     case 'storage':

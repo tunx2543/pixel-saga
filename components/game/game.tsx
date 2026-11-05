@@ -6,6 +6,8 @@ import { GameCanvas } from './game-canvas'
 import { Hud } from './hud'
 import { Panels } from './panels/panels'
 import { TitleScreen } from './title-screen'
+import { PresenceSync } from './presence-sync'
+import { WorldBanner } from './world-banner'
 import { TouchControls } from './touch-controls'
 
 export function Game() {
@@ -14,9 +16,11 @@ export function Game() {
   return (
     <div className="relative h-full w-full select-none overflow-hidden">
       <GameCanvas />
-      <Hud />
-      <ChatBox />
       <TouchControls />
+      <Hud />
+
+      <ChatBox />
+      <PresenceSync />
       <Panels />
     </div>
   )

@@ -27,8 +27,34 @@ const TYPE_TAG: Record<ChatType, string> = {
 export function ChatBox() {
   const g = useGame()
   const [text, setText] = useState('')
-  const [isOpen, setIsOpen] = useState(true) // เพิ่ม State สำหรับเปิด/ปิด (พับ) ช่องแชท
+  const [isOpen, setIsOpen] = useState(true)
+  const [position, setPosition] = useState({ x: 8, y: 0 })
+  const dragRef = useRef({ active: false, offsetX: 0, offsetY: 0 })
   const listRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const move = (event: PointerEvent) => {
+      if (!dragRef.current.active) return
+      setPosition({
+        x: Math.max(4, Math.min(window.innerWidth - 260, event.clientX - dragRef.current.offsetX)),
+        y: Math.max(4, Math.min(window.innerHeight - 96, event.clientY - dragRef.current.offsetY)),
+      })
+    }
+    const stop = () => { dragRef.current.active = false }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', stop)
+    return () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', stop)
+    }
+  }, [])
+
+  const startDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.parentElement?.getBoundingClientRect()
+    if (!rect) return
+    dragRef.current = { active: true, offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top }
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
   const lastId = g.chat.at(-1)?.id ?? 0
 
   useEffect(() => {
@@ -37,10 +63,14 @@ export function ChatBox() {
   }, [lastId, isOpen])
 
   return (
-    <div className="pixel-panel absolute bottom-36 left-2 flex w-[min(20rem,calc(100vw-1rem))] flex-col bg-card/90 md:bottom-3 md:left-3 z-20 shadow-lg">
+    <div
+      className="pixel-panel absolute z-20 flex w-[min(16rem,calc(100vw-1rem))] flex-col bg-card/90 shadow-lg"
+      style={{ left: position.x, top: position.y || undefined, bottom: position.y ? undefined : '7rem' }}
+    >
       
       {/* แถบหัวข้อแชท + ปุ่มกดพับ/ขยาย */}
-      <div 
+      <div
+        onPointerDown={startDrag}
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-between px-2.5 py-1 bg-secondary/70 border-b border-border text-[11px] font-semibold cursor-pointer select-none text-foreground"
       >
@@ -55,7 +85,7 @@ export function ChatBox() {
         <>
           <div
             ref={listRef}
-            className="h-20 overflow-y-auto px-2 py-1.5 text-xs leading-relaxed md:h-32"
+            className="h-14 overflow-y-auto px-2 py-1 text-[11px] leading-snug md:h-24"
             role="log"
             aria-live="polite"
             aria-label="ช่องแชท"

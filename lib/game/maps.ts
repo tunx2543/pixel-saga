@@ -425,16 +425,40 @@ export const MAPS: Record<string, MapDef> = {
     blobs: [{ tile: T.LAVA, count: 7, r: [1, 3] }],
     decor: [{ tile: T.BONES, chance: 0.015 }],
     west: { to: 'cave', tx: 44, ty: 17, label: 'ถ้ำมืด Lv.20-35' },
-    east: null,
+    east: { to: 'abyss', tx: 3, ty: 17, label: 'ดันเจี้ยนห้วงอเวจี Lv.50+' },
     spawns: [
       { monsterId: 'fire_golem', count: 11 },
       { monsterId: 'demon', count: 9 },
       { monsterId: 'demon_lord', count: 1 },
     ],
   }),
+  abyss: buildWild({
+    id: 'abyss',
+    name: 'ดันเจี้ยนห้วงอเวจี',
+    levelLabel: 'Lv.50+ ดันเจี้ยนบอส',
+    theme: 'cave',
+    seed: 55,
+    base: T.CAVEFLOOR,
+    wall: T.CAVEWALL,
+    pathTile: null,
+    obstacles: [
+      { tile: T.CAVEWALL, chance: 0.05 },
+      { tile: T.CRYSTAL, chance: 0.02 },
+      { tile: T.BONES, chance: 0.02 },
+    ],
+    blobs: [{ tile: T.CAVEWALL, count: 8, r: [1, 3] }],
+    decor: [{ tile: T.CRYSTAL, chance: 0.02 }],
+    west: { to: 'volcano', tx: 44, ty: 17, label: 'ภูเขาไฟอัคคี Lv.35-50' },
+    east: null,
+    spawns: [
+      { monsterId: 'demon', count: 10 },
+      { monsterId: 'abyss_knight', count: 6 },
+      { monsterId: 'abyss_dragon', count: 1 },
+    ],
+  }),
 }
 
-export const MAP_ORDER = ['town', 'meadow', 'forest', 'cave', 'volcano']
+export const MAP_ORDER = ['town', 'meadow', 'forest', 'cave', 'volcano', 'abyss']
 
 export function tileAt(map: MapDef, tx: number, ty: number) {
   if (tx < 0 || ty < 0 || tx >= map.width || ty >= map.height) return T.CAVEWALL

@@ -5,6 +5,7 @@ import { JOBS } from '@/lib/game/data'
 import { deleteSave, loadGame, newGame, readSave } from '@/lib/game/engine'
 import { MAPS } from '@/lib/game/maps'
 import { formatPlayTime } from './format'
+import { AccountPanel } from './account-panel'
 
 export function TitleScreen() {
   const [save] = useState(() => readSave())
@@ -31,6 +32,11 @@ export function TitleScreen() {
             PIXEL QUEST
           </p>
           <p className="mt-2 text-lg text-foreground drop-shadow-[2px_2px_0_#1a1423]">ตำนานนักผจญภัยพิกเซล</p>
+          <img
+            src="/images/classes/class-icons.png"
+            alt="นักดาบ นักเวท และนักธนู"
+            className="mx-auto mt-3 h-20 w-64 object-contain pixelated drop-shadow-[3px_3px_0_#1a1423]"
+          />
         </div>
 
         <div className="pixel-panel w-full p-5">
@@ -91,7 +97,7 @@ export function TitleScreen() {
                 type="submit"
                 className="pixel-btn bg-primary px-4 py-3 text-lg text-primary-foreground hover:brightness-110"
               >
-                เริ่มผจญภัย
+                เข้าเล่นแบบ Guest
               </button>
               {save && (
                 <button
@@ -106,8 +112,10 @@ export function TitleScreen() {
           )}
         </div>
 
+        <AccountPanel />
+
         <p className="text-center text-xs text-foreground/80 drop-shadow-[1px_1px_0_#1a1423]">
-          เกมบันทึกอัตโนมัติทุก 10 วินาที ออกเกมแล้วกลับมาเล่นต่อได้ทันที
+          เล่นแบบผู้มาเยือนได้ทันที ข้อมูลจะถูกแยกตามเครื่อง • เข้าสู่ระบบเพื่อซิงค์ตัวละครและพบผู้เล่นอื่น
         </p>
       </div>
     </div>
