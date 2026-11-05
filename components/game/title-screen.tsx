@@ -32,11 +32,6 @@ export function TitleScreen() {
             PIXEL QUEST
           </p>
           <p className="mt-2 text-lg text-foreground drop-shadow-[2px_2px_0_#1a1423]">ตำนานนักผจญภัยพิกเซล</p>
-          <img
-            src="/images/classes/class-icons.png"
-            alt="นักดาบ นักเวท และนักธนู"
-            className="asset-no-bg mx-auto mt-3 h-20 w-64 object-contain pixelated drop-shadow-[3px_3px_0_#1a1423]"
-          />
         </div>
 
         <div className="pixel-panel w-full p-5">
