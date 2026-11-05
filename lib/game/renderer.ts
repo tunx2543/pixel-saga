@@ -44,16 +44,11 @@ function removeLightBackground(key: string, image: HTMLImageElement | HTMLCanvas
 
   const pixels = offscreen.getImageData(0, 0, canvas.width, canvas.height)
   const { data, width, height } = pixels
-  const columns = 4
-  const rows = 4
+  const isSheet = !key.startsWith('monster:')
+  const columns = isSheet ? 4 : 1
+  const rows = isSheet ? 4 : 1
   const cellWidth = width / columns
   const cellHeight = height / rows
-  const colorDistance = (pixel: number, color: [number, number, number]) =>
-    Math.max(
-      Math.abs(data[pixel] - color[0]),
-      Math.abs(data[pixel + 1] - color[1]),
-      Math.abs(data[pixel + 2] - color[2]),
-    )
 
   for (let row = 0; row < rows; row++) {
     for (let column = 0; column < columns; column++) {
@@ -61,35 +56,42 @@ function removeLightBackground(key: string, image: HTMLImageElement | HTMLCanvas
       const top = Math.floor(row * cellHeight)
       const right = Math.min(width - 1, Math.ceil((column + 1) * cellWidth) - 1)
       const bottom = Math.min(height - 1, Math.ceil((row + 1) * cellHeight) - 1)
-      const samples: [number, number, number][] = []
+      const histogram = new Map<string, { color: [number, number, number]; count: number }>()
       const sample = (x: number, y: number) => {
         const pixel = (y * width + x) * 4
-        if (data[pixel + 3] > 0) samples.push([data[pixel], data[pixel + 1], data[pixel + 2]])
+        if (data[pixel + 3] === 0) return
+        const color: [number, number, number] = [data[pixel], data[pixel + 1], data[pixel + 2]]
+        const bucket = color.map((channel) => Math.round(channel / 8) * 8).join(',')
+        const entry = histogram.get(bucket)
+        if (entry) entry.count += 1
+        else histogram.set(bucket, { color, count: 1 })
       }
       for (let x = left; x <= right; x += 2) {
         sample(x, top)
         sample(x, bottom)
       }
-      for (let y = top + 2; y < bottom; y += 2) {
+      for (let y = top + 1; y < bottom; y += 2) {
         sample(left, y)
         sample(right, y)
       }
-
-      const backgroundColors = samples
-        .filter((color) => Math.max(...color) - Math.min(...color) < 48)
-        .filter((color, index, colors) =>
-          colors.findIndex((other) =>
-            color.every((channel, channelIndex) => Math.abs(channel - other[channelIndex]) < 16),
-          ) === index,
+      const backgroundColors = [...histogram.values()]
+        .sort((a, b) => b.count - a.count)
+        .slice(0, isSheet ? 4 : 2)
+        .map(({ color }) => color)
+      const matchesBackground = (pixel: number) =>
+        backgroundColors.some((color) =>
+          Math.max(
+            Math.abs(data[pixel] - color[0]),
+            Math.abs(data[pixel + 1] - color[1]),
+            Math.abs(data[pixel + 2] - color[2]),
+          ) <= 18,
         )
-        .slice(0, 2)
-
       for (let y = top; y <= bottom; y++) {
         for (let x = left; x <= right; x++) {
           const pixel = (y * width + x) * 4
-          const matchesBackground = backgroundColors.some((color) => colorDistance(pixel, color) <= 22)
-          const isCellBorder = x === left || x === right || y === top || y === bottom
-          if (matchesBackground || isCellBorder) data[pixel + 3] = 0
+          if (matchesBackground(pixel) || x === left || x === right || y === top || y === bottom) {
+            data[pixel + 3] = 0
+          }
         }
       }
     }
@@ -241,9 +243,10 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         const frame = Math.floor(m.animT * 3) % 2
         const asset = monsterArt(m.defId)
         const rawImage = asset ?? monsterSprite(def.sprite, def.color, frame)
-        const img = asset ? removeLightBackground(m.defId, rawImage) : rawImage
-        const assetScale = asset ? Math.min(1, (def.boss ? 38 : 22) / Math.max(img.width, img.height)) : 1
-        const scale = (def.boss ? 1.7 : 1) * assetScale
+const img = asset ? removeLightBackground(`monster:${m.defId}`, rawImage) : rawImage
+  const targetSize = def.boss ? 56 : 30
+  const assetScale = asset ? Math.min(1, targetSize / Math.max(img.width, img.height)) : 1
+  const scale = (def.boss ? 1.85 : 1.15) * assetScale
         const w = img.width * scale
         const h = img.height * scale
         shadow(ctx, m.x, m.y, 5 * scale)
