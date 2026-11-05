@@ -40,7 +40,8 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
   ctx.imageSmoothingEnabled = false
 
   const cssW = cw / dpr
-  const zoom = cssW < 700 ? 2 : 3
+  // Pull the camera back slightly so mobile players can see more of the map and nearby enemies.
+  const zoom = cssW < 700 ? 1.6 : 2.4
   const s = zoom * dpr
   const viewW = cw / s
   const viewH = ch / s
