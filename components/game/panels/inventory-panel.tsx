@@ -1,16 +1,31 @@
 'use client'
 
+import { useState } from 'react'
 import { ITEMS } from '@/lib/game/data'
-import { closePanel, equip, itemLabel, unequip } from '@/lib/game/engine'
+import { closePanel, drinkPotion, equip, itemLabel, unequip } from '@/lib/game/engine'
 import { useGame } from '@/lib/game/use-game'
 import { PanelFrame, PxButton } from './panels'
 
 export function InventoryPanel() {
   const { p } = useGame()
+  const [tab, setTab] = useState<'items' | 'use'>('items')
   if (!p) return null
+  const visibleItems = p.inventory.filter((item) => tab === 'items'
+    ? ITEMS[item.itemId]?.kind === 'weapon' || ITEMS[item.itemId]?.kind === 'armor'
+    : ITEMS[item.itemId]?.kind === 'consumable')
 
   return (
     <PanelFrame title="กระเป๋าและอุปกรณ์" subtitle={`${p.inventory.length} ช่องที่ใช้ / 30 ช่อง`}>
+      <div className="mb-3 grid grid-cols-2 gap-1">
+        <PxButton variant={tab === 'items' ? 'primary' : 'secondary'} onClick={() => setTab('items')}>อุปกรณ์</PxButton>
+        <PxButton variant={tab === 'use' ? 'primary' : 'secondary'} onClick={() => setTab('use')}>ใช้ไอเทม</PxButton>
+      </div>
+      {tab === 'use' && (
+        <div className="mb-3 flex gap-2">
+          <PxButton onClick={() => drinkPotion('hp')}>ใช้ยา HP</PxButton>
+          <PxButton onClick={() => drinkPotion('mp')}>ใช้ยา MP</PxButton>
+        </div>
+      )}
       <div className="mb-4 grid grid-cols-2 gap-2">
         {(['weapon', 'armor'] as const).map((slot) => {
           const item = p.equipment[slot]
@@ -28,7 +43,7 @@ export function InventoryPanel() {
         })}
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        {p.inventory.map((item) => {
+        {visibleItems.map((item) => {
           const def = ITEMS[item.itemId]
           if (!def) return null
           const equipable = def.kind === 'weapon' || def.kind === 'armor'
