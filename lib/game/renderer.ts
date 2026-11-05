@@ -14,7 +14,7 @@ const THEME_BG: Record<string, string> = {
 const CHARACTER_ART: Record<string, string> = {
   novice: '/images/classes/novice-sheet.png',
   swordsman: '/images/classes/swordsman-sheet.png',
-  mage: '/images/classes/mage-sheet.png',
+  mage: '/images/classes/mage-idle-sheet.png',
   archer: '/images/classes/archer-sheet.png',
   thief: '/images/classes/thief-sheet.png',
   knight: '/images/classes/knight-sheet.png',
