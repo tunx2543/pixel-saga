@@ -42,7 +42,7 @@ export function PanelFrame({ title, subtitle, children }: { title: string; subti
   const g = useGame()
   return (
     <div
-      className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 p-2 md:p-6"
+      className="pointer-events-auto absolute inset-0 z-20 flex items-center justify-center bg-black/50 p-2 md:p-6"
       onPointerDown={(e) => {
         if (e.target === e.currentTarget) closePanel()
       }}
