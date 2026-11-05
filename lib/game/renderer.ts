@@ -145,17 +145,17 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         const walkBob = flying ? 0 : Math.round(Math.sin(m.animT * (def.boss ? 5 : 8)) * (def.boss ? 1.4 : 0.8))
         const attackBob = m.lunge > 0 ? (m.flip ? -3 : 3) : 0
         const lunge = m.lunge > 0 ? (m.flip ? -2 : 2) : 0
+        const stride = Math.sin(m.animT * (def.boss ? 5 : 9))
+        const squash = 1 + stride * (def.boss ? 0.035 : 0.06)
+        const stretch = 1 - stride * (def.boss ? 0.035 : 0.06)
+        const attackTilt = m.lunge > 0 ? (m.flip ? -0.12 : 0.12) : stride * 0.025
         ctx.save()
         if (m.hitFlash > 0) ctx.globalAlpha = 0.5
         if (def.sprite === 'ghost') ctx.globalAlpha *= 0.8
-        const dx = Math.round(m.x - w / 2 + lunge)
-        const dy = Math.round(m.y - h + hover + walkBob)
-        if (m.lunge > 0) ctx.translate(attackBob, 0)
-        if (m.flip && (def.sprite === 'wolf' || def.sprite === 'golem')) {
-          ctx.translate(dx + w, dy)
-          ctx.scale(-1, 1)
-          ctx.drawImage(img, 0, 0, w, h)
-        } else ctx.drawImage(img, dx, dy, w, h)
+        ctx.translate(m.x + lunge + attackBob, m.y - h / 2 + hover + walkBob)
+        ctx.rotate(attackTilt)
+        ctx.scale(m.flip ? -squash : squash, stretch)
+        ctx.drawImage(img, -w / 2, -h / 2, w, h)
         ctx.restore()
       },
     })
