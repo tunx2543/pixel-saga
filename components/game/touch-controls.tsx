@@ -68,32 +68,27 @@ export function TouchControls() {
   const g = useGame()
   const job = currentJob()
 
-  const handlePointerMoveOrDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if ((e.target as HTMLElement).closest('button')) return
-    if (e.type === 'pointermove' && e.buttons === 0) return
-
-    const rect = e.currentTarget.getBoundingClientRect()
-    const dx = e.clientX - (rect.left + rect.width / 2)
-    const dy = e.clientY - (rect.top + rect.height / 2)
-    game.keys.clear()
-    if (Math.hypot(dx, dy) < 24) return
-
-    if (Math.abs(dx) >= Math.abs(dy)) game.keys.add(dx < 0 ? 'arrowleft' : 'arrowright')
-    else game.keys.add(dy < 0 ? 'arrowup' : 'arrowdown')
+  const setKey = (key: string, active: boolean) => {
+    if (active) game.keys.add(key)
+    else game.keys.delete(key)
   }
 
-  const handlePointerUp = () => game.keys.clear()
-
   return (
-    <div 
-      className="pointer-events-none absolute inset-0 touch-none"
-      onPointerDown={handlePointerMoveOrDown}
-      onPointerMove={handlePointerMoveOrDown}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerUp}
-    >
+    <div className="pointer-events-none absolute inset-0 touch-none">
       {/* จัดระเบียบ UI ด้านขวาให้กระชับ ไม่บังจอตอนเล่นแนวนอน */}
-      <div className="pointer-events-auto absolute inset-x-0 bottom-2 right-2 flex items-end justify-end gap-2 p-2">
+      <div className="pointer-events-auto absolute inset-x-0 bottom-2 flex items-end justify-between gap-2 p-2">
+        <div className="grid grid-cols-3 grid-rows-3 gap-1 rounded-2xl border-2 border-white/15 bg-card/80 p-2 shadow-lg">
+          <span />
+          <HoldButton label="เดินขึ้น" onDown={() => setKey('arrowup', true)} onUp={() => setKey('arrowup', false)} className="size-11 rounded-lg bg-secondary/90 text-lg">▲</HoldButton>
+          <span />
+          <HoldButton label="เดินซ้าย" onDown={() => setKey('arrowleft', true)} onUp={() => setKey('arrowleft', false)} className="size-11 rounded-lg bg-secondary/90 text-lg">◀</HoldButton>
+          <span className="grid size-11 place-items-center rounded-lg bg-primary/30 text-[9px] text-primary">เดิน</span>
+          <HoldButton label="เดินขวา" onDown={() => setKey('arrowright', true)} onUp={() => setKey('arrowright', false)} className="size-11 rounded-lg bg-secondary/90 text-lg">▶</HoldButton>
+          <span />
+          <HoldButton label="เดินลง" onDown={() => setKey('arrowdown', true)} onUp={() => setKey('arrowdown', false)} className="size-11 rounded-lg bg-secondary/90 text-lg">▼</HoldButton>
+          <span />
+        </div>
+        <div className="flex items-end gap-2">
         {/* ปุ่มยา HP / MP ขนาดเล็กด้านข้าง */}
         <div className="flex flex-col gap-1">
           <HoldButton label="ยา HP" onDown={() => drinkPotion('hp')} className="size-9 bg-hp/80 text-[9px]">
@@ -143,6 +138,7 @@ export function TouchControls() {
           >
             โจมตี
           </HoldButton>
+        </div>
         </div>
       </div>
     </div>
