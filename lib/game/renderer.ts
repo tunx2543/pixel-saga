@@ -229,8 +229,12 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         const frameWidth = sheet.width / 4
         const frameHeight = sheet.height / 4
         const row = game.attackAnim > 0 ? 2 : game.facing === 'up' ? 3 : game.facing === 'down' ? 0 : 1
-        const sx = frame * frameWidth
-        const sy = row * frameHeight
+        const cellPadX = frameWidth * 0.12
+        const cellPadY = frameHeight * 0.08
+        const sx = frame * frameWidth + cellPadX
+        const sy = row * frameHeight + cellPadY
+        const sourceWidth = frameWidth - cellPadX * 2
+        const sourceHeight = frameHeight - cellPadY * 2
         const drawW = 24
         const drawH = 28
         const drawX = Math.round(p.x - drawW / 2 + ox)
@@ -240,9 +244,9 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         if (game.facing === 'left') {
           ctx.translate(drawX + drawW, drawY)
           ctx.scale(-1, 1)
-          ctx.drawImage(sheet, sx, sy, frameWidth, frameHeight, 0, 0, drawW, drawH)
+          ctx.drawImage(sheet, sx, sy, sourceWidth, sourceHeight, 0, 0, drawW, drawH)
         } else {
-          ctx.drawImage(sheet, sx, sy, frameWidth, frameHeight, drawX, drawY, drawW, drawH)
+          ctx.drawImage(sheet, sx, sy, sourceWidth, sourceHeight, drawX, drawY, drawW, drawH)
         }
         ctx.restore()
       } else {
