@@ -44,59 +44,53 @@ function removeLightBackground(key: string, image: HTMLImageElement | HTMLCanvas
 
   const pixels = offscreen.getImageData(0, 0, canvas.width, canvas.height)
   const { data, width, height } = pixels
-  const visited = new Uint8Array(width * height)
-  const queue = new Uint32Array(width * height)
-  let head = 0
-  let tail = 0
-  const tolerance = 52
-
-  const addEdgePixel = (x: number, y: number) => {
-    const index = y * width + x
-    if (visited[index]) return
-    visited[index] = 1
-    queue[tail++] = index
+  const borderColors: [number, number, number][] = []
+  const addBorderColor = (x: number, y: number) => {
+    const pixel = (y * width + x) * 4
+    borderColors.push([data[pixel], data[pixel + 1], data[pixel + 2]])
+  }
+  for (let x = 0; x < width; x += 8) {
+    addBorderColor(x, 0)
+    addBorderColor(x, height - 1)
+  }
+  for (let y = 8; y < height - 1; y += 8) {
+    addBorderColor(0, y)
+    addBorderColor(width - 1, y)
   }
 
-  for (let x = 0; x < width; x++) {
-    addEdgePixel(x, 0)
-    addEdgePixel(x, height - 1)
-  }
-  for (let y = 1; y < height - 1; y++) {
-    addEdgePixel(0, y)
-    addEdgePixel(width - 1, y)
-  }
+  const backgroundColors = borderColors
+    .filter((color) => Math.max(...color) - Math.min(...color) < 42)
+    .filter((color, index, colors) =>
+      colors.findIndex((other) =>
+        color.every((channel, channelIndex) => Math.abs(channel - other[channelIndex]) < 18),
+      ) === index,
+    )
+    .slice(0, 2)
+  const colorDistance = (pixel: number, color: [number, number, number]) =>
+    Math.max(
+      Math.abs(data[pixel] - color[0]),
+      Math.abs(data[pixel + 1] - color[1]),
+      Math.abs(data[pixel + 2] - color[2]),
+    )
 
-  while (head < tail) {
-    const index = queue[head++]
-    const x = index % width
-    const y = Math.floor(index / width)
-    const pixel = index * 4
-    const r = data[pixel]
-    const g = data[pixel + 1]
-    const b = data[pixel + 2]
-    const isLightBackground = r > 190 && g > 190 && b > 190
-    if (!isLightBackground) continue
-
-    data[pixel + 3] = 0
-    const neighbors = [
-      [x - 1, y],
-      [x + 1, y],
-      [x, y - 1],
-      [x, y + 1],
-    ]
-    for (const [nx, ny] of neighbors) {
-      if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue
-      const neighborIndex = ny * width + nx
-      if (visited[neighborIndex]) continue
-      const neighborPixel = neighborIndex * 4
-      const closeEnough =
-        Math.abs(data[neighborPixel] - r) <= tolerance &&
-        Math.abs(data[neighborPixel + 1] - g) <= tolerance &&
-        Math.abs(data[neighborPixel + 2] - b) <= tolerance
-      if (closeEnough) {
-        visited[neighborIndex] = 1
-        queue[tail++] = neighborIndex
+  const rowDarkCounts = new Uint16Array(height)
+  const columnDarkCounts = new Uint16Array(width)
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const pixel = (y * width + x) * 4
+      if (data[pixel] < 38 && data[pixel + 1] < 38 && data[pixel + 2] < 38) {
+        rowDarkCounts[y]++
+        columnDarkCounts[x]++
       }
+    }
+  }
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const pixel = (y * width + x) * 4
+      const matchesChecker = backgroundColors.some((color) => colorDistance(pixel, color) <= 32)
+      const isFrameLine = rowDarkCounts[y] > width * 0.72 || columnDarkCounts[x] > height * 0.72
+      if (matchesChecker || isFrameLine) data[pixel + 3] = 0
     }
   }
 
