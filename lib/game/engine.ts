@@ -663,11 +663,16 @@ const ROLE_PANEL: Record<NpcRole, PanelId> = { shop: 'shop', enhance: 'enhance',
 
 export function interact() {
   const npc = game.nearNpc
-  if (!npc || !game.p) return
+  if (!npc || !game.p) return false
   game.keys.clear()
   game.panel = ROLE_PANEL[npc.role]
   say('npc', npc.greeting, npc.name)
   notify()
+  return true
+}
+
+export function action() {
+  if (!interact()) basicAttack()
 }
 
 export function openPanel(id: PanelId) {

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import {
-  basicAttack,
+  action,
   closePanel,
   game,
   interact,
@@ -75,14 +75,12 @@ export function GameCanvas() {
         return
       }
       if (e.repeat) return
-      if (k === ' ' || k === 'j') {
+      if (k === ' ' || k === 'j' || k === 'e') {
         e.preventDefault()
-        game.attackHeld = true
-        basicAttack()
+        action()
       } else if (k === '1' || k === '2' || k === '3') castSkill(Number(k) - 1)
       else if (k === 'q') drinkPotion('hp')
       else if (k === 'r') drinkPotion('mp')
-      else if (k === 'e') interact()
       else if (k === 'i' || k === 'c') openPanel('character')
     }
     const onKeyUp = (e: KeyboardEvent) => {
