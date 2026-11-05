@@ -33,15 +33,24 @@ export function AccountPanel() {
 
     try {
       const supabase = createClient()
+      const normalizedEmail = email.trim().toLowerCase()
       const result = mode === 'signIn'
-        ? await supabase.auth.signInWithPassword({ email, password })
+        ? await supabase.auth.signInWithPassword({ email: normalizedEmail, password })
         : await supabase.auth.signUp({
-            email,
+            email: normalizedEmail,
             password,
             options: { emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ?? `${window.location.origin}/auth/callback` },
           })
       if (result.error) {
-        setMessage('เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบอีเมลและรหัสผ่าน')
+        if (result.error.code === 'email_not_confirmed') {
+          setMessage('กรุณายืนยันอีเมลจากกล่องข้อความก่อนเข้าสู่ระบบ')
+        } else if (result.error.code === 'over_email_send_rate_limit') {
+          setMessage('ส่งอีเมลบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่')
+        } else if (mode === 'signIn') {
+          setMessage('เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบอีเมลและรหัสผ่าน')
+        } else {
+          setMessage('สร้างบัญชีไม่สำเร็จ กรุณาตรวจสอบอีเมลและรหัสผ่าน')
+        }
         return
       }
       setMessage(mode === 'signUp' ? 'สร้างบัญชีแล้ว ตรวจสอบอีเมลเพื่อยืนยันตัวตน' : 'เข้าสู่ระบบแล้ว เล่นกับเพื่อนและซิงค์ตัวละครได้')

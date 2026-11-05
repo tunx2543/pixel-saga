@@ -331,7 +331,7 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
           ctx.scale(-1, 1)
           ctx.drawImage(sheet, sourceLeft, sourceTop, bounds.width, bounds.height, 0, 0, drawW, drawH)
         } else {
-          ctx.drawImage(sheet, bounds.left, bounds.top, bounds.width, bounds.height, drawX, drawY, drawW, drawH)
+          ctx.drawImage(sheet, sourceLeft, sourceTop, bounds.width, bounds.height, drawX, drawY, drawW, drawH)
         }
         ctx.restore()
       } else {
