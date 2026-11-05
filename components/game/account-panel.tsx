@@ -11,29 +11,45 @@ export function AccountPanel() {
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
-    const supabase = createClient()
-    void supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? null))
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => setUserEmail(session?.user?.email ?? null))
-    return () => data.subscription.unsubscribe()
+    let unsubscribe = () => {}
+
+    try {
+      const supabase = createClient()
+      void supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? null)).catch(() => {
+        setUserEmail(null)
+      })
+      const { data } = supabase.auth.onAuthStateChange((_event, session) => setUserEmail(session?.user?.email ?? null))
+      unsubscribe = () => data.subscription.unsubscribe()
+    } catch {
+      setUserEmail(null)
+    }
+
+    return unsubscribe
   }, [])
 
   const submit = async (mode: 'signIn' | 'signUp') => {
     setBusy(true)
     setMessage('')
-    const supabase = createClient()
-    const result = mode === 'signIn'
-      ? await supabase.auth.signInWithPassword({ email, password })
-      : await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ?? `${window.location.origin}/auth/callback` },
-        })
-    setBusy(false)
-    if (result.error) {
-      setMessage('เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบอีเมลและรหัสผ่าน')
-      return
+
+    try {
+      const supabase = createClient()
+      const result = mode === 'signIn'
+        ? await supabase.auth.signInWithPassword({ email, password })
+        : await supabase.auth.signUp({
+            email,
+            password,
+            options: { emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ?? `${window.location.origin}/auth/callback` },
+          })
+      if (result.error) {
+        setMessage('เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบอีเมลและรหัสผ่าน')
+        return
+      }
+      setMessage(mode === 'signUp' ? 'สร้างบัญชีแล้ว ตรวจสอบอีเมลเพื่อยืนยันตัวตน' : 'เข้าสู่ระบบแล้ว เล่นกับเพื่อนและซิงค์ตัวละครได้')
+    } catch {
+      setMessage('ระบบบัญชียังไม่พร้อมใช้งาน กรุณาลองใหม่อีกครั้ง')
+    } finally {
+      setBusy(false)
     }
-    setMessage(mode === 'signUp' ? 'สร้างบัญชีแล้ว ตรวจสอบอีเมลเพื่อยืนยันตัวตน' : 'เข้าสู่ระบบแล้ว เล่นกับเพื่อนและซิงค์ตัวละครได้')
   }
 
   if (userEmail) {
