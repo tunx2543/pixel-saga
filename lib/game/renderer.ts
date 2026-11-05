@@ -118,12 +118,15 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         shadow(ctx, m.x, m.y, 5 * scale)
         const flying = def.sprite === 'bat' || def.sprite === 'ghost'
         const hover = flying ? Math.round(Math.sin(m.animT * 3) * 2) - 4 : 0
+        const walkBob = flying ? 0 : Math.round(Math.sin(m.animT * (def.boss ? 5 : 8)) * (def.boss ? 1.4 : 0.8))
+        const attackBob = m.lunge > 0 ? (m.flip ? -3 : 3) : 0
         const lunge = m.lunge > 0 ? (m.flip ? -2 : 2) : 0
         ctx.save()
         if (m.hitFlash > 0) ctx.globalAlpha = 0.5
         if (def.sprite === 'ghost') ctx.globalAlpha *= 0.8
         const dx = Math.round(m.x - w / 2 + lunge)
-        const dy = Math.round(m.y - h + hover)
+        const dy = Math.round(m.y - h + hover + walkBob)
+        if (m.lunge > 0) ctx.translate(attackBob, 0)
         if (m.flip && (def.sprite === 'wolf' || def.sprite === 'golem')) {
           ctx.translate(dx + w, dy)
           ctx.scale(-1, 1)
