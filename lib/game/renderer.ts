@@ -316,11 +316,12 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         const frameHeight = sheet.height / 4
         const sourceLeft = displayFrame * frameWidth + bounds.left
         const sourceTop = row * frameHeight + bounds.top
-        const maxW = 27
-        const maxH = 31
-        const scale = Math.min(maxW / bounds.width, maxH / bounds.height)
-        const drawW = Math.max(1, Math.round(bounds.width * scale))
-        const drawH = Math.max(1, Math.round(bounds.height * scale))
+        // Every class is rendered into the same NPC-sized box. Scaling from each
+        // frame's visible bounds independently makes characters visibly grow/shrink
+        // as they walk, so keep the destination box stable and let the cleaned
+        // source frame fill it consistently.
+        const drawW = 18
+        const drawH = 21
         const drawX = Math.round(p.x - drawW / 2 + ox)
         const drawY = Math.round(p.y - drawH + bob + oy)
         ctx.save()
