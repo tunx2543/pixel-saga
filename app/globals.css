@@ -121,7 +121,8 @@
   }
 
   .asset-no-bg {
-    mix-blend-mode: darken;
+    mix-blend-mode: normal;
+    isolation: isolate;
   }
 }
 

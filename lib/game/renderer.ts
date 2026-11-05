@@ -34,7 +34,8 @@ function removeLightBackground(key: string, image: HTMLImageElement | HTMLCanvas
     const r = pixels.data[i]
     const g = pixels.data[i + 1]
     const b = pixels.data[i + 2]
-    if (r > 232 && g > 232 && b > 232) pixels.data[i + 3] = 0
+    const neutralLight = Math.max(r, g, b) - Math.min(r, g, b) < 28
+    if (r > 190 && g > 190 && b > 190 && neutralLight) pixels.data[i + 3] = 0
   }
   offscreen.putImageData(pixels, 0, 0)
   transparentArtCache.set(key, canvas)
