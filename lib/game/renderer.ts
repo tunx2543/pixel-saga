@@ -24,10 +24,10 @@ const CHARACTER_ART: Record<string, string> = {
 }
 
 const MONSTER_ART: Record<string, string> = {
-  poring: '/images/monsters/poring.png',
-  undead: '/images/monsters/undead-knight.png',
-  demon: '/images/monsters/abyss-demon.png',
-  demon_lord: '/images/monsters/abyss-demon.png',
+  poring: '/images/monsters/sheets/poring-sheet.png',
+  undead: '/images/monsters/sheets/undead-knight-sheet.png',
+  demon: '/images/monsters/sheets/abyss-demon-sheet.png',
+  demon_lord: '/images/monsters/sheets/abyss-demon-sheet.png',
 }
 const artCache = new Map<string, HTMLImageElement>()
 const transparentArtCache = new Map<string, HTMLCanvasElement>()
@@ -240,15 +240,17 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
     ents.push({
       y: m.y,
       draw: () => {
-        const frame = Math.floor(m.animT * 3) % 2
+        const frame = Math.floor(m.animT * 3) % 4
         const asset = monsterArt(m.defId)
         const rawImage = asset ?? monsterSprite(def.sprite, def.color, frame)
-const img = asset ? removeLightBackground(`monster:${m.defId}`, rawImage) : rawImage
-  const targetSize = def.boss ? 56 : 30
-  const assetScale = asset ? Math.min(1, targetSize / Math.max(img.width, img.height)) : 1
-  const scale = (def.boss ? 1.85 : 1.15) * assetScale
-        const w = img.width * scale
-        const h = img.height * scale
+        const img = asset ? removeLightBackground(`monsterSheet:${m.defId}`, rawImage) : rawImage
+        const sourceWidth = asset ? img.width / 4 : img.width
+        const sourceHeight = asset ? img.height / 4 : img.height
+        const targetSize = def.boss ? 56 : 30
+        const assetScale = asset ? Math.min(1, targetSize / Math.max(sourceWidth, sourceHeight)) : 1
+        const scale = (def.boss ? 1.85 : 1.15) * assetScale
+        const w = sourceWidth * scale
+        const h = sourceHeight * scale
         shadow(ctx, m.x, m.y, 5 * scale)
         const flying = def.sprite === 'bat' || def.sprite === 'ghost'
         const hover = flying ? Math.round(Math.sin(m.animT * 3) * 2) - 4 : 0
@@ -265,7 +267,11 @@ const img = asset ? removeLightBackground(`monster:${m.defId}`, rawImage) : rawI
         ctx.translate(m.x + lunge + attackBob, m.y - h / 2 + hover + walkBob)
         ctx.rotate(attackTilt)
         ctx.scale(m.flip ? -squash : squash, stretch)
-        ctx.drawImage(img, -w / 2, -h / 2, w, h)
+        if (asset) {
+          ctx.drawImage(img, frame * sourceWidth, 0, sourceWidth, sourceHeight, -w / 2, -h / 2, w, h)
+        } else {
+          ctx.drawImage(img, -w / 2, -h / 2, w, h)
+        }
         ctx.restore()
       },
     })
