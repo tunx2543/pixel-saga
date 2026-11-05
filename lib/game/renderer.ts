@@ -41,14 +41,65 @@ function removeLightBackground(key: string, image: HTMLImageElement | HTMLCanvas
   const offscreen = canvas.getContext('2d')
   if (!offscreen) return image
   offscreen.drawImage(image, 0, 0)
+
   const pixels = offscreen.getImageData(0, 0, canvas.width, canvas.height)
-  for (let i = 0; i < pixels.data.length; i += 4) {
-    const r = pixels.data[i]
-    const g = pixels.data[i + 1]
-    const b = pixels.data[i + 2]
-    const neutralLight = Math.max(r, g, b) - Math.min(r, g, b) < 28
-    if (r > 190 && g > 190 && b > 190 && neutralLight) pixels.data[i + 3] = 0
+  const { data, width, height } = pixels
+  const visited = new Uint8Array(width * height)
+  const queue = new Uint32Array(width * height)
+  let head = 0
+  let tail = 0
+  const tolerance = 52
+
+  const addEdgePixel = (x: number, y: number) => {
+    const index = y * width + x
+    if (visited[index]) return
+    visited[index] = 1
+    queue[tail++] = index
   }
+
+  for (let x = 0; x < width; x++) {
+    addEdgePixel(x, 0)
+    addEdgePixel(x, height - 1)
+  }
+  for (let y = 1; y < height - 1; y++) {
+    addEdgePixel(0, y)
+    addEdgePixel(width - 1, y)
+  }
+
+  while (head < tail) {
+    const index = queue[head++]
+    const x = index % width
+    const y = Math.floor(index / width)
+    const pixel = index * 4
+    const r = data[pixel]
+    const g = data[pixel + 1]
+    const b = data[pixel + 2]
+    const isLightBackground = r > 190 && g > 190 && b > 190
+    if (!isLightBackground) continue
+
+    data[pixel + 3] = 0
+    const neighbors = [
+      [x - 1, y],
+      [x + 1, y],
+      [x, y - 1],
+      [x, y + 1],
+    ]
+    for (const [nx, ny] of neighbors) {
+      if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue
+      const neighborIndex = ny * width + nx
+      if (visited[neighborIndex]) continue
+      const neighborPixel = neighborIndex * 4
+      const closeEnough =
+        Math.abs(data[neighborPixel] - r) <= tolerance &&
+        Math.abs(data[neighborPixel + 1] - g) <= tolerance &&
+        Math.abs(data[neighborPixel + 2] - b) <= tolerance
+      if (closeEnough) {
+        visited[neighborIndex] = 1
+        queue[tail++] = neighborIndex
+      }
+    }
+  }
+
   offscreen.putImageData(pixels, 0, 0)
   transparentArtCache.set(key, canvas)
   return canvas
