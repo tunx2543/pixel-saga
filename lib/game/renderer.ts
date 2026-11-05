@@ -86,13 +86,43 @@ function removeLightBackground(key: string, image: HTMLImageElement | HTMLCanvas
             Math.abs(data[pixel + 2] - color[2]),
           ) <= 18,
         )
-      for (let y = top; y <= bottom; y++) {
-        for (let x = left; x <= right; x++) {
-          const pixel = (y * width + x) * 4
-          if (matchesBackground(pixel) || x === left || x === right || y === top || y === bottom) {
-            data[pixel + 3] = 0
+      const cellW = right - left + 1
+      const cellH = bottom - top + 1
+      const visited = new Uint8Array(cellW * cellH)
+      const queue: Array<[number, number]> = []
+      const enqueue = (x: number, y: number) => {
+        if (x < left || x > right || y < top || y > bottom) return
+        const index = (y - top) * cellW + (x - left)
+        if (visited[index]) return
+        const pixel = (y * width + x) * 4
+        if (data[pixel + 3] === 0 || !matchesBackground(pixel)) return
+        visited[index] = 1
+        queue.push([x, y])
+      }
+      for (let x = left; x <= right; x++) {
+        enqueue(x, top)
+        enqueue(x, bottom)
+      }
+      for (let y = top + 1; y < bottom; y++) {
+        enqueue(left, y)
+        enqueue(right, y)
+      }
+      for (let cursor = 0; cursor < queue.length; cursor++) {
+        const [x, y] = queue[cursor]
+        data[(y * width + x) * 4 + 3] = 0
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            if (dx !== 0 || dy !== 0) enqueue(x + dx, y + dy)
           }
         }
+      }
+      for (let x = left; x <= right; x++) {
+        data[(top * width + x) * 4 + 3] = 0
+        data[(bottom * width + x) * 4 + 3] = 0
+      }
+      for (let y = top; y <= bottom; y++) {
+        data[(y * width + left) * 4 + 3] = 0
+        data[(y * width + right) * 4 + 3] = 0
       }
     }
   }
@@ -329,8 +359,8 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         // frame's visible bounds independently makes characters visibly grow/shrink
         // as they walk, so keep the destination box stable and let the cleaned
         // source frame fill it consistently.
-        const drawW = 18
-        const drawH = 21
+        const drawW = 24
+        const drawH = 28
         const drawX = Math.round(p.x - drawW / 2 + ox)
         const drawY = Math.round(p.y - drawH + bob + oy)
         ctx.save()
