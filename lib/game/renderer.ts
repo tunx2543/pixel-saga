@@ -100,6 +100,40 @@ function removeLightBackground(key: string, image: HTMLImageElement | HTMLCanvas
   return canvas
 }
 
+function visibleFrameBounds(sheet: HTMLCanvasElement, column: number, row: number) {
+  const frameWidth = sheet.width / 4
+  const frameHeight = sheet.height / 4
+  const left = Math.floor(column * frameWidth)
+  const top = Math.floor(row * frameHeight)
+  const right = Math.min(sheet.width, Math.ceil((column + 1) * frameWidth))
+  const bottom = Math.min(sheet.height, Math.ceil((row + 1) * frameHeight))
+  const pixels = sheet.getContext('2d')?.getImageData(left, top, right - left, bottom - top).data
+  if (!pixels) return { left, top, width: right - left, height: bottom - top }
+
+  let minX = right - left
+  let minY = bottom - top
+  let maxX = -1
+  let maxY = -1
+  for (let y = 0; y < bottom - top; y++) {
+    for (let x = 0; x < right - left; x++) {
+      if (pixels[(y * (right - left) + x) * 4 + 3] > 18) {
+        minX = Math.min(minX, x)
+        minY = Math.min(minY, y)
+        maxX = Math.max(maxX, x)
+        maxY = Math.max(maxY, y)
+      }
+    }
+  }
+
+  if (maxX < 0) return { left, top, width: right - left, height: bottom - top }
+  const padding = 1
+  const cropLeft = Math.max(0, minX - padding)
+  const cropTop = Math.max(0, minY - padding)
+  const cropRight = Math.min(right - left, maxX + padding + 1)
+  const cropBottom = Math.min(bottom - top, maxY + padding + 1)
+  return { left: left + cropLeft, top: top + cropTop, width: cropRight - cropLeft, height: cropBottom - cropTop }
+}
+
 function characterArt(jobId: string) {
   const src = CHARACTER_ART[jobId]
   if (!src) return null
@@ -272,17 +306,13 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         ctx.fill()
       }
       if (sheet) {
-        const frameWidth = sheet.width / 4
-        const frameHeight = sheet.height / 4
         const row = game.attackAnim > 0 ? 2 : game.facing === 'up' ? 3 : game.facing === 'down' ? 0 : 1
-        const cellPadX = frameWidth * 0.12
-        const cellPadY = frameHeight * 0.08
-        const sx = frame * frameWidth + cellPadX
-        const sy = row * frameHeight + cellPadY
-        const sourceWidth = frameWidth - cellPadX * 2
-        const sourceHeight = frameHeight - cellPadY * 2
-        const drawW = 24
-        const drawH = 28
+        const bounds = visibleFrameBounds(sheet as HTMLCanvasElement, frame, row)
+        const maxW = 27
+        const maxH = 31
+        const scale = Math.min(maxW / bounds.width, maxH / bounds.height)
+        const drawW = Math.max(1, Math.round(bounds.width * scale))
+        const drawH = Math.max(1, Math.round(bounds.height * scale))
         const drawX = Math.round(p.x - drawW / 2 + ox)
         const drawY = Math.round(p.y - drawH + bob + oy)
         ctx.save()
@@ -290,9 +320,9 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         if (game.facing === 'left') {
           ctx.translate(drawX + drawW, drawY)
           ctx.scale(-1, 1)
-          ctx.drawImage(sheet, sx, sy, sourceWidth, sourceHeight, 0, 0, drawW, drawH)
+          ctx.drawImage(sheet, bounds.left, bounds.top, bounds.width, bounds.height, 0, 0, drawW, drawH)
         } else {
-          ctx.drawImage(sheet, sx, sy, sourceWidth, sourceHeight, drawX, drawY, drawW, drawH)
+          ctx.drawImage(sheet, bounds.left, bounds.top, bounds.width, bounds.height, drawX, drawY, drawW, drawH)
         }
         ctx.restore()
       } else {
