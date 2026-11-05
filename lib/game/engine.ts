@@ -48,6 +48,9 @@ export interface SaveData {
   playTime: number
   kills: number
   savedAt: number
+  statPoints?: number
+  skillPoints?: number
+  skillLevels?: Record<string, number>
 }
 
 export interface RemotePlayer {
@@ -545,6 +548,14 @@ function onLevelUp(beforeStats: ReturnType<typeof getStats>) {
   const s = getStats()
   p.hp = s.maxHp
   p.mp = s.maxMp
+  p.statPoints = (p.statPoints ?? 0) + 3
+  p.skillPoints = (p.skillPoints ?? 0) + 1
+  p.skillLevels ??= {}
+  const autoSkill = currentJob().skills[(p.level - 1) % currentJob().skills.length]
+  if (autoSkill) {
+    p.skillLevels[autoSkill.id] = (p.skillLevels[autoSkill.id] ?? 1) + 1
+    say('system', `${autoSkill.name} อัปเป็น Lv.${p.skillLevels[autoSkill.id]} อัตโนมัติ`)
+  }
   addEffect({ type: 'levelup', x: p.x, y: p.y, r: 20, color: '#ffd60a', max: 1.2 })
   addFloat(p.x, p.y - 40, 'LEVEL UP!', '#ffd60a', 14)
   say('system', `ยินดีด้วย! เลเวลอัพเป็น Lv.${p.level}`)
@@ -590,6 +601,8 @@ export function castSkill(index: number) {
   const job = currentJob()
   const skill = job.skills[index]
   if (!skill) return
+  const skillLevel = p.skillLevels?.[skill.id] ?? 1
+  const skillMult = skill.mult * (1 + (skillLevel - 1) * 0.08)
   if (skillCooldown(skill) > 0) return
   if (p.mp < skill.mp) {
     warn('MP ไม่พอ!')
@@ -599,7 +612,7 @@ export function castSkill(index: number) {
   if (skill.kind === 'aoe-self') {
     const r = skill.radius ?? 40
     addEffect({ type: 'ring', x: p.x, y: p.y - 6, r, color: skill.color, max: 0.45 })
-    for (const m of game.monsters) if (!m.dead && Math.hypot(m.x - p.x, m.y - p.y) <= r) damageMonster(m, skill.mult)
+    for (const m of game.monsters) if (!m.dead && Math.hypot(m.x - p.x, m.y - p.y) <= r) damageMonster(m, skillMult)
   } else {
     const t = nearestMonster(range)
     if (!t) {
@@ -608,23 +621,23 @@ export function castSkill(index: number) {
     }
     faceToward(t.x, t.y)
     if (skill.kind === 'single') {
-      if (job.ranged) shoot(t, [skill.mult], skill.color, 4)
+      if (job.ranged) shoot(t, [skillMult], skill.color, 4)
       else {
-        damageMonster(t, skill.mult)
+        damageMonster(t, skillMult)
         addEffect({ type: 'slash', x: t.x, y: t.y - 8, r: 16, color: skill.color, max: 0.3, angle: Math.random() * Math.PI })
       }
     } else if (skill.kind === 'multi') {
       const hits = skill.hits ?? 2
-      if (job.ranged) for (let i = 0; i < hits; i++) shoot(t, [skill.mult], skill.color, 2, 0, i * 0.1)
+      if (job.ranged) for (let i = 0; i < hits; i++) shoot(t, [skillMult], skill.color, 2, 0, i * 0.1)
       else
         for (let i = 0; i < hits; i++) {
-          damageMonster(t, skill.mult)
+          damageMonster(t, skillMult)
           addEffect({ type: 'slash', x: t.x + i * 3, y: t.y - 8 - i * 3, r: 12, color: skill.color, max: 0.25, angle: i })
         }
     } else if (skill.kind === 'aoe-target') {
       const r = skill.radius ?? 48
       addEffect({ type: 'burst', x: t.x, y: t.y - 6, r, color: skill.color, max: 0.55 })
-      for (const m of game.monsters) if (!m.dead && Math.hypot(m.x - t.x, m.y - t.y) <= r) damageMonster(m, skill.mult)
+      for (const m of game.monsters) if (!m.dead && Math.hypot(m.x - t.x, m.y - t.y) <= r) damageMonster(m, skillMult)
     }
   }
   p.mp -= skill.mp

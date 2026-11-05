@@ -119,4 +119,25 @@
   .pixelated {
     image-rendering: pixelated;
   }
+
+  .asset-no-bg {
+    mix-blend-mode: darken;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .game-ui {
+    transform: scale(0.78);
+    transform-origin: bottom left;
+    width: 128.21%;
+    height: 128.21%;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 440px) {
+  .game-ui {
+    transform: scale(0.68);
+    width: 147.06%;
+    height: 147.06%;
+  }
 }

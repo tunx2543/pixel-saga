@@ -35,7 +35,7 @@ export function TitleScreen() {
           <img
             src="/images/classes/class-icons.png"
             alt="นักดาบ นักเวท และนักธนู"
-            className="mx-auto mt-3 h-20 w-64 object-contain pixelated drop-shadow-[3px_3px_0_#1a1423]"
+            className="asset-no-bg mx-auto mt-3 h-20 w-64 object-contain pixelated drop-shadow-[3px_3px_0_#1a1423]"
           />
         </div>
 

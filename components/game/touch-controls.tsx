@@ -110,7 +110,7 @@ export function TouchControls() {
                 className={cn('relative size-12 rounded-full border-2 border-white/30 bg-card/90 p-1 text-[8px] leading-tight shadow-lg', g.p && g.p.mp < sk.mp && 'opacity-50')}
               >
                 {SKILL_ICONS[sk.id] ? (
-                  <img src={SKILL_ICONS[sk.id]} alt="" className="size-full rounded-full object-cover" />
+                  <img src={SKILL_ICONS[sk.id]} alt="" className="asset-no-bg size-full rounded-full object-cover" />
                 ) : (
                   <span style={{ color: sk.color }}>{sk.name}</span>
                 )}
