@@ -18,6 +18,28 @@ const MONSTER_ART: Record<string, string> = {
   demon_lord: '/images/monsters/abyss-demon.png',
 }
 const artCache = new Map<string, HTMLImageElement>()
+const transparentArtCache = new Map<string, HTMLCanvasElement>()
+
+function removeLightBackground(key: string, image: HTMLImageElement | HTMLCanvasElement) {
+  const cached = transparentArtCache.get(key)
+  if (cached) return cached
+  const canvas = document.createElement('canvas')
+  canvas.width = image.width
+  canvas.height = image.height
+  const offscreen = canvas.getContext('2d')
+  if (!offscreen) return image
+  offscreen.drawImage(image, 0, 0)
+  const pixels = offscreen.getImageData(0, 0, canvas.width, canvas.height)
+  for (let i = 0; i < pixels.data.length; i += 4) {
+    const r = pixels.data[i]
+    const g = pixels.data[i + 1]
+    const b = pixels.data[i + 2]
+    if (r > 232 && g > 232 && b > 232) pixels.data[i + 3] = 0
+  }
+  offscreen.putImageData(pixels, 0, 0)
+  transparentArtCache.set(key, canvas)
+  return canvas
+}
 
 function monsterArt(defId: string) {
   const src = MONSTER_ART[defId]
@@ -110,7 +132,8 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
       draw: () => {
         const frame = Math.floor(m.animT * 3) % 2
         const asset = monsterArt(m.defId)
-        const img = asset ?? monsterSprite(def.sprite, def.color, frame)
+        const rawImage = asset ?? monsterSprite(def.sprite, def.color, frame)
+        const img = asset ? removeLightBackground(m.defId, rawImage) : rawImage
         const assetScale = asset ? Math.min(1, (def.boss ? 38 : 22) / Math.max(img.width, img.height)) : 1
         const scale = (def.boss ? 1.7 : 1) * assetScale
         const w = img.width * scale
