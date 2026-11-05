@@ -68,7 +68,7 @@ export function ChatBox() {
 
   return (
     <div
-      onPointerDownCapture={(event) => event.stopPropagation()}
+      onPointerDown={(event) => event.stopPropagation()}
       className="pixel-panel absolute z-20 flex w-[min(16rem,calc(100vw-1rem))] touch-none flex-col bg-card/90 shadow-lg"
       style={{ left: position.x, top: position.y || undefined, bottom: position.y ? undefined : '7rem' }}
     >
