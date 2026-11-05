@@ -44,28 +44,10 @@ function removeLightBackground(key: string, image: HTMLImageElement | HTMLCanvas
 
   const pixels = offscreen.getImageData(0, 0, canvas.width, canvas.height)
   const { data, width, height } = pixels
-  const borderColors: [number, number, number][] = []
-  const addBorderColor = (x: number, y: number) => {
-    const pixel = (y * width + x) * 4
-    borderColors.push([data[pixel], data[pixel + 1], data[pixel + 2]])
-  }
-  for (let x = 0; x < width; x += 8) {
-    addBorderColor(x, 0)
-    addBorderColor(x, height - 1)
-  }
-  for (let y = 8; y < height - 1; y += 8) {
-    addBorderColor(0, y)
-    addBorderColor(width - 1, y)
-  }
-
-  const backgroundColors = borderColors
-    .filter((color) => Math.max(...color) - Math.min(...color) < 42)
-    .filter((color, index, colors) =>
-      colors.findIndex((other) =>
-        color.every((channel, channelIndex) => Math.abs(channel - other[channelIndex]) < 18),
-      ) === index,
-    )
-    .slice(0, 2)
+  const columns = 4
+  const rows = 4
+  const cellWidth = width / columns
+  const cellHeight = height / rows
   const colorDistance = (pixel: number, color: [number, number, number]) =>
     Math.max(
       Math.abs(data[pixel] - color[0]),
@@ -73,24 +55,43 @@ function removeLightBackground(key: string, image: HTMLImageElement | HTMLCanvas
       Math.abs(data[pixel + 2] - color[2]),
     )
 
-  const rowDarkCounts = new Uint16Array(height)
-  const columnDarkCounts = new Uint16Array(width)
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const pixel = (y * width + x) * 4
-      if (data[pixel] < 38 && data[pixel + 1] < 38 && data[pixel + 2] < 38) {
-        rowDarkCounts[y]++
-        columnDarkCounts[x]++
+  for (let row = 0; row < rows; row++) {
+    for (let column = 0; column < columns; column++) {
+      const left = Math.floor(column * cellWidth)
+      const top = Math.floor(row * cellHeight)
+      const right = Math.min(width - 1, Math.ceil((column + 1) * cellWidth) - 1)
+      const bottom = Math.min(height - 1, Math.ceil((row + 1) * cellHeight) - 1)
+      const samples: [number, number, number][] = []
+      const sample = (x: number, y: number) => {
+        const pixel = (y * width + x) * 4
+        if (data[pixel + 3] > 0) samples.push([data[pixel], data[pixel + 1], data[pixel + 2]])
       }
-    }
-  }
+      for (let x = left; x <= right; x += 2) {
+        sample(x, top)
+        sample(x, bottom)
+      }
+      for (let y = top + 2; y < bottom; y += 2) {
+        sample(left, y)
+        sample(right, y)
+      }
 
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const pixel = (y * width + x) * 4
-      const matchesChecker = backgroundColors.some((color) => colorDistance(pixel, color) <= 32)
-      const isFrameLine = rowDarkCounts[y] > width * 0.72 || columnDarkCounts[x] > height * 0.72
-      if (matchesChecker || isFrameLine) data[pixel + 3] = 0
+      const backgroundColors = samples
+        .filter((color) => Math.max(...color) - Math.min(...color) < 48)
+        .filter((color, index, colors) =>
+          colors.findIndex((other) =>
+            color.every((channel, channelIndex) => Math.abs(channel - other[channelIndex]) < 16),
+          ) === index,
+        )
+        .slice(0, 2)
+
+      for (let y = top; y <= bottom; y++) {
+        for (let x = left; x <= right; x++) {
+          const pixel = (y * width + x) * 4
+          const matchesBackground = backgroundColors.some((color) => colorDistance(pixel, color) <= 22)
+          const isCellBorder = x === left || x === right || y === top || y === bottom
+          if (matchesBackground || isCellBorder) data[pixel + 3] = 0
+        }
+      }
     }
   }
 
