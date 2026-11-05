@@ -529,6 +529,7 @@ export function gainExp(n: number) {
   if (p.level >= MAX_LEVEL) return
   p.exp += n
   addFloat(p.x, p.y - 34, `+${n} EXP`, '#c77dff', 9)
+  const beforeStats = getStats()
   let leveled = false
   while (p.level < MAX_LEVEL && p.exp >= expToNext(p.level)) {
     p.exp -= expToNext(p.level)
@@ -536,10 +537,10 @@ export function gainExp(n: number) {
     leveled = true
   }
   if (p.level >= MAX_LEVEL) p.exp = 0
-  if (leveled) onLevelUp()
+  if (leveled) onLevelUp(beforeStats)
 }
 
-function onLevelUp() {
+function onLevelUp(beforeStats: ReturnType<typeof getStats>) {
   const p = player()
   const s = getStats()
   p.hp = s.maxHp
@@ -547,6 +548,7 @@ function onLevelUp() {
   addEffect({ type: 'levelup', x: p.x, y: p.y, r: 20, color: '#ffd60a', max: 1.2 })
   addFloat(p.x, p.y - 40, 'LEVEL UP!', '#ffd60a', 14)
   say('system', `ยินดีด้วย! เลเวลอัพเป็น Lv.${p.level}`)
+  say('system', `ค่าสถานะเพิ่ม: HP +${s.maxHp - beforeStats.maxHp}, MP +${s.maxMp - beforeStats.maxMp}, ATK +${s.atk - beforeStats.atk}, DEF +${s.def - beforeStats.def}`)
   const next = Object.values(JOBS).find((j) => j.from === p.jobId && j.reqLevel === p.level)
   if (next) say('system', `คุณสามารถเปลี่ยนอาชีพได้แล้ว! ไปหา ปรมาจารย์อาร์ค ที่เมือง`)
   saveGame()
@@ -923,7 +925,7 @@ function runCommand(text: string) {
       const lv = Math.max(1, Math.min(MAX_LEVEL, Math.floor(num(0, p.level))))
       p.level = lv
       p.exp = 0
-      onLevelUp()
+      onLevelUp(getStats())
       say('gm', `ตั้งเลเวลเป็น ${lv}`)
     },
     '/exp': () => {
