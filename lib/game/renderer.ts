@@ -100,38 +100,41 @@ function removeLightBackground(key: string, image: HTMLImageElement | HTMLCanvas
   return canvas
 }
 
-function visibleFrameBounds(sheet: HTMLCanvasElement, column: number, row: number) {
+function visibleRowBounds(sheet: HTMLCanvasElement, row: number) {
   const frameWidth = sheet.width / 4
   const frameHeight = sheet.height / 4
-  const left = Math.floor(column * frameWidth)
-  const top = Math.floor(row * frameHeight)
-  const right = Math.min(sheet.width, Math.ceil((column + 1) * frameWidth))
-  const bottom = Math.min(sheet.height, Math.ceil((row + 1) * frameHeight))
-  const pixels = sheet.getContext('2d')?.getImageData(left, top, right - left, bottom - top).data
-  if (!pixels) return { left, top, width: right - left, height: bottom - top }
+  const ctx = sheet.getContext('2d')
+  if (!ctx) return { left: 0, top: 0, width: frameWidth, height: frameHeight }
 
-  let minX = right - left
-  let minY = bottom - top
+  let minX = frameWidth
+  let minY = frameHeight
   let maxX = -1
   let maxY = -1
-  for (let y = 0; y < bottom - top; y++) {
-    for (let x = 0; x < right - left; x++) {
-      if (pixels[(y * (right - left) + x) * 4 + 3] > 18) {
-        minX = Math.min(minX, x)
-        minY = Math.min(minY, y)
-        maxX = Math.max(maxX, x)
-        maxY = Math.max(maxY, y)
+  for (let column = 0; column < 4; column++) {
+    const cellLeft = Math.floor(column * frameWidth)
+    const cellTop = Math.floor(row * frameHeight)
+    const cellRight = Math.min(sheet.width, Math.ceil((column + 1) * frameWidth))
+    const cellBottom = Math.min(sheet.height, Math.ceil((row + 1) * frameHeight))
+    const pixels = ctx.getImageData(cellLeft, cellTop, cellRight - cellLeft, cellBottom - cellTop).data
+    for (let y = 0; y < cellBottom - cellTop; y++) {
+      for (let x = 0; x < cellRight - cellLeft; x++) {
+        if (pixels[(y * (cellRight - cellLeft) + x) * 4 + 3] > 18) {
+          minX = Math.min(minX, x)
+          minY = Math.min(minY, y)
+          maxX = Math.max(maxX, x)
+          maxY = Math.max(maxY, y)
+        }
       }
     }
   }
 
-  if (maxX < 0) return { left, top, width: right - left, height: bottom - top }
+  if (maxX < 0) return { left: 0, top: 0, width: frameWidth, height: frameHeight }
   const padding = 1
-  const cropLeft = Math.max(0, minX - padding)
-  const cropTop = Math.max(0, minY - padding)
-  const cropRight = Math.min(right - left, maxX + padding + 1)
-  const cropBottom = Math.min(bottom - top, maxY + padding + 1)
-  return { left: left + cropLeft, top: top + cropTop, width: cropRight - cropLeft, height: cropBottom - cropTop }
+  const left = Math.max(0, minX - padding)
+  const top = Math.max(0, minY - padding)
+  const right = Math.min(frameWidth, maxX + padding + 1)
+  const bottom = Math.min(frameHeight, maxY + padding + 1)
+  return { left, top, width: right - left, height: bottom - top }
 }
 
 function characterArt(jobId: string) {
@@ -307,7 +310,12 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
       }
       if (sheet) {
         const row = game.attackAnim > 0 ? 2 : game.facing === 'up' ? 3 : game.facing === 'down' ? 0 : 1
-        const bounds = visibleFrameBounds(sheet as HTMLCanvasElement, frame, row)
+        const displayFrame = game.attackAnim > 0 ? Math.min(3, Math.floor((0.22 - game.attackAnim) * 18)) : frame
+        const bounds = visibleRowBounds(sheet as HTMLCanvasElement, row)
+        const frameWidth = sheet.width / 4
+        const frameHeight = sheet.height / 4
+        const sourceLeft = displayFrame * frameWidth + bounds.left
+        const sourceTop = row * frameHeight + bounds.top
         const maxW = 27
         const maxH = 31
         const scale = Math.min(maxW / bounds.width, maxH / bounds.height)
@@ -320,7 +328,7 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         if (game.facing === 'left') {
           ctx.translate(drawX + drawW, drawY)
           ctx.scale(-1, 1)
-          ctx.drawImage(sheet, bounds.left, bounds.top, bounds.width, bounds.height, 0, 0, drawW, drawH)
+          ctx.drawImage(sheet, sourceLeft, sourceTop, bounds.width, bounds.height, 0, 0, drawW, drawH)
         } else {
           ctx.drawImage(sheet, bounds.left, bounds.top, bounds.width, bounds.height, drawX, drawY, drawW, drawH)
         }
