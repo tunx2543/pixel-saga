@@ -146,6 +146,7 @@ export const game = {
   time: 0,
   regenT: 0,
   saveT: 0,
+  persist: false,
   combatT: 99,
   lastSavedAt: 0,
   lastWarnAt: 0,
@@ -1023,7 +1024,7 @@ function runCommand(text: string) {
 
 export function saveGame() {
   const p = game.p
-  if (!p || typeof window === 'undefined') return
+  if (!p || !game.persist || typeof window === 'undefined') return
   p.savedAt = Date.now()
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify(p))
@@ -1074,8 +1075,9 @@ function resetRuntime() {
   game.combatT = 99
 }
 
-function startSession(p: SaveData, welcome: string) {
+function startSession(p: SaveData, welcome: string, persist = false) {
   resetRuntime()
+  game.persist = persist
   game.p = p
   const map = currentMap()
   if (boxBlocked(map, p.x, p.y)) {
@@ -1117,7 +1119,7 @@ export function loadGame(d: SaveData) {
     savedAt: d.savedAt || Date.now(),
   }
   if (p.hp <= 0) p.hp = getStats(p).maxHp
-  startSession(p, `ยินดีต้อนรับกลับ ${p.name}! โหลดความคืบหน้าล่าสุดแล้ว`)
+  startSession(p, `ยินดีต้อนรับกลับ ${p.name}! โหลดความคืบหน้าล่าสุดแล้ว`, true)
 }
 
 export function newGame(name: string) {
