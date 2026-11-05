@@ -37,7 +37,7 @@ export function ChatBox() {
   }, [lastId, isOpen])
 
   return (
-    <div className="pixel-panel absolute bottom-36 left-2 flex w-[min(20rem,calc(100vw-1rem))] flex-col bg-card/90 md:bottom-3 md:left-3 z-20 shadow-lg">
+    <div className="pixel-panel absolute bottom-28 left-2 flex w-[min(16rem,calc(100vw-1rem))] flex-col bg-card/90 md:bottom-3 md:left-3 z-20 shadow-lg">
       
       {/* แถบหัวข้อแชท + ปุ่มกดพับ/ขยาย */}
       <div 
@@ -55,7 +55,7 @@ export function ChatBox() {
         <>
           <div
             ref={listRef}
-            className="h-20 overflow-y-auto px-2 py-1.5 text-xs leading-relaxed md:h-32"
+            className="h-14 overflow-y-auto px-2 py-1 text-[11px] leading-snug md:h-24"
             role="log"
             aria-live="polite"
             aria-label="ช่องแชท"

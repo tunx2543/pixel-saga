@@ -77,7 +77,7 @@ export function TouchControls() {
     <div className="pointer-events-none absolute inset-0 touch-none">
       {/* จัดระเบียบ UI ด้านขวาให้กระชับ ไม่บังจอตอนเล่นแนวนอน */}
       <div className="pointer-events-auto absolute inset-x-0 bottom-2 flex items-end justify-between gap-2 p-2">
-        <div className="grid grid-cols-3 grid-rows-3 gap-1 rounded-2xl border-2 border-white/15 bg-card/80 p-2 shadow-lg">
+        <div className="grid grid-cols-3 grid-rows-3 gap-0.5 rounded-xl border border-white/15 bg-card/80 p-1 shadow-lg">
           <span />
           <HoldButton label="เดินขึ้น" onDown={() => setKey('arrowup', true)} onUp={() => setKey('arrowup', false)} className="size-11 rounded-lg bg-secondary/90 text-lg">▲</HoldButton>
           <span />
