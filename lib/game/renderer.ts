@@ -11,6 +11,18 @@ const THEME_BG: Record<string, string> = {
   volcano: '#140808',
 }
 
+const CHARACTER_ART: Record<string, string> = {
+  novice: '/images/classes/novice-sheet.png',
+  swordsman: '/images/classes/swordsman-sheet.png',
+  mage: '/images/classes/mage-sheet.png',
+  archer: '/images/classes/archer-sheet.png',
+  thief: '/images/classes/thief-sheet.png',
+  knight: '/images/classes/knight-sheet.png',
+  wizard: '/images/classes/wizard-sheet.png',
+  hunter: '/images/classes/hunter-sheet.png',
+  assassin: '/images/classes/assassin-sheet.png',
+}
+
 const MONSTER_ART: Record<string, string> = {
   poring: '/images/monsters/poring.png',
   undead: '/images/monsters/undead-knight.png',
@@ -40,6 +52,18 @@ function removeLightBackground(key: string, image: HTMLImageElement | HTMLCanvas
   offscreen.putImageData(pixels, 0, 0)
   transparentArtCache.set(key, canvas)
   return canvas
+}
+
+function characterArt(jobId: string) {
+  const src = CHARACTER_ART[jobId]
+  if (!src) return null
+  const cached = artCache.get(src)
+  if (cached) return cached.complete ? cached : null
+  const image = new Image()
+  image.crossOrigin = 'anonymous'
+  image.src = src
+  artCache.set(src, image)
+  return null
 }
 
 function monsterArt(defId: string) {
@@ -183,6 +207,8 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
       shadow(ctx, p.x, p.y, 6)
       const frame = game.moving ? Math.floor(game.walkT * 8) % 4 : 0
       const img = humanSprite(job.colors, game.facing, frame, weapon?.weaponType ?? null, weapon?.color)
+      const rawSheet = characterArt(p.jobId)
+      const sheet = rawSheet ? removeLightBackground(`character:${p.jobId}`, rawSheet) : null
       let ox = 0
       let oy = 0
       if (game.attackAnim > 0) {
@@ -199,7 +225,18 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         ctx.ellipse(p.x, p.y, 10, 4, 0, 0, Math.PI * 2)
         ctx.fill()
       }
-      ctx.drawImage(img, Math.round(p.x - img.width / 2 + ox), Math.round(p.y - img.height + bob + oy))
+      if (sheet) {
+        const frameWidth = sheet.width / 4
+        const frameHeight = sheet.height / 4
+        const row = game.attackAnim > 0 ? 2 : game.moving ? 1 : 0
+        const sx = frame * frameWidth
+        const sy = row * frameHeight
+        const drawW = 24
+        const drawH = 28
+        ctx.drawImage(sheet, sx, sy, frameWidth, frameHeight, Math.round(p.x - drawW / 2 + ox), Math.round(p.y - drawH + bob + oy), drawW, drawH)
+      } else {
+        ctx.drawImage(img, Math.round(p.x - img.width / 2 + ox), Math.round(p.y - img.height + bob + oy))
+      }
     },
   })
 
