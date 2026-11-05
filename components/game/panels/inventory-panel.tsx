@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { ITEMS } from '@/lib/game/data'
 import { closePanel, drinkPotion, equip, itemLabel, unequip } from '@/lib/game/engine'
 import { useGame } from '@/lib/game/use-game'
+import { ItemIcon } from '../item-icon'
 import { PanelFrame, PxButton } from './panels'
 
 export function InventoryPanel() {
@@ -58,8 +59,8 @@ export function InventoryPanel() {
           return (
             <div key={item.uid} role="button" tabIndex={0} onClick={() => setSelectedItemId(item.itemId)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') setSelectedItemId(item.itemId) }} className="cursor-pointer rounded border border-border bg-card/80 p-2 transition hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
               <div className="mb-2 flex items-center gap-2">
-                <span className="grid size-9 place-items-center rounded border border-white/20 text-lg" style={{ backgroundColor: `${def.color}33` }}>
-                  {def.kind === 'weapon' ? '⚔' : def.kind === 'armor' ? '◆' : def.kind === 'consumable' ? '●' : '✦'}
+                <span className="grid size-9 shrink-0 place-items-center rounded border border-white/20" style={{ backgroundColor: `${def.color}33` }}>
+                  <ItemIcon itemId={item.itemId} size={30} />
                 </span>
                 <div className="min-w-0">
                   <p className="truncate text-xs text-foreground">{itemLabel(item)}</p>

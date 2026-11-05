@@ -14,7 +14,7 @@ const THEME_BG: Record<string, string> = {
 const CHARACTER_ART: Record<string, string> = {
   novice: '/images/classes/novice-sheet.png',
   swordsman: '/images/classes/swordsman-sheet.png',
-  mage: '/images/classes/mage-sheet.png',
+  mage: '/images/classes/mage-idle-sheet.png',
   archer: '/images/classes/archer-sheet.png',
   thief: '/images/classes/thief-sheet.png',
   knight: '/images/classes/knight-sheet.png',
@@ -24,10 +24,10 @@ const CHARACTER_ART: Record<string, string> = {
 }
 
 const MONSTER_ART: Record<string, string> = {
-  poring: '/images/monsters/poring.png',
-  undead: '/images/monsters/undead-knight.png',
-  demon: '/images/monsters/abyss-demon.png',
-  demon_lord: '/images/monsters/abyss-demon.png',
+  poring: '/images/monsters/sheets/poring-sheet.png',
+  undead: '/images/monsters/sheets/undead-knight-sheet.png',
+  demon: '/images/monsters/sheets/abyss-demon-sheet.png',
+  demon_lord: '/images/monsters/sheets/abyss-demon-sheet.png',
 }
 const artCache = new Map<string, HTMLImageElement>()
 const transparentArtCache = new Map<string, HTMLCanvasElement>()
@@ -41,17 +41,132 @@ function removeLightBackground(key: string, image: HTMLImageElement | HTMLCanvas
   const offscreen = canvas.getContext('2d')
   if (!offscreen) return image
   offscreen.drawImage(image, 0, 0)
+
   const pixels = offscreen.getImageData(0, 0, canvas.width, canvas.height)
-  for (let i = 0; i < pixels.data.length; i += 4) {
-    const r = pixels.data[i]
-    const g = pixels.data[i + 1]
-    const b = pixels.data[i + 2]
-    const neutralLight = Math.max(r, g, b) - Math.min(r, g, b) < 28
-    if (r > 190 && g > 190 && b > 190 && neutralLight) pixels.data[i + 3] = 0
+  const { data, width, height } = pixels
+  const isSheet = !key.startsWith('monster:')
+  const columns = isSheet ? 4 : 1
+  const rows = isSheet ? 4 : 1
+  const cellWidth = width / columns
+  const cellHeight = height / rows
+
+  for (let row = 0; row < rows; row++) {
+    for (let column = 0; column < columns; column++) {
+      const left = Math.floor(column * cellWidth)
+      const top = Math.floor(row * cellHeight)
+      const right = Math.min(width - 1, Math.ceil((column + 1) * cellWidth) - 1)
+      const bottom = Math.min(height - 1, Math.ceil((row + 1) * cellHeight) - 1)
+      const histogram = new Map<string, { color: [number, number, number]; count: number }>()
+      const sample = (x: number, y: number) => {
+        const pixel = (y * width + x) * 4
+        if (data[pixel + 3] === 0) return
+        const color: [number, number, number] = [data[pixel], data[pixel + 1], data[pixel + 2]]
+        const bucket = color.map((channel) => Math.round(channel / 8) * 8).join(',')
+        const entry = histogram.get(bucket)
+        if (entry) entry.count += 1
+        else histogram.set(bucket, { color, count: 1 })
+      }
+      for (let x = left; x <= right; x += 2) {
+        sample(x, top)
+        sample(x, bottom)
+      }
+      for (let y = top + 1; y < bottom; y += 2) {
+        sample(left, y)
+        sample(right, y)
+      }
+      const backgroundColors = [...histogram.values()]
+        .sort((a, b) => b.count - a.count)
+        .slice(0, isSheet ? 4 : 2)
+        .map(({ color }) => color)
+      const matchesBackground = (pixel: number) =>
+        backgroundColors.some((color) =>
+          Math.max(
+            Math.abs(data[pixel] - color[0]),
+            Math.abs(data[pixel + 1] - color[1]),
+            Math.abs(data[pixel + 2] - color[2]),
+          ) <= 18,
+        )
+      const cellW = right - left + 1
+      const cellH = bottom - top + 1
+      const visited = new Uint8Array(cellW * cellH)
+      const queue: Array<[number, number]> = []
+      const enqueue = (x: number, y: number) => {
+        if (x < left || x > right || y < top || y > bottom) return
+        const index = (y - top) * cellW + (x - left)
+        if (visited[index]) return
+        const pixel = (y * width + x) * 4
+        if (data[pixel + 3] === 0 || !matchesBackground(pixel)) return
+        visited[index] = 1
+        queue.push([x, y])
+      }
+      for (let x = left; x <= right; x++) {
+        enqueue(x, top)
+        enqueue(x, bottom)
+      }
+      for (let y = top + 1; y < bottom; y++) {
+        enqueue(left, y)
+        enqueue(right, y)
+      }
+      for (let cursor = 0; cursor < queue.length; cursor++) {
+        const [x, y] = queue[cursor]
+        data[(y * width + x) * 4 + 3] = 0
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            if (dx !== 0 || dy !== 0) enqueue(x + dx, y + dy)
+          }
+        }
+      }
+      for (let x = left; x <= right; x++) {
+        data[(top * width + x) * 4 + 3] = 0
+        data[(bottom * width + x) * 4 + 3] = 0
+      }
+      for (let y = top; y <= bottom; y++) {
+        data[(y * width + left) * 4 + 3] = 0
+        data[(y * width + right) * 4 + 3] = 0
+      }
+    }
   }
+
   offscreen.putImageData(pixels, 0, 0)
   transparentArtCache.set(key, canvas)
   return canvas
+}
+
+function visibleRowBounds(sheet: HTMLCanvasElement, row: number) {
+  const frameWidth = sheet.width / 4
+  const frameHeight = sheet.height / 4
+  const ctx = sheet.getContext('2d')
+  if (!ctx) return { left: 0, top: 0, width: frameWidth, height: frameHeight }
+
+  let minX = frameWidth
+  let minY = frameHeight
+  let maxX = -1
+  let maxY = -1
+  for (let column = 0; column < 4; column++) {
+    const cellLeft = Math.floor(column * frameWidth)
+    const cellTop = Math.floor(row * frameHeight)
+    const cellRight = Math.min(sheet.width, Math.ceil((column + 1) * frameWidth))
+    const cellBottom = Math.min(sheet.height, Math.ceil((row + 1) * frameHeight))
+    const pixels = ctx.getImageData(cellLeft, cellTop, cellRight - cellLeft, cellBottom - cellTop).data
+    for (let y = 0; y < cellBottom - cellTop; y++) {
+      for (let x = 0; x < cellRight - cellLeft; x++) {
+        if (pixels[(y * (cellRight - cellLeft) + x) * 4 + 3] > 18) {
+          minX = Math.min(minX, x)
+          minY = Math.min(minY, y)
+          maxX = Math.max(maxX, x)
+          maxY = Math.max(maxY, y)
+        }
+      }
+    }
+  }
+
+  if (maxX < 0) return { left: 0, top: 0, width: frameWidth, height: frameHeight }
+  const padding = 1
+  const left = Math.max(0, minX - padding)
+  const top = Math.max(0, minY - padding)
+  const right = Math.min(frameWidth, maxX + padding + 1)
+  const bottom = Math.min(frameHeight, maxY + padding + 1)
+  return { left, top, width: right - left, height: bottom - top }
 }
 
 function characterArt(jobId: string) {
@@ -155,14 +270,17 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
     ents.push({
       y: m.y,
       draw: () => {
-        const frame = Math.floor(m.animT * 3) % 2
+        const frame = Math.floor(m.animT * 3) % 4
         const asset = monsterArt(m.defId)
         const rawImage = asset ?? monsterSprite(def.sprite, def.color, frame)
-        const img = asset ? removeLightBackground(m.defId, rawImage) : rawImage
-        const assetScale = asset ? Math.min(1, (def.boss ? 38 : 22) / Math.max(img.width, img.height)) : 1
-        const scale = (def.boss ? 1.7 : 1) * assetScale
-        const w = img.width * scale
-        const h = img.height * scale
+        const img = asset ? removeLightBackground(`monsterSheet:${m.defId}`, rawImage) : rawImage
+        const sourceWidth = asset ? img.width / 4 : img.width
+        const sourceHeight = asset ? img.height / 4 : img.height
+        const targetSize = def.boss ? 56 : 30
+        const assetScale = asset ? Math.min(1, targetSize / Math.max(sourceWidth, sourceHeight)) : 1
+        const scale = (def.boss ? 1.85 : 1.15) * assetScale
+        const w = sourceWidth * scale
+        const h = sourceHeight * scale
         shadow(ctx, m.x, m.y, 5 * scale)
         const flying = def.sprite === 'bat' || def.sprite === 'ghost'
         const hover = flying ? Math.round(Math.sin(m.animT * 3) * 2) - 4 : 0
@@ -179,7 +297,11 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         ctx.translate(m.x + lunge + attackBob, m.y - h / 2 + hover + walkBob)
         ctx.rotate(attackTilt)
         ctx.scale(m.flip ? -squash : squash, stretch)
-        ctx.drawImage(img, -w / 2, -h / 2, w, h)
+        if (asset) {
+          ctx.drawImage(img, frame * sourceWidth, 0, sourceWidth, sourceHeight, -w / 2, -h / 2, w, h)
+        } else {
+          ctx.drawImage(img, -w / 2, -h / 2, w, h)
+        }
         ctx.restore()
       },
     })
@@ -226,15 +348,17 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         ctx.fill()
       }
       if (sheet) {
+        const row = game.attackAnim > 0 ? 2 : game.facing === 'up' ? 3 : game.facing === 'down' ? 0 : 1
+        const displayFrame = game.attackAnim > 0 ? Math.min(3, Math.floor((0.22 - game.attackAnim) * 18)) : frame
+        const bounds = visibleRowBounds(sheet as HTMLCanvasElement, row)
         const frameWidth = sheet.width / 4
         const frameHeight = sheet.height / 4
-        const row = game.attackAnim > 0 ? 2 : game.facing === 'up' ? 3 : game.facing === 'down' ? 0 : 1
-        const cellPadX = frameWidth * 0.12
-        const cellPadY = frameHeight * 0.08
-        const sx = frame * frameWidth + cellPadX
-        const sy = row * frameHeight + cellPadY
-        const sourceWidth = frameWidth - cellPadX * 2
-        const sourceHeight = frameHeight - cellPadY * 2
+        const sourceLeft = displayFrame * frameWidth + bounds.left
+        const sourceTop = row * frameHeight + bounds.top
+        // Every class is rendered into the same NPC-sized box. Scaling from each
+        // frame's visible bounds independently makes characters visibly grow/shrink
+        // as they walk, so keep the destination box stable and let the cleaned
+        // source frame fill it consistently.
         const drawW = 24
         const drawH = 28
         const drawX = Math.round(p.x - drawW / 2 + ox)
@@ -244,9 +368,9 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         if (game.facing === 'left') {
           ctx.translate(drawX + drawW, drawY)
           ctx.scale(-1, 1)
-          ctx.drawImage(sheet, sx, sy, sourceWidth, sourceHeight, 0, 0, drawW, drawH)
+          ctx.drawImage(sheet, sourceLeft, sourceTop, bounds.width, bounds.height, 0, 0, drawW, drawH)
         } else {
-          ctx.drawImage(sheet, sx, sy, sourceWidth, sourceHeight, drawX, drawY, drawW, drawH)
+          ctx.drawImage(sheet, sourceLeft, sourceTop, bounds.width, bounds.height, drawX, drawY, drawW, drawH)
         }
         ctx.restore()
       } else {
