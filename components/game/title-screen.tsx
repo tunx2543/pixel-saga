@@ -1,14 +1,28 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { JOBS } from '@/lib/game/data'
-import { deleteSave, loadGame, newGame, readSave } from '@/lib/game/engine'
+import { deleteSave, loadGame, newGame, readSave, loadCloudGame } from '@/lib/game/engine'
 import { MAPS } from '@/lib/game/maps'
 import { formatPlayTime } from './format'
 import { AccountPanel } from './account-panel'
 
 export function TitleScreen() {
-  const [save] = useState(() => readSave())
+  const [save, setSave] = useState(() => readSave())
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const cloud = await loadCloudGame()
+        if (cloud) {
+          setSave(cloud)
+          setMode('menu')
+        }
+      } catch {
+        // Cloud save unavailable
+      }
+    })()
+  }, [])
   const [mode, setMode] = useState<'menu' | 'new'>(save ? 'menu' : 'new')
   const [name, setName] = useState('')
 

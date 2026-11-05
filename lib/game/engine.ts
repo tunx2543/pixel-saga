@@ -13,6 +13,7 @@ import {
 } from './data'
 import { MAPS, MAP_ORDER, TILE, boxBlocked, isSolidPx, type MapDef, type NpcDef, type NpcRole } from './maps'
 import type { Dir } from './sprites'
+import { createClient } from '@/lib/supabase/client'
 
 export const SAVE_KEY = 'pixel-rpg-save-v1'
 const GM_UNLOCK = '/openmodgm24156'
@@ -1049,10 +1050,48 @@ export function saveGame() {
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify(p))
     game.lastSavedAt = Date.now()
+    void saveCloudGame(p)
   } catch {
     say('error', 'บันทึกเกมไม่สำเร็จ')
   }
   game.saveT = 0
+}
+
+async function saveCloudGame(p: SaveData) {
+  try {
+    const supabase = createClient()
+    const { data } = await supabase.auth.getUser()
+    if (!data.user) return
+    await supabase.from('game_players').upsert({
+      user_id: data.user.id,
+      display_name: p.name,
+      class_id: p.jobId,
+      save_data: p,
+      map_id: p.mapId,
+      x: p.x,
+      y: p.y,
+      level: p.level,
+      last_seen: new Date().toISOString(),
+    })
+  } catch {
+    // Guest saves remain available locally when cloud sync is unavailable.
+  }
+}
+
+export async function loadCloudGame() {
+  try {
+    const supabase = createClient()
+    const { data: auth } = await supabase.auth.getUser()
+    if (!auth.user) return null
+    const { data } = await supabase
+      .from('game_players')
+      .select('save_data')
+      .eq('user_id', auth.user.id)
+      .maybeSingle()
+    return data?.save_data && typeof data.save_data === 'object' ? (data.save_data as SaveData) : null
+  } catch {
+    return null
+  }
 }
 
 export function readSave(): SaveData | null {
