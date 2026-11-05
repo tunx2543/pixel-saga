@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { ITEMS } from '@/lib/game/data'
 import { addItem, closePanel, player } from '@/lib/game/engine'
 import { PanelFrame, PxButton } from './panels'
@@ -30,6 +31,24 @@ export function GachaPanel() {
       }) ?? RATES[RATES.length - 1]
       player().gold -= COST
       addItem(picked.itemId)
+      void (async () => {
+        const supabase = createClient()
+        const { data } = await supabase.auth.getUser()
+        if (data.user) {
+          const { data: existing } = await supabase
+            .from('game_inventory')
+            .select('quantity')
+            .eq('user_id', data.user.id)
+            .eq('item_id', picked.itemId)
+            .maybeSingle()
+          await supabase.from('game_inventory').upsert({
+            user_id: data.user.id,
+            item_id: picked.itemId,
+            quantity: (existing?.quantity ?? 0) + 1,
+            updated_at: new Date().toISOString(),
+          })
+        }
+      })()
       setResult(`${ITEMS[picked.itemId].name} (${picked.label})`)
       setRolling(false)
     }, 420)
