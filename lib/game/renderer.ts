@@ -291,7 +291,8 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
     draw: () => {
       shadow(ctx, p.x, p.y, 6)
       const frame = game.moving ? Math.floor(game.walkT * 8) % 4 : 0
-      const assassin = p.jobId === 'assassin' ? assassinArt(game.facing, game.moving) : null
+      const walkingPose = game.moving && frame % 2 === 0
+  const assassin = p.jobId === 'assassin' ? assassinArt(game.facing, walkingPose) : null
       const img = assassin ?? humanSprite(job.colors, game.facing, frame, weapon?.weaponType ?? null, weapon?.color)
       let ox = 0
       let oy = 0
