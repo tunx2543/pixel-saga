@@ -225,9 +225,18 @@ function removeLightBackground(key: string, image: HTMLImageElement | HTMLCanvas
   return canvas
 }
 
-function monsterArt(defId: string) {
-  const src = MONSTER_ART[defId]
-  if (!src) return null
+const LAVA_BOSS_ART: Record<string, string> = {
+  south: '/images/monsters/lava-boss/south.png',
+  'south-east': '/images/monsters/lava-boss/south-east.png',
+  east: '/images/monsters/lava-boss/east.png',
+  'north-east': '/images/monsters/lava-boss/north-east.png',
+  north: '/images/monsters/lava-boss/north.png',
+  'north-west': '/images/monsters/lava-boss/north-west.png',
+  west: '/images/monsters/lava-boss/west.png',
+  'south-west': '/images/monsters/lava-boss/south-west.png',
+}
+
+function loadArt(src: string) {
   const cached = artCache.get(src)
   if (cached) return cached.complete ? cached : null
   const image = new Image()
@@ -235,6 +244,19 @@ function monsterArt(defId: string) {
   image.src = src
   artCache.set(src, image)
   return null
+}
+
+function lavaBossArt(dir: string, walking: boolean) {
+  const fallback = dir.includes('down') ? 'south' : dir.includes('up') ? 'north' : dir.includes('left') ? 'west' : 'east'
+  const base = LAVA_BOSS_ART[dir] ?? LAVA_BOSS_ART[fallback]
+  const src = walking ? base.replace('/lava-boss/', '/lava-boss/walk-') : base
+  return loadArt(src)
+}
+
+function monsterArt(defId: string) {
+  const src = MONSTER_ART[defId]
+  if (!src) return null
+  return loadArt(src)
 }
 
 export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dpr: number, font: string) {
@@ -315,11 +337,14 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
       y: m.y,
       draw: () => {
         const frame = Math.floor(m.animT * 3) % 4
-        const asset = monsterArt(m.defId)
+        const bossWalking = Math.floor(m.animT * 3) % 2 === 0
+        const lavaBoss = def.id === 'demon_lord' ? lavaBossArt(m.flip ? 'west' : 'east', bossWalking) : null
+        const asset = lavaBoss ?? monsterArt(m.defId)
         const rawImage = asset ?? monsterSprite(def.sprite, def.color, frame)
-        const img = asset ? removeLightBackground(`monsterSheet:${m.defId}`, rawImage) : rawImage
-        const sourceWidth = asset ? img.width / 4 : img.width
-        const sourceHeight = asset ? img.height / 4 : img.height
+        const isDirectionalAsset = lavaBoss !== null
+        const img = asset && !isDirectionalAsset ? removeLightBackground(`monsterSheet:${m.defId}`, rawImage) : rawImage
+        const sourceWidth = asset && !isDirectionalAsset ? img.width / 4 : img.width
+        const sourceHeight = asset && !isDirectionalAsset ? img.height / 4 : img.height
         const targetSize = def.boss ? 56 : 30
         const assetScale = asset ? Math.min(1, targetSize / Math.max(sourceWidth, sourceHeight)) : 1
         const scale = (def.boss ? 1.85 : 1.15) * assetScale
@@ -341,7 +366,7 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         ctx.translate(m.x + lunge + attackBob, m.y - h / 2 + hover + walkBob)
         ctx.rotate(attackTilt)
         ctx.scale(m.flip ? -squash : squash, stretch)
-        if (asset) {
+        if (asset && !isDirectionalAsset) {
           ctx.drawImage(img, frame * sourceWidth, 0, sourceWidth, sourceHeight, -w / 2, -h / 2, w, h)
         } else {
           ctx.drawImage(img, -w / 2, -h / 2, w, h)
