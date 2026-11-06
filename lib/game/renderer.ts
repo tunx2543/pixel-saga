@@ -85,6 +85,46 @@ function archerArt(dir: string, walking = false, attacking = false) {
   return null
 }
 
+const MAGE_ART = Object.fromEntries(
+  Object.entries(ARCHER_ART).map(([direction, src]) => [direction, src.replace('/characters/archer/idle/', '/characters/mage/idle/')]),
+)
+const MAGE_WALK_ART = Object.fromEntries(
+  Object.entries(MAGE_ART).map(([direction, src]) => [direction, src.replace('/idle/', '/walk/')]),
+)
+const MAGE_ATTACK_ART = Object.fromEntries(
+  Object.entries(MAGE_ART).map(([direction, src]) => [direction, src.replace('/idle/', '/attack/')]),
+)
+const SWORD_ART = Object.fromEntries(
+  Object.entries(ARCHER_ART).map(([direction, src]) => [direction, src.replace('/characters/archer/idle/', '/characters/sword/idle/')]),
+)
+const SWORD_WALK_ART = Object.fromEntries(
+  Object.entries(SWORD_ART).map(([direction, src]) => [direction, src.replace('/idle/', '/walk/')]),
+)
+const SWORD_ATTACK_ART = Object.fromEntries(
+  Object.entries(SWORD_ART).map(([direction, src]) => [direction, src.replace('/idle/', '/attack/')]),
+)
+
+function professionArt(
+  dir: string,
+  jobId: string,
+  walking = false,
+  attacking = false,
+) {
+  const maps = jobId === 'mage'
+    ? [MAGE_ART, MAGE_WALK_ART, MAGE_ATTACK_ART]
+    : [SWORD_ART, SWORD_WALK_ART, SWORD_ATTACK_ART]
+  const source = attacking ? maps[2] : walking ? maps[1] : maps[0]
+  const fallback = dir.includes('down') ? 'down' : dir.includes('up') ? 'up' : dir.includes('left') ? 'left' : 'right'
+  const src = source[dir] ?? source[fallback]
+  const cached = artCache.get(src)
+  if (cached) return cached.complete ? cached : null
+  const image = new Image()
+  image.crossOrigin = 'anonymous'
+  image.src = src
+  artCache.set(src, image)
+  return null
+}
+
 function removeLightBackground(key: string, image: HTMLImageElement | HTMLCanvasElement) {
   const cached = transparentArtCache.get(key)
   if (cached) return cached
@@ -334,11 +374,13 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
       shadow(ctx, p.x, p.y, 6)
       const frame = game.moving ? Math.floor(game.walkT * 8) % 4 : 0
       const walkingPose = game.moving && frame % 2 === 0
-const customArt = p.jobId === 'assassin'
+      const customArt = p.jobId === 'assassin'
     ? assassinArt(game.facing, walkingPose, game.attackAnim > 0)
     : p.jobId === 'archer'
       ? archerArt(game.facing, walkingPose, game.attackAnim > 0)
-      : null
+      : p.jobId === 'mage' || p.jobId === 'swordsman'
+        ? professionArt(game.facing, p.jobId, walkingPose, game.attackAnim > 0)
+        : null
   const img = customArt ?? humanSprite(job.colors, game.facing, frame, weapon?.weaponType ?? null, weapon?.color)
       let ox = 0
       let oy = 0
