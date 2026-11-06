@@ -11,18 +11,6 @@ const THEME_BG: Record<string, string> = {
   volcano: '#140808',
 }
 
-const CHARACTER_ART: Record<string, string> = {
-  novice: '/images/classes/novice-sheet.png',
-  swordsman: '/images/classes/swordsman-sheet.png',
-  mage: '/images/classes/mage-idle-sheet.png',
-  archer: '/images/classes/archer-sheet.png',
-  thief: '/images/classes/thief-sheet.png',
-  knight: '/images/classes/knight-sheet.png',
-  wizard: '/images/classes/wizard-sheet.png',
-  hunter: '/images/classes/hunter-sheet.png',
-  assassin: '/images/classes/assassin-sheet.png',
-}
-
 const MONSTER_ART: Record<string, string> = {
   poring: '/images/monsters/sheets/poring-sheet.png',
   undead: '/images/monsters/sheets/undead-knight-sheet.png',
@@ -130,55 +118,6 @@ function removeLightBackground(key: string, image: HTMLImageElement | HTMLCanvas
   offscreen.putImageData(pixels, 0, 0)
   transparentArtCache.set(key, canvas)
   return canvas
-}
-
-function visibleRowBounds(sheet: HTMLCanvasElement, row: number) {
-  const frameWidth = sheet.width / 4
-  const frameHeight = sheet.height / 4
-  const ctx = sheet.getContext('2d')
-  if (!ctx) return { left: 0, top: 0, width: frameWidth, height: frameHeight }
-
-  let minX = frameWidth
-  let minY = frameHeight
-  let maxX = -1
-  let maxY = -1
-  for (let column = 0; column < 4; column++) {
-    const cellLeft = Math.floor(column * frameWidth)
-    const cellTop = Math.floor(row * frameHeight)
-    const cellRight = Math.min(sheet.width, Math.ceil((column + 1) * frameWidth))
-    const cellBottom = Math.min(sheet.height, Math.ceil((row + 1) * frameHeight))
-    const pixels = ctx.getImageData(cellLeft, cellTop, cellRight - cellLeft, cellBottom - cellTop).data
-    for (let y = 0; y < cellBottom - cellTop; y++) {
-      for (let x = 0; x < cellRight - cellLeft; x++) {
-        if (pixels[(y * (cellRight - cellLeft) + x) * 4 + 3] > 18) {
-          minX = Math.min(minX, x)
-          minY = Math.min(minY, y)
-          maxX = Math.max(maxX, x)
-          maxY = Math.max(maxY, y)
-        }
-      }
-    }
-  }
-
-  if (maxX < 0) return { left: 0, top: 0, width: frameWidth, height: frameHeight }
-  const padding = 1
-  const left = Math.max(0, minX - padding)
-  const top = Math.max(0, minY - padding)
-  const right = Math.min(frameWidth, maxX + padding + 1)
-  const bottom = Math.min(frameHeight, maxY + padding + 1)
-  return { left, top, width: right - left, height: bottom - top }
-}
-
-function characterArt(jobId: string) {
-  const src = CHARACTER_ART[jobId]
-  if (!src) return null
-  const cached = artCache.get(src)
-  if (cached) return cached.complete ? cached : null
-  const image = new Image()
-  image.crossOrigin = 'anonymous'
-  image.src = src
-  artCache.set(src, image)
-  return null
 }
 
 function monsterArt(defId: string) {
@@ -329,8 +268,6 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
       shadow(ctx, p.x, p.y, 6)
       const frame = game.moving ? Math.floor(game.walkT * 8) % 4 : 0
       const img = humanSprite(job.colors, game.facing, frame, weapon?.weaponType ?? null, weapon?.color)
-      const rawSheet = characterArt(p.jobId)
-      const sheet = rawSheet ? removeLightBackground(`character:${p.jobId}`, rawSheet) : null
       let ox = 0
       let oy = 0
       if (game.attackAnim > 0) {
@@ -347,35 +284,7 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         ctx.ellipse(p.x, p.y, 10, 4, 0, 0, Math.PI * 2)
         ctx.fill()
       }
-      if (sheet) {
-        const row = game.attackAnim > 0 ? 2 : game.facing === 'up' ? 3 : game.facing === 'down' ? 0 : 1
-        const displayFrame = game.attackAnim > 0 ? Math.min(3, Math.floor((0.22 - game.attackAnim) * 18)) : frame
-        const bounds = visibleRowBounds(sheet as HTMLCanvasElement, row)
-        const frameWidth = sheet.width / 4
-        const frameHeight = sheet.height / 4
-        const sourceLeft = displayFrame * frameWidth + bounds.left
-        const sourceTop = row * frameHeight + bounds.top
-        // Every class is rendered into the same NPC-sized box. Scaling from each
-        // frame's visible bounds independently makes characters visibly grow/shrink
-        // as they walk, so keep the destination box stable and let the cleaned
-        // source frame fill it consistently.
-        const drawW = 24
-        const drawH = 28
-        const drawX = Math.round(p.x - drawW / 2 + ox)
-        const drawY = Math.round(p.y - drawH + bob + oy)
-        ctx.save()
-        ctx.imageSmoothingEnabled = false
-        if (game.facing === 'left') {
-          ctx.translate(drawX + drawW, drawY)
-          ctx.scale(-1, 1)
-          ctx.drawImage(sheet, sourceLeft, sourceTop, bounds.width, bounds.height, 0, 0, drawW, drawH)
-        } else {
-          ctx.drawImage(sheet, sourceLeft, sourceTop, bounds.width, bounds.height, drawX, drawY, drawW, drawH)
-        }
-        ctx.restore()
-      } else {
-        ctx.drawImage(img, Math.round(p.x - img.width / 2 + ox), Math.round(p.y - img.height + bob + oy))
-      }
+      ctx.drawImage(img, Math.round(p.x - img.width / 2 + ox), Math.round(p.y - img.height + bob + oy))
     },
   })
 
