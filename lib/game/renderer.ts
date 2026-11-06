@@ -31,9 +31,21 @@ const ASSASSIN_WALK_ART: Record<string, string> = {
   left: '/images/characters/assassin/walk-west.png',
   right: '/images/characters/assassin/walk-east.png',
 }
+const ASSASSIN_ATTACK_ART: Record<string, string> = {
+  down: '/images/characters/assassin/attack-south.png',
+  'down-right': '/images/characters/assassin/attack-south-east.png',
+  right: '/images/characters/assassin/attack-east.png',
+  'up-right': '/images/characters/assassin/attack-north-east.png',
+  up: '/images/characters/assassin/attack-north.png',
+  'up-left': '/images/characters/assassin/attack-north-west.png',
+  left: '/images/characters/assassin/attack-west.png',
+  'down-left': '/images/characters/assassin/attack-south-west.png',
+}
 
-function assassinArt(dir: 'down' | 'up' | 'left' | 'right', walking = false) {
-  const src = (walking ? ASSASSIN_WALK_ART : ASSASSIN_ART)[dir]
+function assassinArt(dir: string, walking = false, attacking = false) {
+  const source = attacking ? ASSASSIN_ATTACK_ART : walking ? ASSASSIN_WALK_ART : ASSASSIN_ART
+  const fallback = dir.includes('down') ? 'down' : dir.includes('up') ? 'up' : dir.includes('left') ? 'left' : 'right'
+  const src = source[dir] ?? source[fallback]
   const cached = artCache.get(src)
   if (cached) return cached.complete ? cached : null
   const image = new Image()
@@ -292,8 +304,8 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
       shadow(ctx, p.x, p.y, 6)
       const frame = game.moving ? Math.floor(game.walkT * 8) % 4 : 0
       const walkingPose = game.moving && frame % 2 === 0
-  const assassin = p.jobId === 'assassin' ? assassinArt(game.facing, walkingPose) : null
-      const img = assassin ?? humanSprite(job.colors, game.facing, frame, weapon?.weaponType ?? null, weapon?.color)
+const assassin = p.jobId === 'assassin' ? assassinArt(game.facing, walkingPose, game.attackAnim > 0) : null
+  const img = assassin ?? humanSprite(job.colors, game.facing, frame, weapon?.weaponType ?? null, weapon?.color)
       let ox = 0
       let oy = 0
       if (game.attackAnim > 0) {
