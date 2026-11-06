@@ -19,6 +19,23 @@ const MONSTER_ART: Record<string, string> = {
 }
 const artCache = new Map<string, HTMLImageElement>()
 const transparentArtCache = new Map<string, HTMLCanvasElement>()
+const ASSASSIN_ART: Record<string, string> = {
+  down: '/images/characters/assassin/south.png',
+  up: '/images/characters/assassin/north.png',
+  left: '/images/characters/assassin/west.png',
+  right: '/images/characters/assassin/east.png',
+}
+
+function assassinArt(dir: 'down' | 'up' | 'left' | 'right') {
+  const src = ASSASSIN_ART[dir]
+  const cached = artCache.get(src)
+  if (cached) return cached.complete ? cached : null
+  const image = new Image()
+  image.crossOrigin = 'anonymous'
+  image.src = src
+  artCache.set(src, image)
+  return null
+}
 
 function removeLightBackground(key: string, image: HTMLImageElement | HTMLCanvasElement) {
   const cached = transparentArtCache.get(key)
@@ -252,7 +269,8 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
       y: other.y,
       draw: () => {
         shadow(ctx, other.x, other.y, 6)
-        const img = humanSprite(otherJob.colors, 'down', 0)
+        const assassin = other.classId === 'assassin' ? assassinArt('down') : null
+        const img = assassin ?? humanSprite(otherJob.colors, 'down', 0)
         ctx.globalAlpha = 0.92
         ctx.drawImage(img, Math.round(other.x - img.width / 2), Math.round(other.y - img.height))
         ctx.globalAlpha = 1
@@ -267,7 +285,8 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
     draw: () => {
       shadow(ctx, p.x, p.y, 6)
       const frame = game.moving ? Math.floor(game.walkT * 8) % 4 : 0
-      const img = humanSprite(job.colors, game.facing, frame, weapon?.weaponType ?? null, weapon?.color)
+      const assassin = p.jobId === 'assassin' ? assassinArt(game.facing) : null
+      const img = assassin ?? humanSprite(job.colors, game.facing, frame, weapon?.weaponType ?? null, weapon?.color)
       let ox = 0
       let oy = 0
       if (game.attackAnim > 0) {
