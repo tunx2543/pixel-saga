@@ -309,22 +309,7 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         ctx.ellipse(p.x, p.y, 10, 4, 0, 0, Math.PI * 2)
         ctx.fill()
       }
-      const assassinWalking = p.jobId === 'assassin' && game.moving && assassin !== null
-      if (assassinWalking) {
-        ctx.drawImage(
-          img,
-          frame * 32,
-          0,
-          32,
-          32,
-          Math.round(p.x - 16 + ox),
-          Math.round(p.y - 32 + bob + oy),
-          32,
-          32,
-        )
-      } else {
-        ctx.drawImage(img, Math.round(p.x - img.width / 2 + ox), Math.round(p.y - img.height + bob + oy))
-      }
+      ctx.drawImage(img, Math.round(p.x - img.width / 2 + ox), Math.round(p.y - img.height + bob + oy))
     },
   })
 
