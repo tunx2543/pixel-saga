@@ -55,6 +55,36 @@ function assassinArt(dir: string, walking = false, attacking = false) {
   return null
 }
 
+const ARCHER_ART: Record<string, string> = {
+  down: '/images/characters/archer/idle/south.png',
+  'down-right': '/images/characters/archer/idle/south-east.png',
+  right: '/images/characters/archer/idle/east.png',
+  'up-right': '/images/characters/archer/idle/north-east.png',
+  up: '/images/characters/archer/idle/north.png',
+  'up-left': '/images/characters/archer/idle/north-west.png',
+  left: '/images/characters/archer/idle/west.png',
+  'down-left': '/images/characters/archer/idle/south-west.png',
+}
+const ARCHER_WALK_ART = Object.fromEntries(
+  Object.entries(ARCHER_ART).map(([direction, src]) => [direction, src.replace('/idle/', '/walk/')]),
+)
+const ARCHER_ATTACK_ART = Object.fromEntries(
+  Object.entries(ARCHER_ART).map(([direction, src]) => [direction, src.replace('/idle/', '/attack/')]),
+)
+
+function archerArt(dir: string, walking = false, attacking = false) {
+  const source = attacking ? ARCHER_ATTACK_ART : walking ? ARCHER_WALK_ART : ARCHER_ART
+  const fallback = dir.includes('down') ? 'down' : dir.includes('up') ? 'up' : dir.includes('left') ? 'left' : 'right'
+  const src = source[dir] ?? source[fallback]
+  const cached = artCache.get(src)
+  if (cached) return cached.complete ? cached : null
+  const image = new Image()
+  image.crossOrigin = 'anonymous'
+  image.src = src
+  artCache.set(src, image)
+  return null
+}
+
 function removeLightBackground(key: string, image: HTMLImageElement | HTMLCanvasElement) {
   const cached = transparentArtCache.get(key)
   if (cached) return cached
@@ -304,8 +334,12 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
       shadow(ctx, p.x, p.y, 6)
       const frame = game.moving ? Math.floor(game.walkT * 8) % 4 : 0
       const walkingPose = game.moving && frame % 2 === 0
-const assassin = p.jobId === 'assassin' ? assassinArt(game.facing, walkingPose, game.attackAnim > 0) : null
-  const img = assassin ?? humanSprite(job.colors, game.facing, frame, weapon?.weaponType ?? null, weapon?.color)
+const customArt = p.jobId === 'assassin'
+    ? assassinArt(game.facing, walkingPose, game.attackAnim > 0)
+    : p.jobId === 'archer'
+      ? archerArt(game.facing, walkingPose, game.attackAnim > 0)
+      : null
+  const img = customArt ?? humanSprite(job.colors, game.facing, frame, weapon?.weaponType ?? null, weapon?.color)
       let ox = 0
       let oy = 0
       if (game.attackAnim > 0) {
