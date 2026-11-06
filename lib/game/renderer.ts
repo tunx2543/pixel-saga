@@ -25,9 +25,15 @@ const ASSASSIN_ART: Record<string, string> = {
   left: '/images/characters/assassin/west.png',
   right: '/images/characters/assassin/east.png',
 }
+const ASSASSIN_WALK_ART: Record<string, string> = {
+  down: '/images/characters/assassin/walk-south.png',
+  up: '/images/characters/assassin/walk-north.png',
+  left: '/images/characters/assassin/walk-west.png',
+  right: '/images/characters/assassin/walk-east.png',
+}
 
-function assassinArt(dir: 'down' | 'up' | 'left' | 'right') {
-  const src = ASSASSIN_ART[dir]
+function assassinArt(dir: 'down' | 'up' | 'left' | 'right', walking = false) {
+  const src = (walking ? ASSASSIN_WALK_ART : ASSASSIN_ART)[dir]
   const cached = artCache.get(src)
   if (cached) return cached.complete ? cached : null
   const image = new Image()
@@ -285,7 +291,7 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
     draw: () => {
       shadow(ctx, p.x, p.y, 6)
       const frame = game.moving ? Math.floor(game.walkT * 8) % 4 : 0
-      const assassin = p.jobId === 'assassin' ? assassinArt(game.facing) : null
+      const assassin = p.jobId === 'assassin' ? assassinArt(game.facing, game.moving) : null
       const img = assassin ?? humanSprite(job.colors, game.facing, frame, weapon?.weaponType ?? null, weapon?.color)
       let ox = 0
       let oy = 0
@@ -303,7 +309,22 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         ctx.ellipse(p.x, p.y, 10, 4, 0, 0, Math.PI * 2)
         ctx.fill()
       }
-      ctx.drawImage(img, Math.round(p.x - img.width / 2 + ox), Math.round(p.y - img.height + bob + oy))
+      const assassinWalking = p.jobId === 'assassin' && game.moving && assassin !== null
+      if (assassinWalking) {
+        ctx.drawImage(
+          img,
+          frame * 32,
+          0,
+          32,
+          32,
+          Math.round(p.x - 16 + ox),
+          Math.round(p.y - 32 + bob + oy),
+          32,
+          32,
+        )
+      } else {
+        ctx.drawImage(img, Math.round(p.x - img.width / 2 + ox), Math.round(p.y - img.height + bob + oy))
+      }
     },
   })
 
