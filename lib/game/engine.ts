@@ -1216,7 +1216,7 @@ export function newGame(name: string) {
   addItem('red_potion', 15)
   addItem('blue_potion', 5)
   addItem('return_scroll', 3)
-  startSession(p, `ยินดีต้อนรับสู่โลกพิกเซล ${p.name}! ออกไปทางตะวันออกของเมืองเพื่อล่ามอนสเตอร์`)
+  startSession(p, `ยินดีต้อนรับสู่โลกพิกเซล ${p.name}! ออกไปทางตะวันออกของเมืองเพื่อล่ามอนสเตอร์`, true)
 }
 
 export function quitToTitle() {
