@@ -341,14 +341,18 @@ const VISUAL_CLASSIFICATION: Record<string, 'dagger' | 'staff' | 'sword' | 'bow'
   'pixellab-object-03b36157.png': 'staff',
 }
 
+const MAGE_NAMED_ITEMS = new Set(['ราชันผลึก', 'พิทักษ์เถ้า', 'เขี้ยวจันทรา', 'ผ่าอเวจี'])
+
 const catalogItems = Object.fromEntries(CATALOG_ASSETS.map((asset, index) => {
-  const weaponType = VISUAL_CLASSIFICATION[asset] ?? (index >= 50 ? 'staff' : 'sword')
+  const baseName = CATALOG_NAMES[index % CATALOG_NAMES.length]
   const isEffect = index >= 50
+  const forcedMage = MAGE_NAMED_ITEMS.has(baseName)
+  const weaponType = forcedMage ? 'staff' : VISUAL_CLASSIFICATION[asset] ?? (isEffect ? 'staff' : 'sword')
   const weaponLabel = weaponType === 'dagger' ? 'มีด Assassin' : weaponType === 'staff' ? 'คฑา Mage' : weaponType === 'bow' ? 'ธนู Archer' : 'ดาบ Swordsman'
   const tier = isEffect ? 4 : index % 3 + 1
   const atk = 18 + tier * 16 + (index % 5) * 3
   const id = `catalog_${asset.replace('.png', '').replaceAll('-', '_')}`
-  const name = `${CATALOG_NAMES[index % CATALOG_NAMES.length]} ${isEffect ? 'อุปกรณ์อาคม' : weaponLabel} ${index + 1}`
+  const name = `${baseName} ${isEffect ? 'อุปกรณ์อาคม' : weaponLabel} ${String(index + 1).padStart(2, '0')}`
   const item: ItemDef = {
     id,
     name,
