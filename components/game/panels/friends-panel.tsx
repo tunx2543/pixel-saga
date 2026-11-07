@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { closePanel, game as gameState } from '@/lib/game/engine'
+import { createTrade, sendFriendRequest, sendWhisper } from '@/lib/game/social'
 
 export function FriendsPanel({ game }: { game: typeof gameState }) {
   const [uid, setUid] = useState('')
@@ -18,9 +19,9 @@ export function FriendsPanel({ game }: { game: typeof gameState }) {
       if (!user || !active) return
       setMyUid(user.id)
       const { count } = await supabase
-        .from('friend_requests')
-        .select('id', { count: 'exact', head: true })
-        .eq('receiver_id', user.id)
+        .from('friendships')
+        .select('friend_user_id', { count: 'exact', head: true })
+        .eq('friend_user_id', user.id)
         .eq('status', 'pending')
       if (active) setRequestCount(count ?? 0)
     }
@@ -45,7 +46,7 @@ export function FriendsPanel({ game }: { game: typeof gameState }) {
       setMessage('ไม่สามารถแอด UID ของตัวเองได้')
       return
     }
-    const { error } = await supabase.from('friend_requests').insert({ sender_id: user.id, receiver_id: receiverId })
+    const { error } = await supabase.from('friendships').upsert({ user_id: user.id, friend_user_id: receiverId, status: 'pending' }, { onConflict: 'user_id,friend_user_id' })
     setMessage(error ? 'ส่งคำขอไม่สำเร็จ หรือ UID นี้มีคำขออยู่แล้ว' : 'ส่งคำขอเพื่อนแล้ว')
     if (!error) setUid('')
   }
@@ -75,6 +76,17 @@ export function FriendsPanel({ game }: { game: typeof gameState }) {
         <button type="button" className="pixel-button primary" onClick={() => void sendRequest()}>ส่งคำขอ</button>
       </div>
       <p className="panel-copy muted">ตัวละครนี้: {game.p?.name || 'Guest'} · โหมด Guest จะไม่บันทึกคำขอ</p>
+      {game.socialTargetId && (
+        <div className="mt-2 rounded-lg border border-primary/40 bg-primary/5 p-2">
+          <span className="field-label">ตัวละครที่เลือก</span>
+          <code className="mt-1 block truncate text-[10px] text-primary">{game.socialTargetId}</code>
+          <div className="mt-2 grid grid-cols-3 gap-1">
+            <button type="button" className="pixel-button secondary px-1 py-1 text-[9px]" onClick={() => void sendFriendRequest(game.socialTargetId!).then((r) => setMessage(r.message))}>เพิ่มเพื่อน</button>
+            <button type="button" className="pixel-button secondary px-1 py-1 text-[9px]" onClick={() => void createTrade(game.socialTargetId!).then((r) => setMessage(r.message))}>แลกเปลี่ยน</button>
+            <button type="button" className="pixel-button secondary px-1 py-1 text-[9px]" onClick={() => void sendWhisper(game.socialTargetId!, 'สวัสดี').then((r) => setMessage(r.message))}>กระซิบ</button>
+          </div>
+        </div>
+      )}
       {message && <p className="panel-message" role="status">{message}</p>}
       <button type="button" className="pixel-button secondary" onClick={closePanel}>ปิด</button>
     </section>

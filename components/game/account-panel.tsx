@@ -73,6 +73,7 @@ export function AccountPanel() {
   return (
     <div className="border-2 border-border/70 bg-background/40 p-3">
       <p className="mb-2 text-xs font-bold text-primary">เล่นกับเพื่อนและสำรองตัวละคร</p>
+      <p className="mb-2 text-[10px] text-muted-foreground">UID เป็นตัวเลข 5 หลัก • บัญชี GM หลักคือ UID 00000</p>
       <div className="grid gap-2 sm:grid-cols-2">
         <input aria-label="อีเมล" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="อีเมล" className="border-2 border-border bg-input px-2 py-1 text-xs text-foreground outline-none focus:border-primary" />
         <input aria-label="รหัสผ่าน" type="password" minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="รหัสผ่าน 6 ตัวขึ้นไป" className="border-2 border-border bg-input px-2 py-1 text-xs text-foreground outline-none focus:border-primary" />

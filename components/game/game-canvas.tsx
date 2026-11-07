@@ -123,8 +123,17 @@ export function GameCanvas() {
   return (
     <canvas
       ref={ref}
+      onClick={() => {
+        const target = game.remotePlayers
+          .filter((other) => other.mapId === game.p?.mapId)
+          .sort((a, b) => Math.hypot(a.x - (game.p?.x ?? 0), a.y - (game.p?.y ?? 0)) - Math.hypot(b.x - (game.p?.x ?? 0), b.y - (game.p?.y ?? 0)))[0]
+        if (target && game.p && Math.hypot(target.x - game.p.x, target.y - game.p.y) < 64) {
+          game.socialTargetId = target.userId
+          openPanel('friends')
+        }
+      }}
       className="pixelated absolute inset-0 h-full w-full touch-none"
-      aria-label="หน้าจอเกม ใช้ WASD หรือปุ่มลูกศรเพื่อเดิน"
+      aria-label="หน้าจอเกม ใช้ WASD หรือปุ่มลูกศรเพื่อเดิน คลิกตัวละครใกล้เคียงเพื่อเปิดเมนูโซเชียล"
     />
   )
 }

@@ -392,6 +392,29 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
     })
   }
 
+  for (const other of game.remotePlayers) {
+    if (other.mapId !== map.id) continue
+    const remoteJob = JOBS[other.jobId] ?? JOBS.novice
+    const remoteFrame = other.moving ? Math.floor(t * 8) % 4 : 0
+    const remoteAnimation = other.attackAnim > 0 ? 'attack' : other.moving ? 'walk' : 'idle'
+    const remoteImg = (other.gm ? gmOutfitSprite(other.facing, remoteAnimation) : null)
+      ?? professionArt(other.facing, other.jobId, other.moving, other.attackAnim > 0)
+      ?? humanSprite(remoteJob.colors, other.facing, remoteFrame)
+    ents.push({
+      y: other.y,
+      draw: () => {
+        shadow(ctx, other.x, other.y, 6)
+        if (other.gm) {
+          ctx.fillStyle = `rgba(255, 214, 10, ${0.18 + Math.sin(t * 5) * 0.08})`
+          ctx.beginPath()
+          ctx.ellipse(other.x, other.y, 10, 4, 0, 0, Math.PI * 2)
+          ctx.fill()
+        }
+        ctx.drawImage(remoteImg, Math.round(other.x - remoteImg.width / 2), Math.round(other.y - remoteImg.height))
+      },
+    })
+  }
+
   const job = JOBS[p.jobId]
   const weapon = p.equipment.weapon ? ITEMS[p.equipment.weapon.itemId] : null
   ents.push({
@@ -548,13 +571,15 @@ const animation = game.attackAnim > 0 ? 'attack' : game.moving ? 'walk' : 'idle'
   }
 
   for (const other of game.remotePlayers) {
+    if (other.mapId !== map.id) continue
     const [x, y] = toS(other.x, other.y - 24)
-    text(`${other.displayName} Lv.${other.level}`, x, y, '#8be9fd', 9)
+    if (other.gm) text('[GM]', x, y - 12 * dpr, '#ffd60a', 8)
+    text(`${other.displayName} [${String(other.uid).padStart(5, '0')}] Lv.${other.level}`, x, y, other.gm ? '#ffd60a' : '#8be9fd', 9)
   }
 
   {
     const [x, y] = toS(p.x, p.y - 24)
-    text(p.name, x, y, p.gm ? '#ffd60a' : '#ffffff', 10)
+    text(`${p.name} [${String(p.uid ?? 1).padStart(5, '0')}]`, x, y, p.gm ? '#ffd60a' : '#ffffff', 10)
     if (p.gm) text('[GM]', x, y - 12 * dpr, '#ffd60a', 8)
     if (game.bubble) {
       ctx.font = `${Math.round(11 * dpr * (zoom / 3) * 1.2)}px ${font}`

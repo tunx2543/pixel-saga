@@ -19,6 +19,7 @@ export function Game() {
       <div className="game-ui pointer-events-none absolute inset-0">
         <TouchControls />
         <Hud />
+        <WorldBanner />
         <ChatBox />
         <PresenceSync />
         <Panels />
