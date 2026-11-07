@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, UsersRound } from 'lucide-react'
 import { useGame } from '@/lib/game/use-game'
-import { castGmSkill, currentJob, game, getStats, notify } from '@/lib/game/engine'
+import { castGmSkill, currentJob, game, getStats, notify, openPanel } from '@/lib/game/engine'
 import { expToNext } from '@/lib/game/data'
 import { MAX_LEVEL } from '@/lib/game/data'
 import { formatNum } from './format'

@@ -8,10 +8,13 @@ import { PanelFrame, PxButton } from './panels'
 
 const RATES = [
   { itemId: 'flame_sword', rate: 1, label: 'ตำนาน' },
-  { itemId: 'crystal_staff', rate: 4, label: 'อีปิค' },
-  { itemId: 'steel_sword', rate: 15, label: 'หายาก' },
-  { itemId: 'red_potion', rate: 35, label: 'ทั่วไป' },
-  { itemId: 'enhance_stone', rate: 45, label: 'วัสดุ' },
+  { itemId: 'crystal_staff', rate: 3, label: 'อีปิค' },
+  { itemId: 'catalog_assassin', rate: 6, label: 'อาวุธอาคม' },
+  { itemId: 'catalog_pix', rate: 10, label: 'ดาบพิเศษ' },
+  { itemId: 'catalog_pixellab_object_03b36157', rate: 15, label: 'คฑาอาคม' },
+  { itemId: 'steel_sword', rate: 20, label: 'หายาก' },
+  { itemId: 'red_potion', rate: 20, label: 'ทั่วไป' },
+  { itemId: 'enhance_stone', rate: 25, label: 'วัสดุ' },
 ]
 const COST = 500
 
@@ -63,11 +66,7 @@ export function GachaPanel() {
             return (
               <div key={entry.itemId} className="border-2 border-border bg-muted/60 p-2 text-center">
                 <div className="mx-auto mb-2 grid size-12 place-items-center overflow-hidden rounded-lg border-2 border-white/20 bg-card text-2xl" style={{ color: item.color }}>
-                  {entry.itemId === 'flame_sword' ? (
-                    <img src="/images/art/rare-crystal.png" alt="ภาพไอเทมหายาก" className="asset-no-bg size-full object-cover" />
-                  ) : (
-                    <span aria-hidden="true">{entry.label.slice(0, 1)}</span>
-                  )}
+                  {item.asset ? <img src={item.asset} alt={item.name} className="pixelated size-full object-contain" /> : <span aria-hidden="true">{entry.label.slice(0, 1)}</span>}
                 </div>
                 <p className="truncate text-xs text-foreground">{item.name}</p>
                 <p className="mt-1 text-xs text-primary">{entry.rate}%</p>
