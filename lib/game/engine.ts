@@ -1089,7 +1089,6 @@ async function saveCloudGame(p: SaveData) {
       display_name: p.name,
       class_id: p.jobId,
       save_data: p,
-      map_id: p.mapId,
       x: p.x,
       y: p.y,
       level: p.level,
