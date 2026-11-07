@@ -2,7 +2,6 @@
 
 import { ITEMS } from '@/lib/game/data'
 import type { InvItem } from '@/lib/game/engine'
-import { itemIconUrl } from '@/lib/game/sprites'
 import { cn } from '@/lib/utils'
 
 const POTION_ROWS: Record<string, number> = {
@@ -51,14 +50,13 @@ export function ItemIcon({ itemId, size = 32, className }: { itemId: string; siz
   }
 
   return (
-    <img
-      src={def.asset ?? itemIconUrl(def.icon, def.color)}
-      alt={def.name}
-      width={size}
-      height={size}
-      className={cn('pixelated', className)}
-      draggable={false}
-    />
+    <span
+      aria-label={def.name}
+      className={cn('grid shrink-0 place-items-center rounded border border-border/70 bg-secondary/70 text-[10px] font-bold text-muted-foreground', className)}
+      style={{ width: size, height: size }}
+    >
+      {def.name.slice(0, 1)}
+    </span>
   )
 }
 

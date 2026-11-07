@@ -451,10 +451,15 @@ const animation = game.attackAnim > 0 ? 'attack' : game.moving ? 'walk' : 'idle'
         const auraWidth = aura.width * auraScale
         const auraHeight = aura.height * auraScale
         const auraCenterX = p.x
-        const auraCenterY = p.y - auraHeight / 2 + 5
-        ctx.translate(auraCenterX, auraCenterY)
+        const floorY = p.y + 3
+        const groundSourceY = aura.height * 0.48
+        const groundSourceHeight = aura.height - groundSourceY
+        const groundHeight = auraHeight * (groundSourceHeight / aura.height)
+        const pillarHeight = auraHeight - groundHeight
+        ctx.drawImage(aura, 0, 0, aura.width, groundSourceY, p.x - auraWidth / 2, floorY - auraHeight, auraWidth, pillarHeight)
+        ctx.translate(auraCenterX, floorY - groundHeight / 2)
         ctx.rotate(t * 2.4)
-        ctx.drawImage(aura, -auraWidth / 2, -auraHeight / 2, auraWidth, auraHeight)
+        ctx.drawImage(aura, 0, groundSourceY, aura.width, groundSourceHeight, -auraWidth / 2, -groundHeight / 2, auraWidth, groundHeight)
         ctx.restore()
       }
       ctx.drawImage(img, Math.round(p.x - img.width / 2 + ox), Math.round(p.y - img.height + bob + oy))

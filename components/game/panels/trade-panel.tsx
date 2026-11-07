@@ -28,7 +28,7 @@ export function TradePanel() {
   }
 
   return (
-    <PanelFrame title="แลกเปลี่ยนไอเท็ม" subtitle={target ? `กับ ${target.displayName} · UID ${String(target.uid).padStart(5, '0')}` : 'รอคำขอแลกเปลี่ยน'}>
+    <PanelFrame title="แลกเปลี่ยนไอเท็ม" subtitle={target ? `กับ ${target.displayName}` : 'รอคำขอแลกเปลี่ยน'}>
       <div className="grid gap-3 md:grid-cols-2">
         <section className="rounded-lg border border-primary/30 bg-primary/5 p-3">
           <h3 className="text-sm font-bold text-primary">ของที่คุณเสนอ</h3>
