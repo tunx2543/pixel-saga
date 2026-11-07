@@ -948,7 +948,7 @@ const GM_HELP = [
   '/mobs - รายการไอดีมอนสเตอร์',
   '/job <ไอดี> - เปลี่ยนอาชีพทันที',
   '/jobs - รายการไอดีอาชีพ',
-  '/ban <UID> [นาที|permanent] [เหตุผล] - แบนผู้เล่น',
+  '/ban (UID)_(วินาที)_(เหตุผล) - แบนผู้เล่น เช่น /ban 00001_3600_ใช้บอท',
   '/gmchat <ข้อความ> - ประกาศแถบด้านบน',
   '/closegm - ปิดโหมด GM',
 ]
@@ -1114,10 +1114,12 @@ function runCommand(text: string) {
     },
     '/jobs': () => say('gm', Object.keys(JOBS).join(', ')),
     '/ban': () => {
-      const target = args[0]
-      const duration = args[1]?.toLowerCase() === 'permanent' || args[1] === 'ถาวร' ? null : Number(args[1])
-      const reason = args.slice(2).join(' ') || 'ไม่ระบุเหตุผล'
-      if (!target || (duration !== null && (!Number.isFinite(duration) || duration <= 0))) return say('error', 'ใช้ /ban <UID> [นาที|permanent] [เหตุผล]')
+      const input = args.join(' ').trim()
+      const parts = input.split('_').map((part) => part.trim())
+      const target = parts[0]
+      const duration = parts[1]?.toLowerCase() === 'permanent' || parts[1] === 'ถาวร' ? null : Number(parts[1])
+      const reason = parts.slice(2).join('_').trim() || 'ไม่ระบุเหตุผล'
+      if (!target || (duration !== null && (!Number.isInteger(duration) || duration <= 0))) return say('error', 'ใช้ /ban (UID)_(วินาที)_(เหตุผล) เช่น /ban 00001_3600_ใช้บอท')
       void createBan(target, duration, reason).then((result) => { say(result.ok ? 'gm' : 'error', result.message); notify() })
     },
     '/gmchat': () => {
