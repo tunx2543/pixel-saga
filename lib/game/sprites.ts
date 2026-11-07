@@ -69,7 +69,7 @@ export function rebirthAuraSprite(dir: Dir): HTMLImageElement | null {
   if (!image) {
     image = new Image()
     image.crossOrigin = 'anonymous'
-    image.src = `/images/effects/rebirth-aura-${direction}.png`
+    image.src = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ground-sigil-jQzDvfBW2V54R6DRMeDoP55hG7byck.gif'
     rebirthAuraCache.set(direction, image)
   }
   return image.complete && image.naturalWidth > 0 ? image : null
