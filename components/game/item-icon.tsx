@@ -52,7 +52,7 @@ export function ItemIcon({ itemId, size = 32, className }: { itemId: string; siz
 
   return (
     <img
-      src={itemIconUrl(def.icon, def.color)}
+      src={def.asset ?? itemIconUrl(def.icon, def.color)}
       alt={def.name}
       width={size}
       height={size}

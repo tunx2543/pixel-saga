@@ -273,6 +273,8 @@ export interface ItemDef {
   weaponType?: WeaponType
   reqLevel?: number
   tier?: number
+  asset?: string
+  effect?: boolean
 }
 
 const weapon = (
@@ -311,7 +313,45 @@ const armor = (id: string, name: string, def: number, price: number, tier: numbe
   description: `ชุดเกราะ พลังป้องกัน +${def}`,
 })
 
+const CATALOG_NAMES = ['รัตติกาล', 'เพลิงฟ้า', 'เขี้ยวจันทรา', 'ผ่าอเวจี', 'เงาพราย', 'ดาวตก', 'โลหิตแดง', 'วายุเงิน', 'พิทักษ์เถ้า', 'ราชันย์ผลึก']
+const CATALOG_ASSETS = [
+  ...Array.from({ length: 25 }, (_, i) => `assassin${i ? `_${i + 1}` : ''}.png`),
+  ...Array.from({ length: 25 }, (_, i) => `pix${i ? `_${i + 1}` : ''}.png`),
+  'pixellab-object-03b36157.png',
+  'pixellab-object-1f1f412f.png',
+  'pixellab-object-5a4d691b.png',
+  'pixellab-object-705a0bad.png',
+]
+
+const catalogItems = Object.fromEntries(CATALOG_ASSETS.map((asset, index) => {
+  const isAssassin = index < 25
+  const isEffect = index >= 50
+  const weaponType = isAssassin ? 'dagger' : 'bow'
+  const tier = isEffect ? 4 : index % 3 + 1
+  const atk = 18 + tier * 16 + (index % 5) * 3
+  const id = `catalog_${asset.replace('.png', '').replaceAll('-', '_')}`
+  const name = `${CATALOG_NAMES[index % CATALOG_NAMES.length]} ${isAssassin ? 'มีด' : isEffect ? 'อุปกรณ์อาคม' : 'ธนู'} ${index + 1}`
+  const item: ItemDef = {
+    id,
+    name,
+    kind: isEffect ? 'armor' : 'weapon',
+    weaponType: isEffect ? undefined : weaponType,
+    atk: isEffect ? undefined : atk,
+    def: isEffect ? 20 + tier * 10 : undefined,
+    price: 900 * tier,
+    tier,
+    reqLevel: tier * 10,
+    icon: isEffect ? 'armor' : weaponType,
+    asset: `/images/items/catalog/${asset}`,
+    effect: isEffect,
+    color: isEffect ? '#c084fc' : isAssassin ? '#d00000' : '#f59e0b',
+    description: `${isEffect ? 'อุปกรณ์อาคมจากบอส' : 'อาวุธจากภาพต้นฉบับ'} | ไฟล์: ${asset} | ${isEffect ? `ป้องกัน +${20 + tier * 10}` : `โจมตี +${atk}`}`,
+  }
+  return [id, item]
+})) as Record<string, ItemDef>
+
 export const ITEMS: Record<string, ItemDef> = {
+  ...catalogItems,
   red_potion: { id: 'red_potion', name: 'ยาแดง', kind: 'consumable', price: 30, heal: 60, icon: 'potion', color: '#e63946', description: 'ฟื้นฟู HP 60' },
   orange_potion: { id: 'orange_potion', name: 'ยาส้ม', kind: 'consumable', price: 120, heal: 220, icon: 'potion', color: '#f4a261', description: 'ฟื้นฟู HP 220' },
   white_potion: { id: 'white_potion', name: 'ยาขาว', kind: 'consumable', price: 400, heal: 700, icon: 'potion', color: '#f1faee', description: 'ฟื้นฟู HP 700' },
