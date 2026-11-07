@@ -324,13 +324,18 @@ const CATALOG_ASSETS = [
 ]
 
 const catalogItems = Object.fromEntries(CATALOG_ASSETS.map((asset, index) => {
-  const isAssassin = index < 25
+  const lowerAsset = asset.toLowerCase()
+  const isAssassin = lowerAsset.includes('assassin')
   const isEffect = index >= 50
-  const weaponType = isAssassin ? 'dagger' : 'bow'
+  const isMage = /staff|wand|rod|cane|orb|tome|mage/.test(lowerAsset)
+  const isSwordsman = /sword|blade|katana|saber/.test(lowerAsset) || lowerAsset.startsWith('pix')
+  const isArcher = /bow|arrow|archer/.test(lowerAsset)
+  const weaponType = isAssassin ? 'dagger' : isMage ? 'staff' : isSwordsman ? 'sword' : isArcher ? 'bow' : 'sword'
+  const weaponLabel = weaponType === 'dagger' ? 'มีด Assassin' : weaponType === 'staff' ? 'คฑา Mage' : weaponType === 'bow' ? 'ธนู Archer' : 'ดาบ Swordsman'
   const tier = isEffect ? 4 : index % 3 + 1
   const atk = 18 + tier * 16 + (index % 5) * 3
   const id = `catalog_${asset.replace('.png', '').replaceAll('-', '_')}`
-  const name = `${CATALOG_NAMES[index % CATALOG_NAMES.length]} ${isAssassin ? 'มีด' : isEffect ? 'อุปกรณ์อาคม' : 'ธนู'} ${index + 1}`
+  const name = `${CATALOG_NAMES[index % CATALOG_NAMES.length]} ${isEffect ? 'อุปกรณ์อาคม' : weaponLabel} ${index + 1}`
   const item: ItemDef = {
     id,
     name,
@@ -344,8 +349,8 @@ const catalogItems = Object.fromEntries(CATALOG_ASSETS.map((asset, index) => {
     icon: isEffect ? 'armor' : weaponType,
     asset: `/images/items/catalog/${asset}`,
     effect: isEffect,
-    color: isEffect ? '#c084fc' : isAssassin ? '#d00000' : '#f59e0b',
-    description: `${isEffect ? 'อุปกรณ์อาคมจากบอส' : 'อาวุธจากภาพต้นฉบับ'} | ไฟล์: ${asset} | ${isEffect ? `ป้องกัน +${20 + tier * 10}` : `โจมตี +${atk}`}`,
+    color: isEffect ? '#c084fc' : weaponType === 'dagger' ? '#d00000' : weaponType === 'staff' ? '#8b5cf6' : weaponType === 'bow' ? '#16a34a' : '#f59e0b',
+    description: `${isEffect ? 'อุปกรณ์อาคมจากบอส' : `อาวุธสำหรับ ${weaponLabel}`} | ไฟล์: ${asset} | ${isEffect ? `ป้องกัน +${20 + tier * 10}` : `โจมตี +${atk}`}`,
   }
   return [id, item]
 })) as Record<string, ItemDef>
