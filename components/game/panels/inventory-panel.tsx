@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ITEMS } from '@/lib/game/data'
+import { ITEMS, JOBS } from '@/lib/game/data'
 import { closePanel, drinkPotion, equip, itemLabel, unequip } from '@/lib/game/engine'
 import { useGame } from '@/lib/game/use-game'
 import { ItemIcon } from '../item-icon'
@@ -15,8 +15,10 @@ export function InventoryPanel() {
 
   const selectedItem = selectedItemId ? ITEMS[selectedItemId] : null
   const selectedMeta = selectedItem ? {
-    jobs: selectedItem.kind === 'weapon' ? 'นักดาบ, นักธนู, นักเวท' : selectedItem.kind === 'armor' ? 'ทุกอาชีพ' : 'ทุกอาชีพ',
-    level: selectedItem.kind === 'weapon' || selectedItem.kind === 'armor' ? 10 : 1,
+    jobs: selectedItem.kind === 'weapon'
+      ? Object.values(JOBS).filter((job) => job.weaponTypes.includes(selectedItem.weaponType!)).map((job) => job.name).join(', ')
+      : 'ทุกอาชีพ',
+    level: selectedItem.reqLevel ?? 1,
     slot: selectedItem.kind === 'weapon' ? 'อาวุธ' : selectedItem.kind === 'armor' ? 'เกราะ' : 'ไอเทมทั่วไป',
   } : null
   const visibleItems = p.inventory.filter((item) => tab === 'items'
@@ -84,6 +86,8 @@ export function InventoryPanel() {
           <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
             <div><dt className="text-muted-foreground">ช่องสวมใส่</dt><dd className="text-foreground">{selectedMeta.slot}</dd></div>
             <div><dt className="text-muted-foreground">เลเวลที่ใช้ได้</dt><dd className="text-foreground">Lv. {selectedMeta.level} ขึ้นไป</dd></div>
+            {selectedItem.atk !== undefined && <div><dt className="text-muted-foreground">พลังโจมตี</dt><dd className="text-emerald-300">+{selectedItem.atk}</dd></div>}
+            {selectedItem.def !== undefined && <div><dt className="text-muted-foreground">พลังป้องกัน</dt><dd className="text-sky-300">+{selectedItem.def}</dd></div>}
             <div className="col-span-2"><dt className="text-muted-foreground">อาชีพที่ใส่ได้</dt><dd className="text-primary">{selectedMeta.jobs}</dd></div>
           </dl>
         </div>

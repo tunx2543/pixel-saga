@@ -5,12 +5,54 @@ import type { InvItem } from '@/lib/game/engine'
 import { itemIconUrl } from '@/lib/game/sprites'
 import { cn } from '@/lib/utils'
 
+const POTION_ROWS: Record<string, number> = {
+  red_potion: 0,
+  orange_potion: 0,
+  blue_potion: 1,
+  purple_potion: 2,
+  white_potion: 5,
+}
+
+const POTION_COLS: Record<string, number> = {
+  red_potion: 0,
+  blue_potion: 0,
+  orange_potion: 1,
+  purple_potion: 1,
+  white_potion: 3,
+}
+
+function potionIcon(itemId: string, size: number) {
+  const isSpPotion = itemId === 'blue_potion' || itemId === 'purple_potion'
+  const sheet = isSpPotion ? 'vial_potion' : 'round_potion'
+  const row = POTION_ROWS[itemId] ?? 0
+  const col = POTION_COLS[itemId] ?? 0
+
+  return {
+    backgroundImage: `url(/images/potions/${sheet}.png)`,
+    backgroundPosition: `-${col * size}px -${row * size}px`,
+    backgroundSize: `${size * 4}px ${size * 6}px`,
+  }
+}
+
 export function ItemIcon({ itemId, size = 32, className }: { itemId: string; size?: number; className?: string }) {
   const def = ITEMS[itemId]
   if (!def) return null
+  const isPotion = itemId.endsWith('_potion')
+
+  if (isPotion) {
+    return (
+      <span
+        role="img"
+        aria-label={def.name}
+        className={cn('block shrink-0 bg-no-repeat', className)}
+        style={{ width: size, height: size, ...potionIcon(itemId, size) }}
+      />
+    )
+  }
+
   return (
     <img
-      src={itemIconUrl(def.icon, def.color)}
+      src={def.asset ?? itemIconUrl(def.icon, def.color)}
       alt={def.name}
       width={size}
       height={size}

@@ -273,6 +273,8 @@ export interface ItemDef {
   weaponType?: WeaponType
   reqLevel?: number
   tier?: number
+  asset?: string
+  effect?: boolean
 }
 
 const weapon = (
@@ -311,7 +313,67 @@ const armor = (id: string, name: string, def: number, price: number, tier: numbe
   description: `ชุดเกราะ พลังป้องกัน +${def}`,
 })
 
+const CATALOG_NAMES = ['รัตติกาล', 'เพลิงฟ้า', 'เขี้ยวจันทรา', 'ผ่าอเวจี', 'เงาพราย', 'ดาวตก', 'โลหิตแดง', 'วายุเงิน', 'พิทักษ์เถ้า', 'ราชันย์ผลึก']
+const CATALOG_ASSETS = [
+  ...Array.from({ length: 25 }, (_, i) => `assassin${i ? `_${i + 1}` : ''}.png`),
+  ...Array.from({ length: 25 }, (_, i) => `pix${i ? `_${i + 1}` : ''}.png`),
+  'pixellab-object-03b36157.png',
+  'pixellab-object-1f1f412f.png',
+  'pixellab-object-5a4d691b.png',
+  'pixellab-object-705a0bad.png',
+]
+
+const VISUAL_CLASSIFICATION: Record<string, 'dagger' | 'staff' | 'sword' | 'bow'> = {
+  'assassin.png': 'staff',
+  'assassin_2.png': 'bow',
+  'assassin_3.png': 'sword',
+  'assassin_4.png': 'sword',
+  'assassin_5.png': 'dagger',
+  'assassin_6.png': 'dagger',
+  'assassin_7.png': 'dagger',
+  'assassin_8.png': 'sword',
+  'assassin_15.png': 'dagger',
+  'assassin_25.png': 'sword',
+  'pix.png': 'sword',
+  'pix_5.png': 'staff',
+  'pix_15.png': 'staff',
+  'pix_25.png': 'dagger',
+  'pixellab-object-03b36157.png': 'staff',
+}
+
+const MAGE_NAMED_ITEMS = new Set(['ราชันผลึก', 'พิทักษ์เถ้า', 'เขี้ยวจันทรา', 'ผ่าอเวจี'])
+
+const catalogItems = Object.fromEntries(CATALOG_ASSETS.map((asset, index) => {
+  const baseName = CATALOG_NAMES[index % CATALOG_NAMES.length]
+  const isEffect = index >= 50
+  const forcedMage = MAGE_NAMED_ITEMS.has(baseName)
+  const weaponType = forcedMage ? 'staff' : VISUAL_CLASSIFICATION[asset] ?? (isEffect ? 'staff' : 'sword')
+  const weaponLabel = weaponType === 'dagger' ? 'มีด Assassin' : weaponType === 'staff' ? 'คฑา Mage' : weaponType === 'bow' ? 'ธนู Archer' : 'ดาบ Swordsman'
+  const tier = isEffect ? 4 : index % 3 + 1
+  const atk = 18 + tier * 16 + (index % 5) * 3
+  const id = `catalog_${asset.replace('.png', '').replaceAll('-', '_')}`
+  const name = `${baseName} ${isEffect ? 'อุปกรณ์อาคม' : weaponLabel} ${String(index + 1).padStart(2, '0')}`
+  const item: ItemDef = {
+    id,
+    name,
+    kind: isEffect ? 'armor' : 'weapon',
+    weaponType: isEffect ? undefined : weaponType,
+    atk: isEffect ? undefined : atk,
+    def: isEffect ? 20 + tier * 10 : undefined,
+    price: 900 * tier,
+    tier,
+    reqLevel: tier * 10,
+    icon: isEffect ? 'armor' : weaponType,
+    asset: `/images/items/catalog/${asset}`,
+    effect: isEffect,
+    color: isEffect ? '#c084fc' : weaponType === 'dagger' ? '#d00000' : weaponType === 'staff' ? '#8b5cf6' : weaponType === 'bow' ? '#16a34a' : '#f59e0b',
+    description: `${isEffect ? 'อุปกรณ์อาคมจากบอส' : `อาวุธสำหรับ ${weaponLabel}`} | ไฟล์: ${asset} | ${isEffect ? `ป้องกัน +${20 + tier * 10}` : `โจมตี +${atk}`}`,
+  }
+  return [id, item]
+})) as Record<string, ItemDef>
+
 export const ITEMS: Record<string, ItemDef> = {
+  ...catalogItems,
   red_potion: { id: 'red_potion', name: 'ยาแดง', kind: 'consumable', price: 30, heal: 60, icon: 'potion', color: '#e63946', description: 'ฟื้นฟู HP 60' },
   orange_potion: { id: 'orange_potion', name: 'ยาส้ม', kind: 'consumable', price: 120, heal: 220, icon: 'potion', color: '#f4a261', description: 'ฟื้นฟู HP 220' },
   white_potion: { id: 'white_potion', name: 'ยาขาว', kind: 'consumable', price: 400, heal: 700, icon: 'potion', color: '#f1faee', description: 'ฟื้นฟู HP 700' },

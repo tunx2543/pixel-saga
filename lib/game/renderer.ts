@@ -11,18 +11,6 @@ const THEME_BG: Record<string, string> = {
   volcano: '#140808',
 }
 
-const CHARACTER_ART: Record<string, string> = {
-  novice: '/images/classes/novice-sheet.png',
-  swordsman: '/images/classes/swordsman-sheet.png',
-  mage: '/images/classes/mage-idle-sheet.png',
-  archer: '/images/classes/archer-sheet.png',
-  thief: '/images/classes/thief-sheet.png',
-  knight: '/images/classes/knight-sheet.png',
-  wizard: '/images/classes/wizard-sheet.png',
-  hunter: '/images/classes/hunter-sheet.png',
-  assassin: '/images/classes/assassin-sheet.png',
-}
-
 const MONSTER_ART: Record<string, string> = {
   poring: '/images/monsters/sheets/poring-sheet.png',
   undead: '/images/monsters/sheets/undead-knight-sheet.png',
@@ -31,6 +19,111 @@ const MONSTER_ART: Record<string, string> = {
 }
 const artCache = new Map<string, HTMLImageElement>()
 const transparentArtCache = new Map<string, HTMLCanvasElement>()
+const ASSASSIN_ART: Record<string, string> = {
+  down: '/images/characters/assassin/south.png',
+  up: '/images/characters/assassin/north.png',
+  left: '/images/characters/assassin/west.png',
+  right: '/images/characters/assassin/east.png',
+}
+const ASSASSIN_WALK_ART: Record<string, string> = {
+  down: '/images/characters/assassin/walk-south.png',
+  up: '/images/characters/assassin/walk-north.png',
+  left: '/images/characters/assassin/walk-west.png',
+  right: '/images/characters/assassin/walk-east.png',
+}
+const ASSASSIN_ATTACK_ART: Record<string, string> = {
+  down: '/images/characters/assassin/attack-south.png',
+  'down-right': '/images/characters/assassin/attack-south-east.png',
+  right: '/images/characters/assassin/attack-east.png',
+  'up-right': '/images/characters/assassin/attack-north-east.png',
+  up: '/images/characters/assassin/attack-north.png',
+  'up-left': '/images/characters/assassin/attack-north-west.png',
+  left: '/images/characters/assassin/attack-west.png',
+  'down-left': '/images/characters/assassin/attack-south-west.png',
+}
+
+function assassinArt(dir: string, walking = false, attacking = false) {
+  const source = attacking ? ASSASSIN_ATTACK_ART : walking ? ASSASSIN_WALK_ART : ASSASSIN_ART
+  const fallback = dir.includes('down') ? 'down' : dir.includes('up') ? 'up' : dir.includes('left') ? 'left' : 'right'
+  const src = source[dir] ?? source[fallback]
+  const cached = artCache.get(src)
+  if (cached) return cached.complete ? cached : null
+  const image = new Image()
+  image.crossOrigin = 'anonymous'
+  image.src = src
+  artCache.set(src, image)
+  return null
+}
+
+const ARCHER_ART: Record<string, string> = {
+  down: '/images/characters/archer/idle/south.png',
+  'down-right': '/images/characters/archer/idle/south-east.png',
+  right: '/images/characters/archer/idle/east.png',
+  'up-right': '/images/characters/archer/idle/north-east.png',
+  up: '/images/characters/archer/idle/north.png',
+  'up-left': '/images/characters/archer/idle/north-west.png',
+  left: '/images/characters/archer/idle/west.png',
+  'down-left': '/images/characters/archer/idle/south-west.png',
+}
+const ARCHER_WALK_ART = Object.fromEntries(
+  Object.entries(ARCHER_ART).map(([direction, src]) => [direction, src.replace('/idle/', '/walk/')]),
+)
+const ARCHER_ATTACK_ART = Object.fromEntries(
+  Object.entries(ARCHER_ART).map(([direction, src]) => [direction, src.replace('/idle/', '/attack/')]),
+)
+
+function archerArt(dir: string, walking = false, attacking = false) {
+  const source = attacking ? ARCHER_ATTACK_ART : walking ? ARCHER_WALK_ART : ARCHER_ART
+  const fallback = dir.includes('down') ? 'down' : dir.includes('up') ? 'up' : dir.includes('left') ? 'left' : 'right'
+  const src = source[dir] ?? source[fallback]
+  const cached = artCache.get(src)
+  if (cached) return cached.complete ? cached : null
+  const image = new Image()
+  image.crossOrigin = 'anonymous'
+  image.src = src
+  artCache.set(src, image)
+  return null
+}
+
+const MAGE_ART = Object.fromEntries(
+  Object.entries(ARCHER_ART).map(([direction, src]) => [direction, src.replace('/characters/archer/idle/', '/characters/mage/idle/')]),
+)
+const MAGE_WALK_ART = Object.fromEntries(
+  Object.entries(MAGE_ART).map(([direction, src]) => [direction, src.replace('/idle/', '/walk/')]),
+)
+const MAGE_ATTACK_ART = Object.fromEntries(
+  Object.entries(MAGE_ART).map(([direction, src]) => [direction, src.replace('/idle/', '/attack/')]),
+)
+const SWORD_ART = Object.fromEntries(
+  Object.entries(ARCHER_ART).map(([direction, src]) => [direction, src.replace('/characters/archer/idle/', '/characters/sword/idle/')]),
+)
+const SWORD_WALK_ART = Object.fromEntries(
+  Object.entries(SWORD_ART).map(([direction, src]) => [direction, src.replace('/idle/', '/walk/')]),
+)
+const SWORD_ATTACK_ART = Object.fromEntries(
+  Object.entries(SWORD_ART).map(([direction, src]) => [direction, src.replace('/idle/', '/attack/')]),
+)
+
+function professionArt(
+  dir: string,
+  jobId: string,
+  walking = false,
+  attacking = false,
+) {
+  const maps = jobId === 'mage'
+    ? [MAGE_ART, MAGE_WALK_ART, MAGE_ATTACK_ART]
+    : [SWORD_ART, SWORD_WALK_ART, SWORD_ATTACK_ART]
+  const source = attacking ? maps[2] : walking ? maps[1] : maps[0]
+  const fallback = dir.includes('down') ? 'down' : dir.includes('up') ? 'up' : dir.includes('left') ? 'left' : 'right'
+  const src = source[dir] ?? source[fallback]
+  const cached = artCache.get(src)
+  if (cached) return cached.complete ? cached : null
+  const image = new Image()
+  image.crossOrigin = 'anonymous'
+  image.src = src
+  artCache.set(src, image)
+  return null
+}
 
 function removeLightBackground(key: string, image: HTMLImageElement | HTMLCanvasElement) {
   const cached = transparentArtCache.get(key)
@@ -132,46 +225,18 @@ function removeLightBackground(key: string, image: HTMLImageElement | HTMLCanvas
   return canvas
 }
 
-function visibleRowBounds(sheet: HTMLCanvasElement, row: number) {
-  const frameWidth = sheet.width / 4
-  const frameHeight = sheet.height / 4
-  const ctx = sheet.getContext('2d')
-  if (!ctx) return { left: 0, top: 0, width: frameWidth, height: frameHeight }
-
-  let minX = frameWidth
-  let minY = frameHeight
-  let maxX = -1
-  let maxY = -1
-  for (let column = 0; column < 4; column++) {
-    const cellLeft = Math.floor(column * frameWidth)
-    const cellTop = Math.floor(row * frameHeight)
-    const cellRight = Math.min(sheet.width, Math.ceil((column + 1) * frameWidth))
-    const cellBottom = Math.min(sheet.height, Math.ceil((row + 1) * frameHeight))
-    const pixels = ctx.getImageData(cellLeft, cellTop, cellRight - cellLeft, cellBottom - cellTop).data
-    for (let y = 0; y < cellBottom - cellTop; y++) {
-      for (let x = 0; x < cellRight - cellLeft; x++) {
-        if (pixels[(y * (cellRight - cellLeft) + x) * 4 + 3] > 18) {
-          minX = Math.min(minX, x)
-          minY = Math.min(minY, y)
-          maxX = Math.max(maxX, x)
-          maxY = Math.max(maxY, y)
-        }
-      }
-    }
-  }
-
-  if (maxX < 0) return { left: 0, top: 0, width: frameWidth, height: frameHeight }
-  const padding = 1
-  const left = Math.max(0, minX - padding)
-  const top = Math.max(0, minY - padding)
-  const right = Math.min(frameWidth, maxX + padding + 1)
-  const bottom = Math.min(frameHeight, maxY + padding + 1)
-  return { left, top, width: right - left, height: bottom - top }
+const LAVA_BOSS_ART: Record<string, string> = {
+  south: '/images/monsters/lava-boss/south.png',
+  'south-east': '/images/monsters/lava-boss/south-east.png',
+  east: '/images/monsters/lava-boss/east.png',
+  'north-east': '/images/monsters/lava-boss/north-east.png',
+  north: '/images/monsters/lava-boss/north.png',
+  'north-west': '/images/monsters/lava-boss/north-west.png',
+  west: '/images/monsters/lava-boss/west.png',
+  'south-west': '/images/monsters/lava-boss/south-west.png',
 }
 
-function characterArt(jobId: string) {
-  const src = CHARACTER_ART[jobId]
-  if (!src) return null
+function loadArt(src: string) {
   const cached = artCache.get(src)
   if (cached) return cached.complete ? cached : null
   const image = new Image()
@@ -179,18 +244,19 @@ function characterArt(jobId: string) {
   image.src = src
   artCache.set(src, image)
   return null
+}
+
+function lavaBossArt(dir: string, walking: boolean) {
+  const fallback = dir.includes('down') ? 'south' : dir.includes('up') ? 'north' : dir.includes('left') ? 'west' : 'east'
+  const base = LAVA_BOSS_ART[dir] ?? LAVA_BOSS_ART[fallback]
+  const src = walking ? base.replace('/lava-boss/', '/lava-boss/walk-') : base
+  return loadArt(src)
 }
 
 function monsterArt(defId: string) {
   const src = MONSTER_ART[defId]
   if (!src) return null
-  const cached = artCache.get(src)
-  if (cached) return cached.complete ? cached : null
-  const image = new Image()
-  image.crossOrigin = 'anonymous'
-  image.src = src
-  artCache.set(src, image)
-  return null
+  return loadArt(src)
 }
 
 export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dpr: number, font: string) {
@@ -271,11 +337,14 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
       y: m.y,
       draw: () => {
         const frame = Math.floor(m.animT * 3) % 4
-        const asset = monsterArt(m.defId)
+        const bossWalking = Math.floor(m.animT * 3) % 2 === 0
+        const lavaBoss = def.id === 'demon_lord' ? lavaBossArt(m.flip ? 'west' : 'east', bossWalking) : null
+        const asset = lavaBoss ?? monsterArt(m.defId)
         const rawImage = asset ?? monsterSprite(def.sprite, def.color, frame)
-        const img = asset ? removeLightBackground(`monsterSheet:${m.defId}`, rawImage) : rawImage
-        const sourceWidth = asset ? img.width / 4 : img.width
-        const sourceHeight = asset ? img.height / 4 : img.height
+        const isDirectionalAsset = lavaBoss !== null
+        const img = asset && !isDirectionalAsset ? removeLightBackground(`monsterSheet:${m.defId}`, rawImage) : rawImage
+        const sourceWidth = asset && !isDirectionalAsset ? img.width / 4 : img.width
+        const sourceHeight = asset && !isDirectionalAsset ? img.height / 4 : img.height
         const targetSize = def.boss ? 56 : 30
         const assetScale = asset ? Math.min(1, targetSize / Math.max(sourceWidth, sourceHeight)) : 1
         const scale = (def.boss ? 1.85 : 1.15) * assetScale
@@ -297,7 +366,7 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         ctx.translate(m.x + lunge + attackBob, m.y - h / 2 + hover + walkBob)
         ctx.rotate(attackTilt)
         ctx.scale(m.flip ? -squash : squash, stretch)
-        if (asset) {
+        if (asset && !isDirectionalAsset) {
           ctx.drawImage(img, frame * sourceWidth, 0, sourceWidth, sourceHeight, -w / 2, -h / 2, w, h)
         } else {
           ctx.drawImage(img, -w / 2, -h / 2, w, h)
@@ -313,7 +382,8 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
       y: other.y,
       draw: () => {
         shadow(ctx, other.x, other.y, 6)
-        const img = humanSprite(otherJob.colors, 'down', 0)
+        const assassin = other.classId === 'assassin' ? assassinArt('down') : null
+        const img = assassin ?? humanSprite(otherJob.colors, 'down', 0)
         ctx.globalAlpha = 0.92
         ctx.drawImage(img, Math.round(other.x - img.width / 2), Math.round(other.y - img.height))
         ctx.globalAlpha = 1
@@ -328,9 +398,15 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
     draw: () => {
       shadow(ctx, p.x, p.y, 6)
       const frame = game.moving ? Math.floor(game.walkT * 8) % 4 : 0
-      const img = humanSprite(job.colors, game.facing, frame, weapon?.weaponType ?? null, weapon?.color)
-      const rawSheet = characterArt(p.jobId)
-      const sheet = rawSheet ? removeLightBackground(`character:${p.jobId}`, rawSheet) : null
+      const walkingPose = game.moving && frame % 2 === 0
+      const customArt = p.jobId === 'assassin'
+    ? assassinArt(game.facing, walkingPose, game.attackAnim > 0)
+    : p.jobId === 'archer'
+      ? archerArt(game.facing, walkingPose, game.attackAnim > 0)
+      : p.jobId === 'mage' || p.jobId === 'swordsman'
+        ? professionArt(game.facing, p.jobId, walkingPose, game.attackAnim > 0)
+        : null
+  const img = customArt ?? humanSprite(job.colors, game.facing, frame, weapon?.weaponType ?? null, weapon?.color)
       let ox = 0
       let oy = 0
       if (game.attackAnim > 0) {
@@ -347,35 +423,7 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         ctx.ellipse(p.x, p.y, 10, 4, 0, 0, Math.PI * 2)
         ctx.fill()
       }
-      if (sheet) {
-        const row = game.attackAnim > 0 ? 2 : game.facing === 'up' ? 3 : game.facing === 'down' ? 0 : 1
-        const displayFrame = game.attackAnim > 0 ? Math.min(3, Math.floor((0.22 - game.attackAnim) * 18)) : frame
-        const bounds = visibleRowBounds(sheet as HTMLCanvasElement, row)
-        const frameWidth = sheet.width / 4
-        const frameHeight = sheet.height / 4
-        const sourceLeft = displayFrame * frameWidth + bounds.left
-        const sourceTop = row * frameHeight + bounds.top
-        // Every class is rendered into the same NPC-sized box. Scaling from each
-        // frame's visible bounds independently makes characters visibly grow/shrink
-        // as they walk, so keep the destination box stable and let the cleaned
-        // source frame fill it consistently.
-        const drawW = 24
-        const drawH = 28
-        const drawX = Math.round(p.x - drawW / 2 + ox)
-        const drawY = Math.round(p.y - drawH + bob + oy)
-        ctx.save()
-        ctx.imageSmoothingEnabled = false
-        if (game.facing === 'left') {
-          ctx.translate(drawX + drawW, drawY)
-          ctx.scale(-1, 1)
-          ctx.drawImage(sheet, sourceLeft, sourceTop, bounds.width, bounds.height, 0, 0, drawW, drawH)
-        } else {
-          ctx.drawImage(sheet, sourceLeft, sourceTop, bounds.width, bounds.height, drawX, drawY, drawW, drawH)
-        }
-        ctx.restore()
-      } else {
-        ctx.drawImage(img, Math.round(p.x - img.width / 2 + ox), Math.round(p.y - img.height + bob + oy))
-      }
+      ctx.drawImage(img, Math.round(p.x - img.width / 2 + ox), Math.round(p.y - img.height + bob + oy))
     },
   })
 

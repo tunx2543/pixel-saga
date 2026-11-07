@@ -519,7 +519,17 @@ function killMonster(m: Monster) {
   p.gold += gold
   addFloat(m.x, m.y - 30, `+${gold}G`, '#f2c94c', 9)
   gainExp(def.exp)
-  for (const d of def.drops) {
+
+  const equipmentPool = Object.values(ITEMS).filter((item) => item.kind === 'weapon' || item.kind === 'armor')
+  const guaranteedPool = equipmentPool.filter((item) => (item.tier ?? 1) <= 3)
+  const effectPool = equipmentPool.filter((item) => (item.tier ?? 1) >= 4)
+  const dynamicDrops = def.boss
+    ? effectPool.map((item) => ({ itemId: item.id, chance: 0.1 }))
+    : guaranteedPool.map((item) => ({ itemId: item.id, chance: 0.01 }))
+  const seen = new Set<string>()
+  for (const d of [...def.drops, ...dynamicDrops]) {
+    if (seen.has(d.itemId)) continue
+    seen.add(d.itemId)
     if (Math.random() < d.chance) {
       if (addItem(d.itemId, 1)) say('loot', `ได้รับ ${ITEMS[d.itemId].name}`)
       else warn('กระเป๋าเต็ม! ไอเทมหล่นหาย')
@@ -883,6 +893,7 @@ const GM_HELP = [
   '/exp <เลข> - เพิ่ม EXP',
   '/gold <เลข> - เพิ่มเงิน',
   '/item <ไอดี> [จำนวน] [บวก] - เสกไอเทม',
+  '/allweapons - เสกอาวุธทั้งหมดที่อาชีพนี้ใช้ได้',
   '/items - รายการไอดีไอเทม',
   '/stone <เลข> - เสกหินตีบวก',
   '/tp <แมพ> - วาร์ป (town, meadow, forest, cave, volcano)',
@@ -950,15 +961,26 @@ function runCommand(text: string) {
       p.gold = Math.max(0, p.gold + Math.floor(num(0)))
       say('gm', `เงินปัจจุบัน ${p.gold.toLocaleString()}G`)
     },
-    '/item': () => {
-      const id = args[0]
-      if (!id || !ITEMS[id]) return say('error', 'ไม่พบไอดีไอเทม พิมพ์ /items เพื่อดูรายการ')
-      const qty = Math.max(1, Math.min(999, Math.floor(num(1, 1))))
-      const plus = Math.max(0, Math.min(MAX_PLUS, Math.floor(num(2, 0))))
-      if (addItem(id, qty, plus)) say('gm', `เสก ${ITEMS[id].name}${plus ? ` +${plus}` : ''} x${qty}`)
-      else say('error', 'กระเป๋าเต็ม')
-    },
-    '/items': () => {
+  '/item': () => {
+  const id = args[0]
+  if (!id || !ITEMS[id]) return say('error', 'ไม่พบไอดีไอเทม พิมพ์ /items เพื่อดูรายการ')
+  const qty = Math.max(1, Math.min(999, Math.floor(num(1, 1))))
+  const plus = Math.max(0, Math.min(MAX_PLUS, Math.floor(num(2, 0))))
+  if (addItem(id, qty, plus)) say('gm', `เสก ${ITEMS[id].name}${plus ? ` +${plus}` : ''} x${qty}`)
+  else say('error', 'กระเป๋าเต็ม')
+  },
+  '/allweapons': () => {
+  const allowed = new Set(currentJob().weaponTypes)
+  const weapons = Object.values(ITEMS).filter((item) => item.kind === 'weapon' && item.weaponType && allowed.has(item.weaponType))
+  let added = 0
+  for (const item of weapons) {
+    if (addItem(item.id, 1)) added++
+    else if (addItem(item.id, 1, 0, p.storage, STORAGE_SIZE)) added++
+  }
+  say('gm', `เสกอาวุธสำหรับอาชีพ ${currentJob().name} แล้ว ${added}/${weapons.length} ชิ้น (ในกระเป๋า/คลัง)`)
+  saveGame()
+  },
+  '/items': () => {
       const ids = Object.keys(ITEMS)
       for (let i = 0; i < ids.length; i += 8) say('gm', ids.slice(i, i + 8).join(', '))
     },
@@ -1216,7 +1238,7 @@ export function newGame(name: string) {
   addItem('red_potion', 15)
   addItem('blue_potion', 5)
   addItem('return_scroll', 3)
-  startSession(p, `ยินดีต้อนรับสู่โลกพิกเซล ${p.name}! ออกไปทางตะวันออกของเมืองเพื่อล่ามอนสเตอร์`)
+  startSession(p, `ยินดีต้อนรับสู่โลกพิกเซล ${p.name}! ออกไปทางตะวันออกของเมืองเพื่อล่ามอนสเตอร์`, true)
 }
 
 export function quitToTitle() {
