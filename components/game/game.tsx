@@ -9,6 +9,7 @@ import { TitleScreen } from './title-screen'
 import { PresenceSync } from './presence-sync'
 import { WorldBanner } from './world-banner'
 import { TouchControls } from './touch-controls'
+import { PlayerActionMenu } from './player-action-menu'
 
 export function Game() {
   const g = useGame()
@@ -20,6 +21,7 @@ export function Game() {
         <TouchControls />
         <Hud />
         <WorldBanner />
+        <PlayerActionMenu />
         <ChatBox />
         <PresenceSync />
         <Panels />

@@ -129,7 +129,7 @@ export function GameCanvas() {
           .sort((a, b) => Math.hypot(a.x - (game.p?.x ?? 0), a.y - (game.p?.y ?? 0)) - Math.hypot(b.x - (game.p?.x ?? 0), b.y - (game.p?.y ?? 0)))[0]
         if (target && game.p && Math.hypot(target.x - game.p.x, target.y - game.p.y) < 64) {
           game.socialTargetId = target.userId
-          openPanel('friends')
+          notify()
         }
       }}
       className="pixelated absolute inset-0 h-full w-full touch-none"
