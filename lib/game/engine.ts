@@ -893,6 +893,7 @@ const GM_HELP = [
   '/exp <เลข> - เพิ่ม EXP',
   '/gold <เลข> - เพิ่มเงิน',
   '/item <ไอดี> [จำนวน] [บวก] - เสกไอเทม',
+  '/allweapons - เสกอาวุธทั้งหมดที่อาชีพนี้ใช้ได้',
   '/items - รายการไอดีไอเทม',
   '/stone <เลข> - เสกหินตีบวก',
   '/tp <แมพ> - วาร์ป (town, meadow, forest, cave, volcano)',
@@ -960,15 +961,26 @@ function runCommand(text: string) {
       p.gold = Math.max(0, p.gold + Math.floor(num(0)))
       say('gm', `เงินปัจจุบัน ${p.gold.toLocaleString()}G`)
     },
-    '/item': () => {
-      const id = args[0]
-      if (!id || !ITEMS[id]) return say('error', 'ไม่พบไอดีไอเทม พิมพ์ /items เพื่อดูรายการ')
-      const qty = Math.max(1, Math.min(999, Math.floor(num(1, 1))))
-      const plus = Math.max(0, Math.min(MAX_PLUS, Math.floor(num(2, 0))))
-      if (addItem(id, qty, plus)) say('gm', `เสก ${ITEMS[id].name}${plus ? ` +${plus}` : ''} x${qty}`)
-      else say('error', 'กระเป๋าเต็ม')
-    },
-    '/items': () => {
+  '/item': () => {
+  const id = args[0]
+  if (!id || !ITEMS[id]) return say('error', 'ไม่พบไอดีไอเทม พิมพ์ /items เพื่อดูรายการ')
+  const qty = Math.max(1, Math.min(999, Math.floor(num(1, 1))))
+  const plus = Math.max(0, Math.min(MAX_PLUS, Math.floor(num(2, 0))))
+  if (addItem(id, qty, plus)) say('gm', `เสก ${ITEMS[id].name}${plus ? ` +${plus}` : ''} x${qty}`)
+  else say('error', 'กระเป๋าเต็ม')
+  },
+  '/allweapons': () => {
+  const allowed = new Set(currentJob().weaponTypes)
+  const weapons = Object.values(ITEMS).filter((item) => item.kind === 'weapon' && item.weaponType && allowed.has(item.weaponType))
+  let added = 0
+  for (const item of weapons) {
+    if (addItem(item.id, 1)) added++
+    else if (addItem(item.id, 1, 0, p.storage, STORAGE_SIZE)) added++
+  }
+  say('gm', `เสกอาวุธสำหรับอาชีพ ${currentJob().name} แล้ว ${added}/${weapons.length} ชิ้น (ในกระเป๋า/คลัง)`)
+  saveGame()
+  },
+  '/items': () => {
       const ids = Object.keys(ITEMS)
       for (let i = 0; i < ids.length; i += 8) say('gm', ids.slice(i, i + 8).join(', '))
     },
