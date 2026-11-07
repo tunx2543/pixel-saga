@@ -323,14 +323,27 @@ const CATALOG_ASSETS = [
   'pixellab-object-705a0bad.png',
 ]
 
+const VISUAL_CLASSIFICATION: Record<string, 'dagger' | 'staff' | 'sword' | 'bow'> = {
+  'assassin.png': 'staff',
+  'assassin_2.png': 'bow',
+  'assassin_3.png': 'sword',
+  'assassin_4.png': 'sword',
+  'assassin_5.png': 'dagger',
+  'assassin_6.png': 'dagger',
+  'assassin_7.png': 'dagger',
+  'assassin_8.png': 'sword',
+  'assassin_15.png': 'dagger',
+  'assassin_25.png': 'sword',
+  'pix.png': 'sword',
+  'pix_5.png': 'staff',
+  'pix_15.png': 'staff',
+  'pix_25.png': 'dagger',
+  'pixellab-object-03b36157.png': 'staff',
+}
+
 const catalogItems = Object.fromEntries(CATALOG_ASSETS.map((asset, index) => {
-  const lowerAsset = asset.toLowerCase()
-  const isAssassin = lowerAsset.includes('assassin')
+  const weaponType = VISUAL_CLASSIFICATION[asset] ?? (index >= 50 ? 'staff' : 'sword')
   const isEffect = index >= 50
-  const isMage = /staff|wand|rod|cane|orb|tome|mage/.test(lowerAsset)
-  const isSwordsman = /sword|blade|katana|saber/.test(lowerAsset) || lowerAsset.startsWith('pix')
-  const isArcher = /bow|arrow|archer/.test(lowerAsset)
-  const weaponType = isAssassin ? 'dagger' : isMage ? 'staff' : isSwordsman ? 'sword' : isArcher ? 'bow' : 'sword'
   const weaponLabel = weaponType === 'dagger' ? 'มีด Assassin' : weaponType === 'staff' ? 'คฑา Mage' : weaponType === 'bow' ? 'ธนู Archer' : 'ดาบ Swordsman'
   const tier = isEffect ? 4 : index % 3 + 1
   const atk = 18 + tier * 16 + (index % 5) * 3
