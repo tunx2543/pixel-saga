@@ -55,7 +55,7 @@ export const SOLID = new Set<number>([
 ])
 
 export type Theme = 'town' | 'meadow' | 'forest' | 'cave' | 'volcano'
-export type NpcRole = 'shop' | 'enhance' | 'job' | 'storage'
+export type NpcRole = 'shop' | 'enhance' | 'job' | 'storage' | 'gacha' | 'rebirth'
 
 export interface Portal {
   x: number
@@ -225,7 +225,7 @@ function buildTown(): MapDef {
         greeting: 'ส่งอาวุธมา ข้าจะทำให้มันแข็งแกร่งขึ้น... ถ้าโชคดีนะ',
       },
       {
-        id: 'jobmaster',
+        id: 'goddess',
         name: 'ปรมาจารย์อาร์ค',
         title: 'เปลี่ยนอาชีพ',
         role: 'job',
@@ -243,6 +243,26 @@ function buildTown(): MapDef {
         y: 17.2,
         colors: { hair: '#8b2635', body: '#2a9d8f', legs: '#264653', accent: '#e9c46a' },
         greeting: 'ฝากของไว้กับฉันได้เลย ปลอดภัยแน่นอนจ้า',
+      },
+      {
+        id: 'gacha',
+        name: 'มาดามแคปซูล',
+        title: 'ตู้สุ่มชา',
+        role: 'gacha',
+        x: 22.5,
+        y: 13.8,
+        colors: { hair: '#f1f1f1', body: '#7b2cbf', legs: '#3c096c', accent: '#ffd166', skin: '#f2c6a0' },
+        greeting: 'ยินดีต้อนรับสู่ตู้สุ่มชา ลองเสี่ยงโชคเพื่อรับไอเท็มหายากดูไหม?',
+      },
+      {
+        id: 'rebirth',
+        name: 'เทวทูตแห่งการจุติ',
+        title: 'จุติ',
+        role: 'rebirth',
+        x: 17.5,
+        y: 13.8,
+        colors: { hair: '#ffffff', body: '#e0fbfc', legs: '#98c1d9', accent: '#ffd166', skin: '#f2c6a0' },
+        greeting: 'เมื่อเจ้าพร้อม ข้าจะนำทางสู่การจุติและการเริ่มต้นใหม่',
       },
     ],
   }
@@ -414,8 +434,8 @@ export const MAPS: Record<string, MapDef> = {
   }),
   volcano: buildWild({
     id: 'volcano',
-    name: 'ภูเขาไฟอัคคี',
-    levelLabel: 'Lv.35-50',
+    name: 'แมพลาวา',
+    levelLabel: 'Lv.35-50 • เขตลาวา',
     theme: 'volcano',
     seed: 44,
     base: T.VOLCFLOOR,

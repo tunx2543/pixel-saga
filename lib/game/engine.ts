@@ -45,6 +45,7 @@ export interface SaveData {
   y: number
   gm: boolean
   god: boolean
+  invisible?: boolean
   speed: number
   playTime: number
   kills: number
@@ -119,7 +120,7 @@ interface Projectile {
   delay: number
 }
 
-export type PanelId = 'shop' | 'enhance' | 'job' | 'storage' | 'character' | 'gacha' | 'friends' | 'inventory'
+export type PanelId = 'shop' | 'enhance' | 'job' | 'storage' | 'character' | 'gacha' | 'friends' | 'inventory' | 'gm-summon'
 export type ChatType = 'system' | 'player' | 'gm' | 'loot' | 'error' | 'npc'
 export interface ChatMsg {
   id: number
@@ -491,12 +492,15 @@ function faceToward(x: number, y: number) {
   game.facing = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : dy < 0 ? 'up' : 'down'
 }
 
-function damageMonster(m: Monster, mult: number) {
+  function damageMonster(m: Monster, mult: number) {
   if (m.dead) return
+  const p = player()
   const s = getStats()
   const def = MONSTERS[m.defId]
-  let dmg = dmgFormula(s.atk * mult, def.def) * rand(0.9, 1.1)
-  const crit = Math.random() < s.crit
+  if (!def) return
+  const gmStaff = p.equipment.weapon?.itemId === 'gm_golden_staff' && p.gm
+  let dmg = gmStaff ? 9999999 : dmgFormula(s.atk * mult, def.def) * rand(0.9, 1.1)
+  const crit = !gmStaff && Math.random() < s.crit
   if (crit) dmg *= 1.6
   const amount = Math.max(1, Math.round(dmg))
   m.hp -= amount
@@ -685,7 +689,7 @@ function die() {
 
 /* ---------------- NPC systems ---------------- */
 
-const ROLE_PANEL: Record<NpcRole, PanelId> = { shop: 'shop', enhance: 'enhance', job: 'job', storage: 'storage' }
+const ROLE_PANEL: Record<NpcRole, PanelId> = { shop: 'shop', enhance: 'enhance', job: 'job', storage: 'storage', gacha: 'gacha', rebirth: 'character' }
 
 export function interact() {
   const npc = game.nearNpc
@@ -701,9 +705,35 @@ export function action() {
   if (!interact()) basicAttack()
 }
 
+export function castGmSkill(skill: 'invisible' | 'summon' | 'immortal') {
+  const p = player()
+  if (!p.gm) return
+  if (skill === 'invisible') {
+    p.invisible = !p.invisible
+    say('gm', `ล่องหน: ${p.invisible ? 'เปิด' : 'ปิด'}`)
+  } else if (skill === 'immortal') {
+    p.god = !p.god
+    if (p.god) { p.hp = getStats().maxHp; p.mp = getStats().maxMp }
+    say('gm', `อมตะ: ${p.god ? 'เปิด' : 'ปิด'}`)
+  } else {
+    openPanel('gm-summon')
+  }
+  saveGame()
+  notify()
+}
+
+export function summonGmItem(itemId: string) {
+  const p = player()
+  if (!p.gm || !ITEMS[itemId]) return
+  if (addItem(itemId, 1)) say('gm', `เสก ${ITEMS[itemId].name} สำเร็จ`)
+  else say('error', 'กระเป๋าเต็ม')
+  saveGame()
+  notify()
+}
+
 export function openPanel(id: PanelId) {
-  game.keys.clear()
-  game.panel = game.panel === id ? null : id
+  if (id === 'gm-summon' && !game.p?.gm) return
+  game.panel = id
   notify()
 }
 
@@ -1089,7 +1119,6 @@ async function saveCloudGame(p: SaveData) {
       display_name: p.name,
       class_id: p.jobId,
       save_data: p,
-      map_id: p.mapId,
       x: p.x,
       y: p.y,
       level: p.level,
@@ -1179,7 +1208,7 @@ export function loadGame(d: SaveData) {
   const p: SaveData = {
     version: 1,
     name: d.name.slice(0, 16) || 'นักผจญภัย',
-    jobId: JOBS[d.jobId] ? d.jobId : 'novice',
+    jobId: d.gm && JOBS[d.jobId] ? d.jobId : (JOBS[d.jobId] && d.jobId !== 'gm' ? d.jobId : 'novice'),
     level: Math.max(1, Math.min(MAX_LEVEL, Math.floor(d.level || 1))),
     exp: Math.max(0, d.exp || 0),
     hp: d.hp || 1,
@@ -1194,6 +1223,7 @@ export function loadGame(d: SaveData) {
     y: Number.isFinite(d.y) ? d.y : (MAPS.town.spawn.y + 0.5) * TILE,
     gm: !!d.gm,
     god: !!d.god,
+    invisible: !!d.invisible,
     speed: d.speed || 1,
     playTime: d.playTime || 0,
     kills: d.kills || 0,
@@ -1226,6 +1256,7 @@ export function newGame(name: string) {
     y: (town.spawn.y + 0.5) * TILE,
     gm: false,
     god: false,
+    invisible: false,
     speed: 1,
     playTime: 0,
     kills: 0,

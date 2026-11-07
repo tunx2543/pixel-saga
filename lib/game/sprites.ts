@@ -59,6 +59,37 @@ function renderTemplate(rows: string[], palette: Record<string, string>, outline
 }
 
 const cache = new Map<string, HTMLCanvasElement>()
+const gmOutfitCache = new Map<string, HTMLImageElement>()
+const npcSpriteCache = new Map<string, HTMLImageElement>()
+
+export function npcSprite(id: string): HTMLImageElement | null {
+  let image = npcSpriteCache.get(id)
+  if (!image) {
+    image = new Image()
+    image.crossOrigin = 'anonymous'
+    image.src = `/images/npcs/${id}.png`
+    npcSpriteCache.set(id, image)
+  }
+  return image.complete && image.naturalWidth > 0 ? image : null
+}
+
+type GmAnimation = 'idle' | 'walk' | 'attack'
+
+export function gmOutfitSprite(dir: Dir, animation: GmAnimation = 'idle'): HTMLImageElement | null {
+  const direction = dir === 'down' ? 'south' : dir === 'up' ? 'north' : dir === 'left' ? 'west' : 'east'
+  const key = `gm-${animation}-${direction}`
+  let image = gmOutfitCache.get(key)
+  if (!image) {
+    image = new Image()
+    image.crossOrigin = 'anonymous'
+    const useWalk = animation === 'walk' && direction === 'south'
+    const filename = animation === 'attack' ? `attack-${direction}.gif` : useWalk ? 'walk-south.gif' : `outfit-${direction}.png`
+    image.src = `/images/characters/gm/${filename}`
+    gmOutfitCache.set(key, image)
+  }
+  return image.complete && image.naturalWidth > 0 ? image : null
+}
+
 function cached(key: string, make: () => HTMLCanvasElement) {
   let c = cache.get(key)
   if (!c) {

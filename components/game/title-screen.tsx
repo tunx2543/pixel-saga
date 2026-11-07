@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { JOBS } from '@/lib/game/data'
 import { deleteSave, loadGame, newGame, readSave, loadCloudGame } from '@/lib/game/engine'
 import { MAPS } from '@/lib/game/maps'
@@ -11,17 +12,19 @@ export function TitleScreen() {
   const [save, setSave] = useState(() => readSave())
 
   useEffect(() => {
-    void (async () => {
-      try {
-        const cloud = await loadCloudGame()
-        if (cloud) {
-          setSave(cloud)
-          setMode('menu')
-        }
-      } catch {
-        // Cloud save unavailable
+    const loadCloud = async () => {
+      const cloud = await loadCloudGame()
+      if (cloud) {
+        setSave(cloud)
+        setMode('menu')
       }
-    })()
+    }
+
+    void loadCloud()
+    const { data } = createClient().auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') void loadCloud()
+    })
+    return () => data.subscription.unsubscribe()
   }, [])
   const [mode, setMode] = useState<'menu' | 'new'>(save ? 'menu' : 'new')
   const [name, setName] = useState('')

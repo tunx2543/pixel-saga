@@ -1,7 +1,7 @@
 import { ITEMS, JOBS, MONSTERS } from './data'
 import { currentMap, game } from './engine'
 import { TILE } from './maps'
-import { humanSprite, mapCanvas, monsterSprite } from './sprites'
+import { gmOutfitSprite, humanSprite, mapCanvas, monsterSprite, npcSprite } from './sprites'
 
 const THEME_BG: Record<string, string> = {
   town: '#2d5a27',
@@ -323,9 +323,10 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
       y: fy,
       draw: () => {
         shadow(ctx, fx, fy, 6)
-        const img = humanSprite(n.colors, 'down', 0)
+        const img = npcSprite(n.id) ?? humanSprite(n.colors, 'down', 0)
         const bob = Math.sin(t * 2 + fx) > 0.6 ? 1 : 0
-        ctx.drawImage(img, Math.round(fx - img.width / 2), Math.round(fy - img.height + bob))
+        const scale = npcSprite(n.id) ? 1.15 : 1
+        ctx.drawImage(img, Math.round(fx - (img.width * scale) / 2), Math.round(fy - img.height * scale + bob), img.width * scale, img.height * scale)
       },
     })
   }
@@ -399,13 +400,8 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
       shadow(ctx, p.x, p.y, 6)
       const frame = game.moving ? Math.floor(game.walkT * 8) % 4 : 0
       const walkingPose = game.moving && frame % 2 === 0
-      const customArt = p.jobId === 'assassin'
-    ? assassinArt(game.facing, walkingPose, game.attackAnim > 0)
-    : p.jobId === 'archer'
-      ? archerArt(game.facing, walkingPose, game.attackAnim > 0)
-      : p.jobId === 'mage' || p.jobId === 'swordsman'
-        ? professionArt(game.facing, p.jobId, walkingPose, game.attackAnim > 0)
-        : null
+const animation = game.attackAnim > 0 ? 'attack' : game.moving ? 'walk' : 'idle'
+    const customArt = p.gm ? gmOutfitSprite(game.facing, animation) : null
   const img = customArt ?? humanSprite(job.colors, game.facing, frame, weapon?.weaponType ?? null, weapon?.color)
       let ox = 0
       let oy = 0
@@ -417,6 +413,7 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         else oy = k
       }
       const bob = game.moving && frame % 2 === 1 ? -1 : 0
+      ctx.globalAlpha = p.invisible ? 0.18 : 1
       if (p.gm) {
         ctx.fillStyle = `rgba(255, 214, 10, ${0.18 + Math.sin(t * 5) * 0.08})`
         ctx.beginPath()
@@ -424,6 +421,7 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         ctx.fill()
       }
       ctx.drawImage(img, Math.round(p.x - img.width / 2 + ox), Math.round(p.y - img.height + bob + oy))
+      ctx.globalAlpha = 1
     },
   })
 

@@ -44,8 +44,14 @@ export function GameCanvas() {
     const loop = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000)
       last = now
-      update(dt)
-      render(ctx, canvas.width, canvas.height, dpr, font)
+      try {
+        update(dt)
+        render(ctx, canvas.width, canvas.height, dpr, font)
+      } catch (error) {
+        console.error('[v0] Game frame error:', error)
+        ctx.setTransform(1, 0, 0, 1, 0, 0)
+        ctx.globalAlpha = 1
+      }
       uiAcc += dt
       if (uiAcc > 0.1) {
         uiAcc = 0
