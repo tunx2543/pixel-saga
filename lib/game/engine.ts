@@ -497,6 +497,7 @@ function faceToward(x: number, y: number) {
   const p = player()
   const s = getStats()
   const def = MONSTERS[m.defId]
+  if (!def) return
   const gmStaff = p.equipment.weapon?.itemId === 'gm_golden_staff' && p.gm
   let dmg = gmStaff ? 9999999 : dmgFormula(s.atk * mult, def.def) * rand(0.9, 1.1)
   const crit = !gmStaff && Math.random() < s.crit
