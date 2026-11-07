@@ -450,7 +450,11 @@ const animation = game.attackAnim > 0 ? 'attack' : game.moving ? 'walk' : 'idle'
         const auraScale = Math.max(0.12, Math.min(0.22, (img.width / aura.width) * 2.2))
         const auraWidth = aura.width * auraScale
         const auraHeight = aura.height * auraScale
-        ctx.drawImage(aura, Math.round(p.x - auraWidth / 2), Math.round(p.y - auraHeight + 5), auraWidth, auraHeight)
+        const auraCenterX = p.x
+        const auraCenterY = p.y - auraHeight / 2 + 5
+        ctx.translate(auraCenterX, auraCenterY)
+        ctx.rotate(t * 2.4)
+        ctx.drawImage(aura, -auraWidth / 2, -auraHeight / 2, auraWidth, auraHeight)
         ctx.restore()
       }
       ctx.drawImage(img, Math.round(p.x - img.width / 2 + ox), Math.round(p.y - img.height + bob + oy))
