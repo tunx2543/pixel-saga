@@ -14,6 +14,7 @@ import { InventoryPanel } from './inventory-panel'
 import { JobPanel } from './job-panel'
 import { ShopPanel } from './shop-panel'
 import { StoragePanel } from './storage-panel'
+import { TradePanel } from './trade-panel'
 
 export function Panels() {
   const g = useGame()
@@ -26,6 +27,8 @@ export function Panels() {
       return <GachaPanel />
     case 'friends':
       return <FriendsPanel game={g} />
+    case 'trade':
+      return <TradePanel />
     case 'gm-summon':
       return <GmSummonPanel />
     case 'inventory':

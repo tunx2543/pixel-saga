@@ -129,7 +129,7 @@ interface Projectile {
   delay: number
 }
 
-export type PanelId = 'shop' | 'enhance' | 'job' | 'storage' | 'character' | 'gacha' | 'friends' | 'inventory' | 'gm-summon'
+export type PanelId = 'shop' | 'enhance' | 'job' | 'storage' | 'character' | 'gacha' | 'friends' | 'trade' | 'inventory' | 'gm-summon'
 export type ChatType = 'system' | 'player' | 'gm' | 'loot' | 'error' | 'npc'
 export interface ChatMsg {
   id: number
@@ -158,6 +158,8 @@ export const game = {
   bubble: null as null | { text: string; until: number },
   announcement: null as null | { body: string; authorId: string; until: number },
   socialTargetId: null as string | null,
+  tradeTargetId: null as string | null,
+  tradeId: null as number | null,
   nearNpc: null as NpcDef | null,
   time: 0,
   regenT: 0,

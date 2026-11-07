@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { notify } from '@/lib/game/engine'
+import { game, notify, openPanel } from '@/lib/game/engine'
 
 export function SocialNotifications() {
   const [request, setRequest] = useState<{ userId: string; uid: number | null } | null>(null)
+  const [trade, setTrade] = useState<{ id: number; userId: string } | null>(null)
 
   useEffect(() => {
     let active = true
@@ -14,32 +15,54 @@ export function SocialNotifications() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user || !active) return
       const { data } = await supabase.from('friendships').select('user_id').eq('friend_user_id', user.id).eq('status', 'pending').limit(1).maybeSingle()
-      if (!data || !active) return
-      const { data: player } = await supabase.from('game_players').select('uid').eq('user_id', data.user_id).maybeSingle()
-      setRequest({ userId: data.user_id, uid: player?.uid ?? null })
+      if (!active) return
+      if (data) {
+        const { data: player } = await supabase.from('game_players').select('uid').eq('user_id', data.user_id).maybeSingle()
+        setRequest({ userId: data.user_id, uid: player?.uid ?? null })
+      }
+      const { data: tradeRequest } = await supabase.from('trade_requests').select('id, sender_id').eq('recipient_id', user.id).eq('status', 'pending').order('created_at', { ascending: false }).limit(1).maybeSingle()
+      if (tradeRequest) setTrade({ id: tradeRequest.id, userId: tradeRequest.sender_id })
     }
     void load()
     const timer = window.setInterval(() => void load(), 4000)
     return () => { active = false; window.clearInterval(timer) }
   }, [])
 
-  if (!request) return null
+  if (!request && !trade) return null
 
   const respond = async (status: 'accepted' | 'blocked') => {
+    if (!request) return
     const supabase = createClient()
     await supabase.from('friendships').update({ status }).eq('user_id', request.userId).eq('friend_user_id', (await supabase.auth.getUser()).data.user?.id)
     setRequest(null)
     notify()
   }
 
+  const acceptTrade = async () => {
+    if (!trade) return
+    const supabase = createClient()
+    await supabase.from('trade_requests').update({ status: 'accepted' }).eq('id', trade.id)
+    game.tradeId = trade.id
+    game.tradeTargetId = trade.userId
+    setTrade(null)
+    openPanel('trade')
+  }
+
   return (
-    <div className="pointer-events-auto absolute right-2 top-2 z-50 w-[min(18rem,calc(100vw-1rem))] rounded-xl border border-primary/50 bg-background/95 p-3 shadow-2xl backdrop-blur" role="status">
-      <p className="text-[10px] font-bold tracking-[0.15em] text-primary">คำขอเพื่อนใหม่</p>
-      <p className="mt-1 text-xs text-foreground">ผู้เล่น UID {request.uid === null ? '?????' : String(request.uid).padStart(5, '0')} ต้องการเพิ่มคุณเป็นเพื่อน</p>
-      <div className="mt-2 grid grid-cols-2 gap-2">
-        <button type="button" className="pixel-button primary px-2 py-1.5 text-[10px]" onClick={() => void respond('accepted')}>ยอมรับ</button>
-        <button type="button" className="pixel-button secondary px-2 py-1.5 text-[10px]" onClick={() => void respond('blocked')}>ปฏิเสธ</button>
-      </div>
+    <div className="pointer-events-auto absolute right-2 top-2 z-50 w-[min(18rem,calc(100vw-1rem))] space-y-2" role="status">
+      {request && <div className="rounded-xl border border-primary/50 bg-background/95 p-3 shadow-2xl backdrop-blur">
+        <p className="text-[10px] font-bold tracking-[0.15em] text-primary">คำขอเพื่อนใหม่</p>
+        <p className="mt-1 text-xs text-foreground">ผู้เล่น UID {request.uid === null ? '?????' : String(request.uid).padStart(5, '0')} ต้องการเพิ่มคุณเป็นเพื่อน</p>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <button type="button" className="pixel-button primary px-2 py-1.5 text-[10px]" onClick={() => void respond('accepted')}>ยอมรับ</button>
+          <button type="button" className="pixel-button secondary px-2 py-1.5 text-[10px]" onClick={() => void respond('blocked')}>ปฏิเสธ</button>
+        </div>
+      </div>}
+      {trade && <div className="rounded-xl border border-accent/50 bg-background/95 p-3 shadow-2xl backdrop-blur">
+        <p className="text-[10px] font-bold tracking-[0.15em] text-accent">คำขอแลกเปลี่ยน</p>
+        <p className="mt-1 text-xs text-foreground">ผู้เล่นต้องการแลกเปลี่ยนไอเท็มกับคุณ</p>
+        <button type="button" className="pixel-button primary mt-2 w-full px-2 py-1.5 text-[10px]" onClick={() => void acceptTrade()}>เปิดหน้าต่างแลกเปลี่ยน</button>
+      </div>}
     </div>
   )
 }
