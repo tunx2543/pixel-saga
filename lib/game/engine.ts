@@ -1,4 +1,5 @@
 import {
+  GM_ITEMS,
   ITEMS,
   JOBS,
   MAX_LEVEL,
@@ -780,8 +781,8 @@ export function castGmSkill(skill: 'invisible' | 'summon' | 'immortal') {
 
 export function summonGmItem(itemId: string) {
   const p = player()
-  if (!p.gm || !ITEMS[itemId]) return
-  if (addItem(itemId, 1)) say('gm', `เสก ${ITEMS[itemId].name} สำเร็จ`)
+  if (!p.gm || !GM_ITEMS[itemId]) return
+  if (addItem(itemId, 1)) say('gm', `เสก ${GM_ITEMS[itemId].name} สำเร็จ`)
   else say('error', 'กระเป๋าเต็ม')
   saveGame()
   notify()
@@ -1089,8 +1090,8 @@ function runCommand(text: string) {
   saveGame()
   },
   '/items': () => {
-      const ids = Object.keys(ITEMS)
-      for (let i = 0; i < ids.length; i += 8) say('gm', ids.slice(i, i + 8).join(', '))
+  const ids = Object.keys(ITEMS)
+  for (let i = 0; i < ids.length; i += 8) say('gm', ids.slice(i, i + 8).join(', '))
     },
     '/stone': () => {
       const n = Math.max(1, Math.min(999, Math.floor(num(0, 10))))

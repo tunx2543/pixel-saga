@@ -296,6 +296,7 @@ export interface ItemDef {
   tier?: number
   asset?: string
   effect?: boolean
+  gmOnly?: boolean
 }
 
 const weapon = (
@@ -393,7 +394,7 @@ const catalogItems = Object.fromEntries(CATALOG_ASSETS.map((asset, index) => {
   return [id, item]
 })) as Record<string, ItemDef>
 
-export const ITEMS: Record<string, ItemDef> = {
+const BASE_ITEMS: Record<string, ItemDef> = {
   ...catalogItems,
   red_potion: { id: 'red_potion', name: 'ยาแดง', kind: 'consumable', price: 30, heal: 60, icon: 'potion', color: '#e63946', description: 'ฟื้นฟู HP 60' },
   orange_potion: { id: 'orange_potion', name: 'ยาส้ม', kind: 'consumable', price: 120, heal: 220, icon: 'potion', color: '#f4a261', description: 'ฟื้นฟู HP 220' },
@@ -441,6 +442,28 @@ export const ITEMS: Record<string, ItemDef> = {
   chain_mail: armor('chain_mail', 'เกราะโซ่', 34, 8000, 3, 22, '#adb5bd'),
   dragon_armor: armor('dragon_armor', 'เกราะมังกร', 70, 24000, 4, 36, '#c1121f'),
 }
+
+const GM_ITEM_COUNT = 64
+export const GM_ITEMS: Record<string, ItemDef> = Object.fromEntries(
+  Array.from({ length: GM_ITEM_COUNT }, (_, index) => {
+    const number = String(index + 1).padStart(3, '0')
+    const id = `gm888_${number}`
+    const item: ItemDef = {
+      id,
+      name: `GM อาร์ติแฟกต์ ${number}`,
+      kind: 'material',
+      price: 0,
+      icon: 'core',
+      color: '#f6c453',
+      asset: `/images/items/gm888/gm888_${number}.png`,
+      description: `ไอเทม GM 888 ลำดับ ${number} — สงวนสำหรับคำสั่งเสกของ GM เท่านั้น`,
+      gmOnly: true,
+    }
+    return [id, item]
+  }),
+) as Record<string, ItemDef>
+
+export const ITEMS: Record<string, ItemDef> = { ...BASE_ITEMS, ...GM_ITEMS }
 
 export const SHOP_STOCK: string[] = [
   'red_potion',
