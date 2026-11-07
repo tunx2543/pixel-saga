@@ -11,6 +11,7 @@ import { WorldBanner } from './world-banner'
 import { TouchControls } from './touch-controls'
 import { PlayerActionMenu } from './player-action-menu'
 import { SocialNotifications } from './social-notifications'
+import { SocialPopover } from './social-popover'
 
 export function Game() {
   const g = useGame()
@@ -24,6 +25,7 @@ export function Game() {
         <WorldBanner />
         <PlayerActionMenu />
         <SocialNotifications />
+        <SocialPopover />
         <ChatBox />
         <PresenceSync />
         <Panels />

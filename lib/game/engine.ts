@@ -149,6 +149,7 @@ export const game = {
   projectiles: [] as Projectile[],
   chat: [] as ChatMsg[],
   panel: null as PanelId | null,
+  socialMenuOpen: false,
   keys: new Set<string>(),
   attackHeld: false,
   facing: 'down' as Dir,
@@ -723,6 +724,11 @@ export function rebirth() {
     notify()
     return false
   }
+  if ((p.rebirthCount ?? 0) >= 6) {
+    say('error', 'จุติครบสูงสุด 6 ครั้งแล้ว')
+    notify()
+    return false
+  }
   const before = getStats(p)
   const baseHp = 80 + 22 + itemPower(p.equipment.armor) * 2
   const baseMp = 30 + 7
@@ -740,9 +746,10 @@ export function rebirth() {
   p.exp = 0
   p.hp = baseHp + p.rebirthBonus.maxHp
   p.mp = baseMp + p.rebirthBonus.maxMp
+  const spawn = MAPS.town.spawn
   p.mapId = 'town'
-  p.x = 20
-  p.y = 18
+  p.x = spawn.x
+  p.y = spawn.y
   game.effects.push({ type: 'levelup', x: p.x, y: p.y, r: 36, color: '#ffd60a', life: 3, max: 3 })
   addFloat(p.x, p.y - 42, `REBIRTH ${p.rebirthCount}`, '#ffd60a', 15)
   say('system', 'จุติสำเร็จ! กลับไปเลเวล 1 และคงค่าสเตตัสเดิมไว้')

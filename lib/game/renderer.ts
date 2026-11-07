@@ -445,14 +445,16 @@ const animation = game.attackAnim > 0 ? 'attack' : game.moving ? 'walk' : 'idle'
       }
       if ((p.rebirthCount ?? 0) > 0) {
         ctx.save()
-        const pulse = 0.55 + Math.sin(t * 8) * 0.2
+        const rebirthTier = Math.min(6, p.rebirthCount ?? 1)
+        const pulse = 0.55 + Math.sin(t * (7 + rebirthTier)) * 0.2
+        const colors = ['#b9f6ff', '#8fe9ff', '#72c7ff', '#a78bfa', '#f0abfc', '#ffe08a']
         ctx.globalAlpha = pulse
-        ctx.strokeStyle = '#b9f6ff'
-        ctx.shadowColor = '#39d8ff'
-        ctx.shadowBlur = 7
-        ctx.lineWidth = 1.4
-        for (let bolt = 0; bolt < 4; bolt++) {
-          const angle = t * 1.8 + bolt * (Math.PI / 2)
+        ctx.strokeStyle = colors[rebirthTier - 1]
+        ctx.shadowColor = colors[rebirthTier - 1]
+        ctx.shadowBlur = 7 + rebirthTier * 2
+        ctx.lineWidth = 1.2 + rebirthTier * 0.18
+        for (let bolt = 0; bolt < 2 + rebirthTier; bolt++) {
+          const angle = t * (1.2 + rebirthTier * 0.18) + bolt * (Math.PI * 2 / (2 + rebirthTier))
           const startX = p.x + Math.cos(angle) * 8
           const startY = p.y - 15 + Math.sin(angle) * 4
           ctx.beginPath()
