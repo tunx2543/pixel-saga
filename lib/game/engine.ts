@@ -747,9 +747,7 @@ export function rebirth() {
   p.hp = baseHp + p.rebirthBonus.maxHp
   p.mp = baseMp + p.rebirthBonus.maxMp
   const spawn = MAPS.town.spawn
-  p.mapId = 'town'
-  p.x = spawn.x
-  p.y = spawn.y
+  changeMap('town', spawn.x, spawn.y)
   game.effects.push({ type: 'levelup', x: p.x, y: p.y, r: 36, color: '#ffd60a', life: 3, max: 3 })
   addFloat(p.x, p.y - 42, `REBIRTH ${p.rebirthCount}`, '#ffd60a', 15)
   say('system', 'จุติสำเร็จ! กลับไปเลเวล 1 และคงค่าสเตตัสเดิมไว้')
