@@ -492,8 +492,9 @@ function faceToward(x: number, y: number) {
   game.facing = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : dy < 0 ? 'up' : 'down'
 }
 
-function damageMonster(m: Monster, mult: number) {
+  function damageMonster(m: Monster, mult: number) {
   if (m.dead) return
+  const p = player()
   const s = getStats()
   const def = MONSTERS[m.defId]
   const gmStaff = p.equipment.weapon?.itemId === 'gm_golden_staff' && p.gm
