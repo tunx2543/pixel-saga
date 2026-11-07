@@ -1,7 +1,7 @@
 import { ITEMS, JOBS, MONSTERS } from './data'
 import { currentMap, game } from './engine'
 import { TILE } from './maps'
-import { humanSprite, mapCanvas, monsterSprite } from './sprites'
+import { gmOutfitSprite, humanSprite, mapCanvas, monsterSprite } from './sprites'
 
 const THEME_BG: Record<string, string> = {
   town: '#2d5a27',
@@ -399,7 +399,9 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
       shadow(ctx, p.x, p.y, 6)
       const frame = game.moving ? Math.floor(game.walkT * 8) % 4 : 0
       const walkingPose = game.moving && frame % 2 === 0
-      const customArt = p.jobId === 'assassin'
+      const customArt = p.gm
+    ? gmOutfitSprite(game.facing)
+    : p.jobId === 'assassin'
     ? assassinArt(game.facing, walkingPose, game.attackAnim > 0)
     : p.jobId === 'archer'
       ? archerArt(game.facing, walkingPose, game.attackAnim > 0)

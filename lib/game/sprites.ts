@@ -59,6 +59,20 @@ function renderTemplate(rows: string[], palette: Record<string, string>, outline
 }
 
 const cache = new Map<string, HTMLCanvasElement>()
+const gmOutfitCache = new Map<string, HTMLImageElement>()
+
+export function gmOutfitSprite(dir: Dir) {
+  const key = `gm-outfit-${dir}`
+  let image = gmOutfitCache.get(key)
+  if (!image) {
+    image = new Image()
+    image.crossOrigin = 'anonymous'
+    image.src = `/images/characters/gm/outfit-${dir === 'down' ? 'south' : dir === 'up' ? 'north' : dir}.png`
+    gmOutfitCache.set(key, image)
+  }
+  return image
+}
+
 function cached(key: string, make: () => HTMLCanvasElement) {
   let c = cache.get(key)
   if (!c) {
