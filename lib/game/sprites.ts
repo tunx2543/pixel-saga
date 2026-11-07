@@ -60,6 +60,18 @@ function renderTemplate(rows: string[], palette: Record<string, string>, outline
 
 const cache = new Map<string, HTMLCanvasElement>()
 const gmOutfitCache = new Map<string, HTMLImageElement>()
+const npcSpriteCache = new Map<string, HTMLImageElement>()
+
+export function npcSprite(id: string): HTMLImageElement | null {
+  let image = npcSpriteCache.get(id)
+  if (!image) {
+    image = new Image()
+    image.crossOrigin = 'anonymous'
+    image.src = `/images/npcs/${id}.png`
+    npcSpriteCache.set(id, image)
+  }
+  return image.complete && image.naturalWidth > 0 ? image : null
+}
 
 type GmAnimation = 'idle' | 'walk' | 'attack'
 

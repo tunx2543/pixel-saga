@@ -689,7 +689,7 @@ function die() {
 
 /* ---------------- NPC systems ---------------- */
 
-const ROLE_PANEL: Record<NpcRole, PanelId> = { shop: 'shop', enhance: 'enhance', job: 'job', storage: 'storage' }
+const ROLE_PANEL: Record<NpcRole, PanelId> = { shop: 'shop', enhance: 'enhance', job: 'job', storage: 'storage', gacha: 'gacha', rebirth: 'character' }
 
 export function interact() {
   const npc = game.nearNpc
