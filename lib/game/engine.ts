@@ -519,7 +519,17 @@ function killMonster(m: Monster) {
   p.gold += gold
   addFloat(m.x, m.y - 30, `+${gold}G`, '#f2c94c', 9)
   gainExp(def.exp)
-  for (const d of def.drops) {
+
+  const equipmentPool = Object.values(ITEMS).filter((item) => item.kind === 'weapon' || item.kind === 'armor')
+  const guaranteedPool = equipmentPool.filter((item) => (item.tier ?? 1) <= 3)
+  const effectPool = equipmentPool.filter((item) => (item.tier ?? 1) >= 4)
+  const dynamicDrops = def.boss
+    ? effectPool.map((item) => ({ itemId: item.id, chance: 0.1 }))
+    : guaranteedPool.map((item) => ({ itemId: item.id, chance: 0.01 }))
+  const seen = new Set<string>()
+  for (const d of [...def.drops, ...dynamicDrops]) {
+    if (seen.has(d.itemId)) continue
+    seen.add(d.itemId)
     if (Math.random() < d.chance) {
       if (addItem(d.itemId, 1)) say('loot', `ได้รับ ${ITEMS[d.itemId].name}`)
       else warn('กระเป๋าเต็ม! ไอเทมหล่นหาย')
