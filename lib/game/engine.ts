@@ -45,6 +45,7 @@ export interface SaveData {
   x: number
   y: number
   gm: boolean
+  uid?: number
   god: boolean
   invisible?: boolean
   speed: number
@@ -58,6 +59,7 @@ export interface SaveData {
 
 export interface RemotePlayer {
   userId: string
+  uid: number
   displayName: string
   classId: string
   jobId: string
@@ -959,15 +961,16 @@ function runCommand(text: string) {
   }
 
   if (cmd === GM_UNLOCK) {
-    if (p.gm) say('gm', 'โหมด GM เปิดอยู่แล้ว')
-    else {
-      p.gm = true
-      say('gm', 'เปิดโหมด GM สำเร็จ! พิมพ์ /gm เพื่อดูคำสั่งทั้งหมด')
-      saveGame()
+    if (p.uid !== 0) {
+      say('error', 'คำสั่งนี้ใช้ได้เฉพาะ UID 00000')
+      return
     }
+    p.gm = true
+    say('gm', 'โหมด GM เปิดอยู่แล้วสำหรับบัญชีหลัก')
+    saveGame()
+    notify()
     return
   }
-
   switch (cmd) {
     case '/help':
       PUBLIC_HELP.forEach((l) => say('system', l))
@@ -1263,7 +1266,8 @@ export function loadGame(d: SaveData) {
     mapId: MAPS[d.mapId] ? d.mapId : 'town',
     x: Number.isFinite(d.x) ? d.x : (MAPS.town.spawn.x + 0.5) * TILE,
     y: Number.isFinite(d.y) ? d.y : (MAPS.town.spawn.y + 0.5) * TILE,
-    gm: !!d.gm,
+    uid: d.uid === 0 ? 0 : undefined,
+    gm: d.uid === 0,
     god: !!d.god,
     invisible: !!d.invisible,
     speed: d.speed || 1,

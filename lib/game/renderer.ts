@@ -574,12 +574,12 @@ const animation = game.attackAnim > 0 ? 'attack' : game.moving ? 'walk' : 'idle'
     if (other.mapId !== map.id) continue
     const [x, y] = toS(other.x, other.y - 24)
     if (other.gm) text('[GM]', x, y - 12 * dpr, '#ffd60a', 8)
-    text(`${other.displayName} Lv.${other.level}`, x, y, other.gm ? '#ffd60a' : '#8be9fd', 9)
+    text(`${other.displayName} [${String(other.uid).padStart(5, '0')}] Lv.${other.level}`, x, y, other.gm ? '#ffd60a' : '#8be9fd', 9)
   }
 
   {
     const [x, y] = toS(p.x, p.y - 24)
-    text(p.name, x, y, p.gm ? '#ffd60a' : '#ffffff', 10)
+    text(`${p.name} [${String(p.uid ?? 1).padStart(5, '0')}]`, x, y, p.gm ? '#ffd60a' : '#ffffff', 10)
     if (p.gm) text('[GM]', x, y - 12 * dpr, '#ffd60a', 8)
     if (game.bubble) {
       ctx.font = `${Math.round(11 * dpr * (zoom / 3) * 1.2)}px ${font}`

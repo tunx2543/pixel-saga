@@ -30,6 +30,10 @@ export function PresenceSync() {
           notify()
           return
         }
+        const isGm = data.user.email?.toLowerCase() === 'ffsmilepay53@gmail.com'
+        const { data: ownRow } = await supabase.from('game_players').select('uid').eq('user_id', data.user.id).maybeSingle()
+        player.uid = ownRow?.uid ?? player.uid ?? undefined
+        player.gm = isGm
         const now = new Date().toISOString()
         await supabase.from('game_players').upsert({
           user_id: data.user.id,
@@ -44,7 +48,7 @@ export function PresenceSync() {
         lastSync = Date.now()
         const { data: rows } = await supabase
           .from('game_players')
-          .select('user_id, display_name, class_id, save_data, x, y, level, last_seen')
+          .select('user_id, uid, display_name, class_id, save_data, x, y, level, last_seen')
           .gt('last_seen', new Date(Date.now() - 30000).toISOString())
         game.remotePlayers = (rows ?? [])
           .filter((row) => row.user_id !== data.user.id)
@@ -52,6 +56,7 @@ export function PresenceSync() {
             const save = (row.save_data ?? {}) as Record<string, unknown>
             return {
               userId: row.user_id,
+              uid: Number(row.uid),
               displayName: row.display_name,
               classId: row.class_id,
               jobId: typeof save.jobId === 'string' ? save.jobId : row.class_id,
@@ -59,7 +64,7 @@ export function PresenceSync() {
               x: Number(row.x),
               y: Number(row.y),
               level: row.level,
-              gm: save.gm === true,
+              gm: Number(row.uid) === 0,
               facing: (typeof save.facing === 'string' ? save.facing : 'down') as 'up' | 'down' | 'left' | 'right',
               moving: save.moving === true,
               attackAnim: typeof save.attackAnim === 'number' ? save.attackAnim : 0,

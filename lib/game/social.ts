@@ -4,7 +4,15 @@ import { createClient } from '@/lib/supabase/client'
 
 export type SocialResult = { ok: boolean; message: string }
 
+async function resolveTargetId(target: string) {
+  if (!/^\d{1,5}$/.test(target)) return target
+  const supabase = createClient()
+  const { data } = await supabase.from('game_players').select('user_id').eq('uid', Number(target)).maybeSingle()
+  return data?.user_id ?? target
+}
+
 export async function sendFriendRequest(targetUserId: string): Promise<SocialResult> {
+  targetUserId = await resolveTargetId(targetUserId)
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false, message: 'กรุณาเข้าสู่ระบบก่อน' }
@@ -13,6 +21,7 @@ export async function sendFriendRequest(targetUserId: string): Promise<SocialRes
 }
 
 export async function sendWhisper(targetUserId: string, body: string): Promise<SocialResult> {
+  targetUserId = await resolveTargetId(targetUserId)
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false, message: 'กรุณาเข้าสู่ระบบก่อน' }
@@ -21,6 +30,7 @@ export async function sendWhisper(targetUserId: string, body: string): Promise<S
 }
 
 export async function createTrade(targetUserId: string): Promise<SocialResult> {
+  targetUserId = await resolveTargetId(targetUserId)
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false, message: 'กรุณาเข้าสู่ระบบก่อน' }
@@ -37,6 +47,7 @@ export async function publishAnnouncement(body: string): Promise<SocialResult> {
 }
 
 export async function createBan(targetUserId: string, durationMinutes: number | null, reason: string): Promise<SocialResult> {
+  targetUserId = await resolveTargetId(targetUserId)
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false, message: 'กรุณาเข้าสู่ระบบก่อน' }
