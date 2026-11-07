@@ -61,14 +61,18 @@ function renderTemplate(rows: string[], palette: Record<string, string>, outline
 const cache = new Map<string, HTMLCanvasElement>()
 const gmOutfitCache = new Map<string, HTMLImageElement>()
 
-export function gmOutfitSprite(dir: Dir): HTMLImageElement | null {
-  const key = `gm-outfit-${dir}`
+type GmAnimation = 'idle' | 'walk' | 'attack'
+
+export function gmOutfitSprite(dir: Dir, animation: GmAnimation = 'idle'): HTMLImageElement | null {
+  const direction = dir === 'down' ? 'south' : dir === 'up' ? 'north' : dir === 'left' ? 'west' : 'east'
+  const key = `gm-${animation}-${direction}`
   let image = gmOutfitCache.get(key)
   if (!image) {
     image = new Image()
     image.crossOrigin = 'anonymous'
-    const direction = dir === 'down' ? 'south' : dir === 'up' ? 'north' : dir === 'left' ? 'west' : 'east'
-    image.src = `/images/characters/gm/outfit-${direction}.png`
+    const useWalk = animation === 'walk' && direction === 'south'
+    const filename = animation === 'attack' ? `attack-${direction}.gif` : useWalk ? 'walk-south.gif' : `outfit-${direction}.png`
+    image.src = `/images/characters/gm/${filename}`
     gmOutfitCache.set(key, image)
   }
   return image.complete && image.naturalWidth > 0 ? image : null

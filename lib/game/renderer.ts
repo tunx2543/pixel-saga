@@ -399,15 +399,8 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
       shadow(ctx, p.x, p.y, 6)
       const frame = game.moving ? Math.floor(game.walkT * 8) % 4 : 0
       const walkingPose = game.moving && frame % 2 === 0
-      const customArt = p.gm && game.attackAnim <= 0
-    ? gmOutfitSprite(game.facing)
-    : p.jobId === 'assassin'
-    ? assassinArt(game.facing, walkingPose, game.attackAnim > 0)
-    : p.jobId === 'archer'
-      ? archerArt(game.facing, walkingPose, game.attackAnim > 0)
-      : p.jobId === 'mage' || p.jobId === 'swordsman'
-        ? professionArt(game.facing, p.jobId, walkingPose, game.attackAnim > 0)
-        : null
+const animation = game.attackAnim > 0 ? 'attack' : game.moving ? 'walk' : 'idle'
+    const customArt = p.gm ? gmOutfitSprite(game.facing, animation) : null
   const img = customArt ?? humanSprite(job.colors, game.facing, frame, weapon?.weaponType ?? null, weapon?.color)
       let ox = 0
       let oy = 0
