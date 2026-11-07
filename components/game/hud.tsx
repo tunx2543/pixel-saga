@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown, ChevronUp, UsersRound } from 'lucide-react'
 import { useGame } from '@/lib/game/use-game'
 import { castGmSkill, currentJob, getStats, openPanel } from '@/lib/game/engine'
 import { expToNext } from '@/lib/game/data'
@@ -71,7 +71,7 @@ export function Hud() {
           <div className="mt-2 grid grid-cols-2 gap-1">
             <button type="button" onClick={() => openPanel('inventory')} className="pixel-btn bg-secondary px-2 py-1 text-[10px] text-foreground hover:bg-secondary/80">กระเป๋า</button>
             <button type="button" onClick={() => openPanel('gacha')} className="pixel-btn bg-primary/20 px-2 py-1 text-[10px] text-primary hover:bg-primary/30">เปิดตู้กาชา</button>
-            <button type="button" onClick={() => openPanel('friends')} className="pixel-btn bg-accent/20 px-2 py-1 text-[10px] text-accent hover:bg-accent/30">สังคม</button>
+            <button type="button" onClick={() => openPanel('friends')} className="pixel-btn grid place-items-center bg-accent/20 p-1.5 text-accent hover:bg-accent/30" aria-label="เปิดรายชื่อเพื่อน" title="รายชื่อเพื่อน"><UsersRound className="size-3.5" aria-hidden /></button>
           </div>
         </div>
       )}
