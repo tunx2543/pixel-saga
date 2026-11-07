@@ -399,7 +399,7 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
       shadow(ctx, p.x, p.y, 6)
       const frame = game.moving ? Math.floor(game.walkT * 8) % 4 : 0
       const walkingPose = game.moving && frame % 2 === 0
-      const customArt = p.gm
+      const customArt = p.gm && game.attackAnim <= 0
     ? gmOutfitSprite(game.facing)
     : p.jobId === 'assassin'
     ? assassinArt(game.facing, walkingPose, game.attackAnim > 0)
