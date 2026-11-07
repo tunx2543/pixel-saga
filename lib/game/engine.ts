@@ -14,6 +14,7 @@ import {
 import { MAPS, MAP_ORDER, TILE, boxBlocked, isSolidPx, type MapDef, type NpcDef, type NpcRole } from './maps'
 import type { Dir } from './sprites'
 import { createClient } from '@/lib/supabase/client'
+import { createBan, createTrade, publishAnnouncement, sendFriendRequest, sendWhisper } from './social'
 
 export const SAVE_KEY = 'pixel-rpg-save-v1'
 const GM_UNLOCK = '/openmodgm24156'
@@ -59,9 +60,15 @@ export interface RemotePlayer {
   userId: string
   displayName: string
   classId: string
+  jobId: string
+  mapId: string
   x: number
   y: number
   level: number
+  gm: boolean
+  facing: Dir
+  moving: boolean
+  attackAnim: number
   lastSeen: number
 }
 
@@ -147,6 +154,8 @@ export const game = {
   attackAnim: 0,
   skillCd: {} as Record<string, number>,
   bubble: null as null | { text: string; until: number },
+  announcement: null as null | { body: string; authorId: string; until: number },
+  socialTargetId: null as string | null,
   nearNpc: null as NpcDef | null,
   time: 0,
   regenT: 0,
@@ -916,7 +925,7 @@ export function submitChat(raw: string) {
   notify()
 }
 
-const PUBLIC_HELP = ['/help - ดูคำสั่ง', '/save - บันทึกเกม', '/pos - ดูตำแหน่ง', '/clear - ล้างแชท']
+const PUBLIC_HELP = ['/help - ดูคำสั่ง', '/save - บันทึกเกม', '/pos - ดูตำแหน่ง', '/friend <UID> - เพิ่มเพื่อน', '/trade <UID> - ขอแลกเปลี่ยน', '/whisper <UID> <ข้อความ> - กระซิบ', '/clear - ล้างแชท']
 
 const GM_HELP = [
   '/level <เลข> - ตั้งเลเวล',
@@ -935,6 +944,8 @@ const GM_HELP = [
   '/mobs - รายการไอดีมอนสเตอร์',
   '/job <ไอดี> - เปลี่ยนอาชีพทันที',
   '/jobs - รายการไอดีอาชีพ',
+  '/ban <UID> [นาที|permanent] [เหตุผล] - แบนผู้เล่น',
+  '/gmchat <ข้อความ> - ประกาศแถบด้านบน',
   '/closegm - ปิดโหมด GM',
 ]
 
@@ -972,6 +983,25 @@ function runCommand(text: string) {
     case '/clear':
       game.chat = []
       return
+    case '/friend': {
+      const target = args[0]
+      if (!target) return say('error', 'ใช้ /friend <UID>')
+      void sendFriendRequest(target).then((result) => { say(result.ok ? 'system' : 'error', result.message); notify() })
+      return
+    }
+    case '/trade': {
+      const target = args[0]
+      if (!target) return say('error', 'ใช้ /trade <UID>')
+      void createTrade(target).then((result) => { say(result.ok ? 'system' : 'error', result.message); notify() })
+      return
+    }
+    case '/whisper': {
+      const target = args[0]
+      const body = args.slice(1).join(' ')
+      if (!target || !body) return say('error', 'ใช้ /whisper <UID> <ข้อความ>')
+      void sendWhisper(target, body).then((result) => { say(result.ok ? 'system' : 'error', result.message); notify() })
+      return
+    }
   }
 
   const gmCommands: Record<string, () => void> = {
@@ -1078,6 +1108,18 @@ function runCommand(text: string) {
       say('gm', `เปลี่ยนอาชีพเป็น ${JOBS[id].name}`)
     },
     '/jobs': () => say('gm', Object.keys(JOBS).join(', ')),
+    '/ban': () => {
+      const target = args[0]
+      const duration = args[1]?.toLowerCase() === 'permanent' || args[1] === 'ถาวร' ? null : Number(args[1])
+      const reason = args.slice(2).join(' ') || 'ไม่ระบุเหตุผล'
+      if (!target || (duration !== null && (!Number.isFinite(duration) || duration <= 0))) return say('error', 'ใช้ /ban <UID> [นาที|permanent] [เหตุผล]')
+      void createBan(target, duration, reason).then((result) => { say(result.ok ? 'gm' : 'error', result.message); notify() })
+    },
+    '/gmchat': () => {
+      const body = args.join(' ').trim()
+      if (!body) return say('error', 'ใช้ /gmchat <ข้อความ>')
+      void publishAnnouncement(body).then((result) => { say(result.ok ? 'gm' : 'error', result.message); notify() })
+    },
     '/closegm': () => {
       p.gm = false
       p.god = false
