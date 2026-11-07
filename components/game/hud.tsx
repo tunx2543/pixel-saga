@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { useGame } from '@/lib/game/use-game'
-import { currentJob, getStats, openPanel } from '@/lib/game/engine'
+import { castGmSkill, currentJob, getStats, openPanel } from '@/lib/game/engine'
 import { expToNext } from '@/lib/game/data'
 import { MAX_LEVEL } from '@/lib/game/data'
 import { formatNum } from './format'
@@ -58,6 +58,16 @@ export function Hud() {
             <Bar label="EXP" value={p.level >= MAX_LEVEL ? need : p.exp} max={need} color="bg-exp" />
           </div>
           <p className="mt-1 text-[11px] text-gold">{formatNum(p.gold)} G</p>
+          {p.gm && (
+            <div className="mt-2 border-t border-gold/40 pt-2">
+              <p className="mb-1 text-[10px] font-semibold text-gold">GM SKILLS</p>
+              <div className="grid grid-cols-3 gap-1">
+                <button type="button" onClick={() => castGmSkill('invisible')} className="pixel-btn bg-gold/20 px-1 py-1 text-[9px] text-gold">ล่องหน</button>
+                <button type="button" onClick={() => castGmSkill('summon')} className="pixel-btn bg-gold/20 px-1 py-1 text-[9px] text-gold">เสกของ</button>
+                <button type="button" onClick={() => castGmSkill('immortal')} className="pixel-btn bg-gold/20 px-1 py-1 text-[9px] text-gold">อมตะ</button>
+              </div>
+            </div>
+          )}
           <div className="mt-2 grid grid-cols-2 gap-1">
             <button type="button" onClick={() => openPanel('inventory')} className="pixel-btn bg-secondary px-2 py-1 text-[10px] text-foreground hover:bg-secondary/80">กระเป๋า</button>
             <button type="button" onClick={() => openPanel('gacha')} className="pixel-btn bg-primary/20 px-2 py-1 text-[10px] text-primary hover:bg-primary/30">เปิดตู้กาชา</button>

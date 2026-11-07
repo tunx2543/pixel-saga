@@ -417,6 +417,7 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         else oy = k
       }
       const bob = game.moving && frame % 2 === 1 ? -1 : 0
+      ctx.globalAlpha = p.invisible ? 0.18 : 1
       if (p.gm) {
         ctx.fillStyle = `rgba(255, 214, 10, ${0.18 + Math.sin(t * 5) * 0.08})`
         ctx.beginPath()
@@ -424,6 +425,7 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         ctx.fill()
       }
       ctx.drawImage(img, Math.round(p.x - img.width / 2 + ox), Math.round(p.y - img.height + bob + oy))
+      ctx.globalAlpha = 1
     },
   })
 

@@ -414,8 +414,8 @@ export const MAPS: Record<string, MapDef> = {
   }),
   volcano: buildWild({
     id: 'volcano',
-    name: 'ภูเขาไฟอัคคี',
-    levelLabel: 'Lv.35-50',
+    name: 'แมพลาวา',
+    levelLabel: 'Lv.35-50 • เขตลาวา',
     theme: 'volcano',
     seed: 44,
     base: T.VOLCFLOOR,

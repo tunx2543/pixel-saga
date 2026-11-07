@@ -9,6 +9,7 @@ import { CharacterPanel } from './character-panel'
 import { EnhancePanel } from './enhance-panel'
 import { GachaPanel } from './gacha-panel'
 import { FriendsPanel } from './friends-panel'
+import { GmSummonPanel } from './gm-summon-panel'
 import { InventoryPanel } from './inventory-panel'
 import { JobPanel } from './job-panel'
 import { ShopPanel } from './shop-panel'
@@ -25,6 +26,8 @@ export function Panels() {
       return <GachaPanel />
     case 'friends':
       return <FriendsPanel game={g} />
+    case 'gm-summon':
+      return <GmSummonPanel />
     case 'inventory':
       return <InventoryPanel />
     case 'job':
