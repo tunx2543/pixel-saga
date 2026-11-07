@@ -55,6 +55,8 @@ export interface SaveData {
   statPoints?: number
   skillPoints?: number
   skillLevels?: Record<string, number>
+  rebirthCount?: number
+  rebirthBonus?: { maxHp: number; maxMp: number; atk: number; def: number }
 }
 
 export interface RemotePlayer {
@@ -129,7 +131,7 @@ interface Projectile {
   delay: number
 }
 
-export type PanelId = 'shop' | 'enhance' | 'job' | 'storage' | 'character' | 'gacha' | 'friends' | 'trade' | 'inventory' | 'gm-summon'
+export type PanelId = 'shop' | 'enhance' | 'job' | 'storage' | 'character' | 'gacha' | 'rebirth' | 'friends' | 'trade' | 'inventory' | 'gm-summon'
 export type ChatType = 'system' | 'player' | 'gm' | 'loot' | 'error' | 'npc'
 export interface ChatMsg {
   id: number
@@ -217,10 +219,10 @@ export function getStats(p: SaveData = game.p!) {
   const wAtk = itemPower(p.equipment.weapon)
   const aDef = itemPower(p.equipment.armor)
   return {
-    maxHp: Math.floor((80 + L * 22) * job.hpMul + aDef * 2),
-    maxMp: Math.floor((30 + L * 7) * job.mpMul),
-    atk: Math.floor((8 + L * 2.6 + wAtk) * job.atkMul),
-    def: Math.floor((3 + L * 1.4) * job.defMul + aDef),
+    maxHp: Math.floor((80 + L * 22) * job.hpMul + aDef * 2) + (p.rebirthBonus?.maxHp ?? 0),
+    maxMp: Math.floor((30 + L * 7) * job.mpMul) + (p.rebirthBonus?.maxMp ?? 0),
+    atk: Math.floor((8 + L * 2.6 + wAtk) * job.atkMul) + (p.rebirthBonus?.atk ?? 0),
+    def: Math.floor((3 + L * 1.4) * job.defMul + aDef) + (p.rebirthBonus?.def ?? 0),
     speed: 72 * job.speedMul * (p.speed || 1),
     crit: job.crit,
     attackSpeed: job.attackSpeed,
@@ -702,7 +704,7 @@ function die() {
 
 /* ---------------- NPC systems ---------------- */
 
-const ROLE_PANEL: Record<NpcRole, PanelId> = { shop: 'shop', enhance: 'enhance', job: 'job', storage: 'storage', gacha: 'gacha', rebirth: 'character' }
+const ROLE_PANEL: Record<NpcRole, PanelId> = { shop: 'shop', enhance: 'enhance', job: 'job', storage: 'storage', gacha: 'gacha', rebirth: 'rebirth' }
 
 export function interact() {
   const npc = game.nearNpc
@@ -710,6 +712,42 @@ export function interact() {
   game.keys.clear()
   game.panel = ROLE_PANEL[npc.role]
   say('npc', npc.greeting, npc.name)
+  notify()
+  return true
+}
+
+export function rebirth() {
+  const p = player()
+  if (p.level < MAX_LEVEL) {
+    say('error', `ต้องมีเลเวล ${MAX_LEVEL} จึงจะจุติได้`)
+    notify()
+    return false
+  }
+  const before = getStats(p)
+  const baseHp = 80 + 22 + itemPower(p.equipment.armor) * 2
+  const baseMp = 30 + 7
+  const baseAtk = Math.floor(8 + 2.6 + itemPower(p.equipment.weapon))
+  const baseDef = Math.floor(3 + 1.4 + itemPower(p.equipment.armor))
+  p.rebirthBonus = {
+    maxHp: Math.max(0, before.maxHp - baseHp),
+    maxMp: Math.max(0, before.maxMp - baseMp),
+    atk: Math.max(0, before.atk - baseAtk),
+    def: Math.max(0, before.def - baseDef),
+  }
+  p.rebirthCount = (p.rebirthCount ?? 0) + 1
+  p.jobId = 'novice'
+  p.level = 1
+  p.exp = 0
+  p.hp = baseHp + p.rebirthBonus.maxHp
+  p.mp = baseMp + p.rebirthBonus.maxMp
+  p.mapId = 'town'
+  p.x = 20
+  p.y = 18
+  game.effects.push({ type: 'levelup', x: p.x, y: p.y, r: 36, color: '#ffd60a', life: 3, max: 3 })
+  addFloat(p.x, p.y - 42, `REBIRTH ${p.rebirthCount}`, '#ffd60a', 15)
+  say('system', 'จุติสำเร็จ! กลับไปเลเวล 1 และคงค่าสเตตัสเดิมไว้')
+  saveGame()
+  game.panel = null
   notify()
   return true
 }
@@ -1278,6 +1316,13 @@ export function loadGame(d: SaveData) {
     playTime: d.playTime || 0,
     kills: d.kills || 0,
     savedAt: d.savedAt || Date.now(),
+    rebirthCount: Math.max(0, Math.floor(d.rebirthCount || 0)),
+    rebirthBonus: {
+      maxHp: Math.max(0, Math.floor(d.rebirthBonus?.maxHp || 0)),
+      maxMp: Math.max(0, Math.floor(d.rebirthBonus?.maxMp || 0)),
+      atk: Math.max(0, Math.floor(d.rebirthBonus?.atk || 0)),
+      def: Math.max(0, Math.floor(d.rebirthBonus?.def || 0)),
+    },
   }
   if (p.hp <= 0) p.hp = getStats(p).maxHp
   startSession(p, `ยินดีต้อนรับกลับ ${p.name}! โหลดความคืบหน้าล่าสุดแล้ว`, true)

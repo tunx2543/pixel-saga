@@ -1,7 +1,7 @@
 import { ITEMS, JOBS, MONSTERS } from './data'
 import { currentMap, game } from './engine'
 import { TILE } from './maps'
-import { gmOutfitSprite, humanSprite, mapCanvas, monsterSprite, npcSprite } from './sprites'
+import { gmOutfitSprite, humanSprite, mapCanvas, monsterSprite, npcSprite, rebirthAuraSprite } from './sprites'
 
 const THEME_BG: Record<string, string> = {
   town: '#2d5a27',
@@ -442,6 +442,16 @@ const animation = game.attackAnim > 0 ? 'attack' : game.moving ? 'walk' : 'idle'
         ctx.beginPath()
         ctx.ellipse(p.x, p.y, 10, 4, 0, 0, Math.PI * 2)
         ctx.fill()
+      }
+      const aura = (p.rebirthCount ?? 0) > 0 ? rebirthAuraSprite(game.facing) : null
+      if (aura) {
+        ctx.save()
+        ctx.globalAlpha = 0.82 + Math.sin(t * 4) * 0.12
+        const auraScale = Math.max(0.12, Math.min(0.22, (img.width / aura.width) * 2.2))
+        const auraWidth = aura.width * auraScale
+        const auraHeight = aura.height * auraScale
+        ctx.drawImage(aura, Math.round(p.x - auraWidth / 2), Math.round(p.y - auraHeight + 5), auraWidth, auraHeight)
+        ctx.restore()
       }
       ctx.drawImage(img, Math.round(p.x - img.width / 2 + ox), Math.round(p.y - img.height + bob + oy))
       ctx.globalAlpha = 1

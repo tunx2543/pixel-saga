@@ -11,6 +11,7 @@ import { GachaPanel } from './gacha-panel'
 import { FriendsPanel } from './friends-panel'
 import { GmSummonPanel } from './gm-summon-panel'
 import { InventoryPanel } from './inventory-panel'
+import { RebirthPanel } from './rebirth-panel'
 import { JobPanel } from './job-panel'
 import { ShopPanel } from './shop-panel'
 import { StoragePanel } from './storage-panel'
@@ -33,6 +34,8 @@ export function Panels() {
       return <GmSummonPanel />
     case 'inventory':
       return <InventoryPanel />
+    case 'rebirth':
+      return <RebirthPanel />
     case 'job':
       return <JobPanel />
     case 'storage':
