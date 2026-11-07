@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { UserRound } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { closePanel, game as gameState } from '@/lib/game/engine'
 import { createTrade, sendFriendRequest, sendWhisper } from '@/lib/game/social'
@@ -10,6 +11,7 @@ export function FriendsPanel({ game }: { game: typeof gameState }) {
   const [myUid, setMyUid] = useState<number | null>(null)
   const [message, setMessage] = useState('')
   const [requestCount, setRequestCount] = useState(0)
+  const [friends, setFriends] = useState<Array<{ userId: string; uid: number | null }>>([])
 
   useEffect(() => {
     let active = true
@@ -24,7 +26,13 @@ export function FriendsPanel({ game }: { game: typeof gameState }) {
         .select('friend_user_id', { count: 'exact', head: true })
         .eq('friend_user_id', user.id)
         .eq('status', 'pending')
-      if (active) setRequestCount(count ?? 0)
+      const { data: accepted } = await supabase.from('friendships').select('user_id, friend_user_id').or(`user_id.eq.${user.id},friend_user_id.eq.${user.id}`).eq('status', 'accepted')
+      const friendIds = (accepted ?? []).map((row) => row.user_id === user.id ? row.friend_user_id : row.user_id)
+      const { data: friendPlayers } = friendIds.length ? await supabase.from('game_players').select('user_id, uid').in('user_id', friendIds) : { data: [] }
+      if (active) {
+        setRequestCount(count ?? 0)
+        setFriends((friendPlayers ?? []).map((row) => ({ userId: row.user_id, uid: row.uid })))
+      }
     }
     void load()
     return () => { active = false }
@@ -60,6 +68,18 @@ export function FriendsPanel({ game }: { game: typeof gameState }) {
           </div>
         </div>
       )}
+      <div className="mt-3 rounded-lg border border-border bg-secondary/30 p-2">
+        <span className="field-label">รายชื่อเพื่อน</span>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {friends.map((friend) => (
+            <button key={friend.userId} type="button" className="group flex w-14 flex-col items-center gap-1 rounded-lg border border-border bg-background/60 p-1.5 hover:border-primary" title={`UID ${String(friend.uid ?? 0).padStart(5, '0')}`} onClick={() => { game.socialTargetId = friend.userId }}>
+              <span className="grid size-8 place-items-center rounded-full bg-primary/20 text-primary"><UserRound className="size-4" aria-hidden /></span>
+              <span className="text-[9px] text-muted-foreground">{String(friend.uid ?? 0).padStart(5, '0')}</span>
+            </button>
+          ))}
+          {!friends.length && <p className="text-xs text-muted-foreground">ยังไม่มีเพื่อนที่ยอมรับคำขอ</p>}
+        </div>
+      </div>
       <label className="field-label" htmlFor="friend-uid">UID เพื่อน</label>
       <div className="friend-form">
         <input id="friend-uid" value={uid} onChange={(event) => setUid(event.target.value)} placeholder="00001" />

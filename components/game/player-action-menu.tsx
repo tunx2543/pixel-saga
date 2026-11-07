@@ -1,7 +1,7 @@
 'use client'
 
 import { createTrade, sendFriendRequest, sendWhisper } from '@/lib/game/social'
-import { game, notify } from '@/lib/game/engine'
+import { game, notify, openPanel } from '@/lib/game/engine'
 
 export function PlayerActionMenu() {
   const target = game.remotePlayers.find((player) => player.userId === game.socialTargetId)
@@ -26,7 +26,7 @@ export function PlayerActionMenu() {
       </div>
       <div className="grid grid-cols-3 gap-1.5">
         <button type="button" className="pixel-button secondary px-1 py-2 text-[10px]" onClick={() => run(sendFriendRequest(target.userId))}>เพิ่มเพื่อน</button>
-        <button type="button" className="pixel-button secondary px-1 py-2 text-[10px]" onClick={() => run(createTrade(target.userId))}>แลกเปลี่ยน</button>
+        <button type="button" className="pixel-button secondary px-1 py-2 text-[10px]" onClick={() => void createTrade(target.userId).then((result) => { if (result.ok && result.tradeId) { game.tradeTargetId = target.userId; game.tradeId = result.tradeId; game.socialTargetId = null; openPanel('trade') } else { game.chat.push({ id: Date.now(), type: 'error', text: result.message }); notify() } })}>แลกเปลี่ยน</button>
         <button type="button" className="pixel-button secondary px-1 py-2 text-[10px]" onClick={() => run(sendWhisper(target.userId, 'สวัสดี'))}>กระซิบ</button>
       </div>
     </div>

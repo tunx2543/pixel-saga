@@ -29,13 +29,19 @@ export async function sendWhisper(targetUserId: string, body: string): Promise<S
   return error ? { ok: false, message: 'ส่งกระซิบไม่สำเร็จ' } : { ok: true, message: 'ส่งกระซิบแล้ว' }
 }
 
-export async function createTrade(targetUserId: string): Promise<SocialResult> {
+export async function createTrade(targetUserId: string): Promise<SocialResult & { tradeId?: number }> {
   targetUserId = await resolveTargetId(targetUserId)
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false, message: 'กรุณาเข้าสู่ระบบก่อน' }
-  const { error } = await supabase.from('trade_requests').insert({ sender_id: user.id, recipient_id: targetUserId, offer: {} })
-  return error ? { ok: false, message: 'ส่งคำขอแลกเปลี่ยนไม่สำเร็จ' } : { ok: true, message: 'ส่งคำขอแลกเปลี่ยนแล้ว' }
+  const { data, error } = await supabase.from('trade_requests').insert({ sender_id: user.id, recipient_id: targetUserId, offer: { senderItems: [], recipientItems: [], senderReady: false, recipientReady: false } }).select('id').single()
+  return error ? { ok: false, message: 'ส่งคำขอแลกเปลี่ยนไม่สำเร็จ' } : { ok: true, message: 'ส่งคำขอแลกเปลี่ยนแล้ว', tradeId: data.id }
+}
+
+export async function updateTradeOffer(tradeId: number, offer: Record<string, unknown>): Promise<SocialResult> {
+  const supabase = createClient()
+  const { error } = await supabase.from('trade_requests').update({ offer, updated_at: new Date().toISOString() }).eq('id', tradeId)
+  return error ? { ok: false, message: 'อัปเดตรายการแลกเปลี่ยนไม่สำเร็จ' } : { ok: true, message: 'อัปเดตรายการแลกเปลี่ยนแล้ว' }
 }
 
 export async function publishAnnouncement(body: string): Promise<SocialResult> {
