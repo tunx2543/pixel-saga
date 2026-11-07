@@ -10,6 +10,7 @@ import { PresenceSync } from './presence-sync'
 import { WorldBanner } from './world-banner'
 import { TouchControls } from './touch-controls'
 import { PlayerActionMenu } from './player-action-menu'
+import { SocialNotifications } from './social-notifications'
 
 export function Game() {
   const g = useGame()
@@ -22,6 +23,7 @@ export function Game() {
         <Hud />
         <WorldBanner />
         <PlayerActionMenu />
+        <SocialNotifications />
         <ChatBox />
         <PresenceSync />
         <Panels />
