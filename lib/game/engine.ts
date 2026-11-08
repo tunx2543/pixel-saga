@@ -161,6 +161,7 @@ export const game = {
   skillCd: {} as Record<string, number>,
   bubble: null as null | { text: string; until: number },
   announcement: null as null | { body: string; authorId: string; until: number },
+  lootToast: null as null | { itemId: string; until: number },
   socialTargetId: null as string | null,
   tradeTargetId: null as string | null,
   tradeId: null as number | null,
@@ -543,17 +544,20 @@ function killMonster(m: Monster) {
 
   const equipmentPool = Object.values(ITEMS).filter((item) => item.kind === 'weapon' || item.kind === 'armor')
   const guaranteedPool = equipmentPool.filter((item) => (item.tier ?? 1) <= 3)
-  const effectPool = equipmentPool.filter((item) => (item.tier ?? 1) >= 4)
+  const bossImagePool = Object.values(GM_ITEMS)
   const dynamicDrops = def.boss
-    ? effectPool.map((item) => ({ itemId: item.id, chance: 0.1 }))
+    ? bossImagePool.map((item) => ({ itemId: item.id, chance: 0.01 }))
     : guaranteedPool.map((item) => ({ itemId: item.id, chance: 0.01 }))
   const seen = new Set<string>()
   for (const d of [...def.drops, ...dynamicDrops]) {
     if (seen.has(d.itemId)) continue
     seen.add(d.itemId)
     if (Math.random() < d.chance) {
-      if (addItem(d.itemId, 1)) say('loot', `ได้รับ ${ITEMS[d.itemId].name}`)
-      else warn('กระเป๋าเต็ม! ไอเทมหล่นหาย')
+      if (addItem(d.itemId, 1)) {
+        game.lootToast = { itemId: d.itemId, until: game.time + 5 }
+        say('loot', `ได้รับ ${ITEMS[d.itemId].name}`)
+        notify()
+      } else warn('กระเป๋าเต็ม! ไอเทมหล่นหาย')
     }
   }
   if (def.boss) say('system', `★ ${p.name} ได้ปราบ ${def.name} สำเร็จ! ★`)
