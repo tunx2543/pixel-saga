@@ -506,7 +506,7 @@ export const SHOP_STOCK: string[] = [
   'leather_armor',
 ]
 
-export type MonsterSprite = 'slime' | 'mushroom' | 'rabbit' | 'wolf' | 'goblin' | 'bat' | 'skeleton' | 'ghost' | 'golem' | 'demon'
+export type MonsterSprite = 'slime' | 'mushroom' | 'rabbit' | 'wolf' | 'goblin' | 'bat' | 'skeleton' | 'ghost' | 'golem' | 'demon' | 'gale_sentinel'
 
 export interface MonsterDef {
   id: string
@@ -543,6 +543,7 @@ export const MONSTERS: Record<string, MonsterDef> = {
   demon: { id: 'demon', name: 'ปีศาจ', level: 43, hp: 2800, atk: 190, def: 68, exp: 900, gold: [150, 300], speed: 48, aggro: 130, sprite: 'demon', color: '#9d0208', drops: [{ itemId: 'demon_horn', chance: 0.4 }, { itemId: 'flame_sword', chance: 0.008 }, { itemId: 'inferno_staff', chance: 0.008 }, { itemId: 'phoenix_bow', chance: 0.008 }, { itemId: 'demon_fang', chance: 0.008 }, { itemId: 'enhance_stone', chance: 0.12 }] },
   demon_lord: { id: 'demon_lord', name: 'ราชาปีศาจเพลิง', level: 50, hp: 15000, atk: 260, def: 90, exp: 6000, gold: [2000, 4000], speed: 42, aggro: 150, sprite: 'demon', color: '#370617', boss: true, drops: [{ itemId: 'dragon_armor', chance: 0.25 }, { itemId: 'flame_sword', chance: 0.1 }, { itemId: 'inferno_staff', chance: 0.1 }, { itemId: 'phoenix_bow', chance: 0.1 }, { itemId: 'demon_fang', chance: 0.1 }, { itemId: 'enhance_stone', chance: 1 }] },
   abyss_knight: { id: 'abyss_knight', name: 'อัศวินห้วงอเวจี', level: 54, hp: 5200, atk: 280, def: 105, exp: 1400, gold: [320, 620], speed: 38, aggro: 145, sprite: 'golem', color: '#5b21b6', drops: [{ itemId: 'abyss_crystal', chance: 0.22 }, { itemId: 'enhance_stone', chance: 0.2 }] },
+  gale_sentinel: { id: 'gale_sentinel', name: 'ผู้พิทักษ์สายลม', level: 68, hp: 8400, atk: 360, def: 125, exp: 2500, gold: [600, 1100], speed: 44, aggro: 165, sprite: 'gale_sentinel', color: '#8ee7ff', drops: [{ itemId: 'abyss_crystal', chance: 0.18 }, { itemId: 'enhance_stone', chance: 0.2 }] },
   abyss_dragon: { id: 'abyss_dragon', name: 'มังกรอเวจี', level: 60, hp: 32000, atk: 420, def: 150, exp: 12000, gold: [6000, 12000], speed: 46, aggro: 180, sprite: 'demon', color: '#24104f', boss: true, drops: [{ itemId: 'abyss_crystal', chance: 1 }, { itemId: 'dragon_armor', chance: 0.35 }, { itemId: 'flame_sword', chance: 0.2 }, { itemId: 'inferno_staff', chance: 0.2 }, { itemId: 'phoenix_bow', chance: 0.2 }, { itemId: 'demon_fang', chance: 0.2 }] },
 }
 

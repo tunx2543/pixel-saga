@@ -16,6 +16,7 @@ const MONSTER_ART: Record<string, string> = {
   undead: '/images/monsters/sheets/undead-knight-sheet.png',
   demon: '/images/monsters/sheets/abyss-demon-sheet.png',
   demon_lord: '/images/monsters/sheets/abyss-demon-sheet.png',
+  gale_sentinel: '/images/monsters/gale-sentinel/south.png',
 }
 const artCache = new Map<string, HTMLImageElement>()
 const transparentArtCache = new Map<string, HTMLCanvasElement>()
@@ -253,8 +254,10 @@ function lavaBossArt(dir: string, walking: boolean) {
   return loadArt(src)
 }
 
-function monsterArt(defId: string) {
-  const src = MONSTER_ART[defId]
+function monsterArt(defId: string, flip = false) {
+  const src = defId === 'gale_sentinel'
+    ? `/images/monsters/gale-sentinel/${flip ? 'west' : 'east'}.png`
+    : MONSTER_ART[defId]
   if (!src) return null
   return loadArt(src)
 }
@@ -340,7 +343,7 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         const frame = Math.floor(m.animT * 3) % 4
         const bossWalking = Math.floor(m.animT * 3) % 2 === 0
         const lavaBoss = def.id === 'demon_lord' ? lavaBossArt(m.flip ? 'west' : 'east', bossWalking) : null
-        const asset = lavaBoss ?? monsterArt(m.defId)
+        const asset = lavaBoss ?? monsterArt(m.defId, m.flip)
         const rawImage = asset ?? monsterSprite(def.sprite, def.color, frame)
         const isDirectionalAsset = lavaBoss !== null
         const img = asset && !isDirectionalAsset ? removeLightBackground(`monsterSheet:${m.defId}`, rawImage) : rawImage

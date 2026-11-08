@@ -480,7 +480,7 @@ export const MAPS: Record<string, MapDef> = {
     id: 'sky_ruins', name: 'ซากฟ้าลอยฟ้า', levelLabel: 'Lv.60-70', theme: 'meadow', seed: 66, base: T.PLAZA, wall: T.ROOF_BLUE, pathTile: T.PATH,
     obstacles: [{ tile: T.ROOF_BLUE, chance: 0.04 }, { tile: T.ROCK, chance: 0.02 }], blobs: [{ tile: T.WATER, count: 2, r: [1, 2] }], decor: [{ tile: T.FLOWER, chance: 0.04 }],
     west: { to: 'abyss', tx: 44, ty: 17, label: 'ดันเจี้ยนห้วงอเวจี Lv.50+' }, east: { to: 'crystal_vale', tx: 3, ty: 17, label: 'หุบเขาคริสตัล Lv.70+' },
-    spawns: [{ monsterId: 'abyss_knight', count: 10 }, { monsterId: 'demon_lord', count: 3 }],
+    spawns: [{ monsterId: 'gale_sentinel', count: 8 }, { monsterId: 'abyss_knight', count: 8 }, { monsterId: 'demon_lord', count: 3 }],
   }),
   crystal_vale: buildWild({
     id: 'crystal_vale', name: 'หุบเขาคริสตัล', levelLabel: 'Lv.70-80', theme: 'cave', seed: 77, base: T.CAVEFLOOR, wall: T.CAVEWALL,
