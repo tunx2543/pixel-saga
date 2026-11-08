@@ -443,6 +443,14 @@ const BASE_ITEMS: Record<string, ItemDef> = {
   dragon_armor: armor('dragon_armor', 'เกราะมังกร', 70, 24000, 4, 36, '#c1121f'),
 }
 
+const GM_NAME_PREFIXES = ['อัสนี', 'เงาจันทร์', 'เพลิงคราม', 'วายุเงิน', 'ดาราทอง', 'รัตติกาล', 'สุริยคราส', 'มายาพิภพ']
+const GM_NAME_SUFFIXES = ['คมดาบ', 'แกนพลัง', 'เขี้ยวอสูร', 'ตราผนึก', 'เศษดาว', 'หัวใจเวท', 'เกล็ดมังกร', 'มงกุฎนิรันดร์']
+const GM_NAME_ORDER = [37, 4, 58, 12, 45, 21, 63, 8, 30, 52, 16, 1, 41, 24, 56, 9, 34, 60, 6, 49, 19, 28, 54, 14, 43, 3, 62, 26, 11, 47, 32, 5, 22, 59, 17, 39, 7, 50, 29, 55, 13, 35, 61, 2, 44, 20, 53, 27, 10, 46, 31, 57, 15, 40, 23, 48, 0, 36, 18, 51, 25, 42, 33, 38]
+const GM_ITEM_NAMES = GM_NAME_ORDER.map((value) => {
+  const prefix = GM_NAME_PREFIXES[value % GM_NAME_PREFIXES.length]
+  const suffix = GM_NAME_SUFFIXES[Math.floor(value / GM_NAME_PREFIXES.length)]
+  return `${prefix}${suffix}`
+})
 const GM_ITEM_COUNT = 64
 export const GM_ITEMS: Record<string, ItemDef> = Object.fromEntries(
   Array.from({ length: GM_ITEM_COUNT }, (_, index) => {
@@ -450,7 +458,7 @@ export const GM_ITEMS: Record<string, ItemDef> = Object.fromEntries(
     const id = `gm888_${number}`
     const item: ItemDef = {
       id,
-      name: `GM อาร์ติแฟกต์ ${number}`,
+      name: GM_ITEM_NAMES[index],
       kind: 'material',
       price: 0,
       icon: 'core',
