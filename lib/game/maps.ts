@@ -469,16 +469,46 @@ export const MAPS: Record<string, MapDef> = {
     blobs: [{ tile: T.CAVEWALL, count: 8, r: [1, 3] }],
     decor: [{ tile: T.CRYSTAL, chance: 0.02 }],
     west: { to: 'volcano', tx: 44, ty: 17, label: 'ภูเขาไฟอัคคี Lv.35-50' },
-    east: null,
+    east: { to: 'sky_ruins', tx: 3, ty: 17, label: 'ซากฟ้าลอยฟ้า Lv.60+' },
     spawns: [
       { monsterId: 'demon', count: 10 },
       { monsterId: 'abyss_knight', count: 6 },
       { monsterId: 'abyss_dragon', count: 1 },
     ],
   }),
+  sky_ruins: buildWild({
+    id: 'sky_ruins', name: 'ซากฟ้าลอยฟ้า', levelLabel: 'Lv.60-70', theme: 'meadow', seed: 66, base: T.PLAZA, wall: T.ROOF_BLUE, pathTile: T.PATH,
+    obstacles: [{ tile: T.ROOF_BLUE, chance: 0.04 }, { tile: T.ROCK, chance: 0.02 }], blobs: [{ tile: T.WATER, count: 2, r: [1, 2] }], decor: [{ tile: T.FLOWER, chance: 0.04 }],
+    west: { to: 'abyss', tx: 44, ty: 17, label: 'ดันเจี้ยนห้วงอเวจี Lv.50+' }, east: { to: 'crystal_vale', tx: 3, ty: 17, label: 'หุบเขาคริสตัล Lv.70+' },
+    spawns: [{ monsterId: 'abyss_knight', count: 10 }, { monsterId: 'demon_lord', count: 3 }],
+  }),
+  crystal_vale: buildWild({
+    id: 'crystal_vale', name: 'หุบเขาคริสตัล', levelLabel: 'Lv.70-80', theme: 'cave', seed: 77, base: T.CAVEFLOOR, wall: T.CAVEWALL,
+    obstacles: [{ tile: T.CRYSTAL, chance: 0.05 }, { tile: T.ROCK, chance: 0.03 }], blobs: [{ tile: T.CRYSTAL, count: 5, r: [1, 3] }], decor: [{ tile: T.CRYSTAL, chance: 0.03 }],
+    west: { to: 'sky_ruins', tx: 44, ty: 17, label: 'ซากฟ้าลอยฟ้า Lv.60+' }, east: { to: 'frost_peak', tx: 3, ty: 17, label: 'ยอดเขาเหมันต์ Lv.80+' },
+    spawns: [{ monsterId: 'ghost', count: 10 }, { monsterId: 'abyss_dragon', count: 2 }],
+  }),
+  frost_peak: buildWild({
+    id: 'frost_peak', name: 'ยอดเขาเหมันต์', levelLabel: 'Lv.80-90', theme: 'forest', seed: 88, base: T.DARKGRASS, wall: T.PINE,
+    obstacles: [{ tile: T.PINE, chance: 0.08 }, { tile: T.ROCK, chance: 0.025 }], blobs: [{ tile: T.WATER, count: 3, r: [1, 2] }], decor: [{ tile: T.BONES, chance: 0.02 }],
+    west: { to: 'crystal_vale', tx: 44, ty: 17, label: 'หุบเขาคริสตัล Lv.70+' }, east: { to: 'dream_garden', tx: 3, ty: 17, label: 'สวนฝันนิรันดร์ Lv.90+' },
+    spawns: [{ monsterId: 'demon', count: 10 }, { monsterId: 'demon_lord', count: 2 }],
+  }),
+  dream_garden: buildWild({
+    id: 'dream_garden', name: 'สวนฝันนิรันดร์', levelLabel: 'Lv.90-100', theme: 'meadow', seed: 99, base: T.GRASS, wall: T.TREE, pathTile: T.PATH,
+    obstacles: [{ tile: T.TREE, chance: 0.05 }, { tile: T.BUSH, chance: 0.04 }], blobs: [{ tile: T.WATER, count: 4, r: [1, 3] }], decor: [{ tile: T.FLOWER, chance: 0.12 }],
+    west: { to: 'frost_peak', tx: 44, ty: 17, label: 'ยอดเขาเหมันต์ Lv.80+' }, east: { to: 'celestial_colosseum', tx: 3, ty: 17, label: 'โคลอสเซียมสวรรค์ Lv.100+' },
+    spawns: [{ monsterId: 'fire_golem', count: 8 }, { monsterId: 'abyss_knight', count: 4 }],
+  }),
+  celestial_colosseum: buildWild({
+    id: 'celestial_colosseum', name: 'โคลอสเซียมสวรรค์', levelLabel: 'Lv.100+ เขตบอส', theme: 'volcano', seed: 110, base: T.VOLCFLOOR, wall: T.CAVEWALL,
+    obstacles: [{ tile: T.ROCK, chance: 0.05 }], blobs: [{ tile: T.LAVA, count: 4, r: [1, 2] }], decor: [{ tile: T.BONES, chance: 0.03 }],
+    west: { to: 'dream_garden', tx: 44, ty: 17, label: 'สวนฝันนิรันดร์ Lv.90+' }, east: null,
+    spawns: [{ monsterId: 'demon_lord', count: 6 }, { monsterId: 'abyss_dragon', count: 2 }],
+  }),
 }
 
-export const MAP_ORDER = ['town', 'meadow', 'forest', 'cave', 'volcano', 'abyss']
+export const MAP_ORDER = ['town', 'meadow', 'forest', 'cave', 'volcano', 'abyss', 'sky_ruins', 'crystal_vale', 'frost_peak', 'dream_garden', 'celestial_colosseum']
 
 export function tileAt(map: MapDef, tx: number, ty: number) {
   if (tx < 0 || ty < 0 || tx >= map.width || ty >= map.height) return T.CAVEWALL
