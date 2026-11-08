@@ -544,14 +544,20 @@ function killMonster(m: Monster) {
   addFloat(m.x, m.y - 30, `+${gold}G`, '#f2c94c', 9)
   gainExp(def.exp)
 
-  const equipmentPool = Object.values(ITEMS).filter((item) => item.kind === 'weapon' || item.kind === 'armor')
-  const guaranteedPool = equipmentPool.filter((item) => (item.tier ?? 1) <= 3)
-  const bossImagePool = Object.values(GM_ITEMS)
+  const equipmentPool = [...new Map(
+    Object.values(ITEMS)
+      .filter((item) => (item.kind === 'weapon' || item.kind === 'armor') && !item.gmOnly)
+      .map((item) => [item.id, item]),
+  ).values()]
   const dynamicDrops = def.boss
-    ? bossImagePool.map((item) => ({ itemId: item.id, chance: 0.01 }))
-    : guaranteedPool.map((item) => ({ itemId: item.id, chance: 0.01 }))
+    ? equipmentPool.map((item) => ({ itemId: item.id, chance: 0.001 }))
+    : []
+  const junkDrops = def.drops.filter((drop) => {
+    const item = ITEMS[drop.itemId]
+    return !item || (item.kind !== 'weapon' && item.kind !== 'armor')
+  })
   const seen = new Set<string>()
-  for (const d of [...def.drops, ...dynamicDrops]) {
+  for (const d of [...junkDrops, ...dynamicDrops]) {
     if (seen.has(d.itemId)) continue
     seen.add(d.itemId)
     if (Math.random() < d.chance) {

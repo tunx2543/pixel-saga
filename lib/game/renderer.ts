@@ -345,7 +345,7 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         const lavaBoss = def.id === 'demon_lord' ? lavaBossArt(m.flip ? 'west' : 'east', bossWalking) : null
         const asset = lavaBoss ?? monsterArt(m.defId, m.flip)
         const rawImage = asset ?? monsterSprite(def.sprite, def.color, frame)
-        const isDirectionalAsset = lavaBoss !== null
+        const isDirectionalAsset = lavaBoss !== null || m.defId === 'gale_sentinel'
         const img = asset && !isDirectionalAsset ? removeLightBackground(`monsterSheet:${m.defId}`, rawImage) : rawImage
         const sourceWidth = asset && !isDirectionalAsset ? img.width / 4 : img.width
         const sourceHeight = asset && !isDirectionalAsset ? img.height / 4 : img.height
