@@ -13,8 +13,7 @@ export function EnhancePanel() {
   const g = useGame()
   const p = g.p!
   const gear: { it: InvItem; equipped: boolean }[] = [
-    ...(p.equipment.weapon ? [{ it: p.equipment.weapon, equipped: true }] : []),
-    ...(p.equipment.armor ? [{ it: p.equipment.armor, equipped: true }] : []),
+    ...(['weapon', 'armor', 'shoes', 'cloak', 'accessory'] as const).flatMap((slot) => p.equipment[slot] ? [{ it: p.equipment[slot]!, equipped: true }] : []),
     ...p.inventory.filter((i) => ['weapon', 'armor'].includes(ITEMS[i.itemId].kind)).map((it) => ({ it, equipped: false })),
   ]
   const [selected, setSelected] = useState<string | null>(gear[0]?.it.uid ?? null)

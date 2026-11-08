@@ -11,6 +11,7 @@ import {
   type ItemDef,
   type JobDef,
   type SkillDef,
+  type EquipmentSlot,
 } from './data'
 import { MAPS, MAP_ORDER, TILE, boxBlocked, isSolidPx, type MapDef, type NpcDef, type NpcRole } from './maps'
 import type { Dir } from './sprites'
@@ -41,7 +42,7 @@ export interface SaveData {
   inventory: InvItem[]
   storage: InvItem[]
   storageGold: number
-  equipment: { weapon: InvItem | null; armor: InvItem | null }
+  equipment: Record<EquipmentSlot, InvItem | null>
   mapId: string
   x: number
   y: number
@@ -220,7 +221,7 @@ export function getStats(p: SaveData = game.p!) {
   const job = JOBS[p.jobId] ?? JOBS.novice
   const L = p.level
   const wAtk = itemPower(p.equipment.weapon)
-  const aDef = itemPower(p.equipment.armor)
+  const aDef = (['armor', 'shoes', 'cloak', 'accessory'] as const).reduce((total, slot) => total + itemPower(p.equipment[slot]), 0)
   return {
     maxHp: Math.floor((80 + L * 22) * job.hpMul + aDef * 2) + (p.rebirthBonus?.maxHp ?? 0),
     maxMp: Math.floor((30 + L * 7) * job.mpMul) + (p.rebirthBonus?.maxMp ?? 0),
@@ -329,7 +330,7 @@ export function equip(id: string) {
     notify()
     return
   }
-  const slot = ITEMS[it.itemId].kind === 'weapon' ? 'weapon' : 'armor'
+  const slot: EquipmentSlot = ITEMS[it.itemId].slot ?? (ITEMS[it.itemId].kind === 'weapon' ? 'weapon' : 'armor')
   p.inventory = p.inventory.filter((i) => i.uid !== id)
   const prev = p.equipment[slot]
   if (prev) p.inventory.push(prev)
@@ -339,7 +340,7 @@ export function equip(id: string) {
   notify()
 }
 
-export function unequip(slot: 'weapon' | 'armor') {
+export function unequip(slot: EquipmentSlot) {
   const p = player()
   const it = p.equipment[slot]
   if (!it) return
@@ -1300,8 +1301,16 @@ function startSession(p: SaveData, welcome: string, persist = false) {
 }
 
 export function loadGame(d: SaveData) {
-  const weapon = sanitizeList(d.equipment?.weapon ? [d.equipment.weapon] : [])[0] ?? null
-  const armor = sanitizeList(d.equipment?.armor ? [d.equipment.armor] : [])[0] ?? null
+  const sanitizeEquipment = (slot: EquipmentSlot, fallback: InvItem | null = null) => {
+    const item = d.equipment?.[slot] ?? (slot === 'armor' ? fallback : null)
+    return sanitizeList(item ? [item] : [])[0] ?? null
+  }
+  const legacyArmor = d.equipment?.armor ? sanitizeList([d.equipment.armor])[0] ?? null : null
+  const weapon = sanitizeEquipment('weapon')
+  const armor = sanitizeEquipment('armor', legacyArmor)
+  const shoes = sanitizeEquipment('shoes')
+  const cloak = sanitizeEquipment('cloak')
+  const accessory = sanitizeEquipment('accessory')
   const p: SaveData = {
     version: 1,
     name: d.name.slice(0, 16) || 'นักผจญภัย',
@@ -1314,7 +1323,7 @@ export function loadGame(d: SaveData) {
     inventory: sanitizeList(d.inventory),
     storage: sanitizeList(d.storage),
     storageGold: Math.max(0, Math.floor(d.storageGold || 0)),
-    equipment: { weapon, armor },
+    equipment: { weapon, armor, shoes, cloak, accessory },
     mapId: MAPS[d.mapId] ? d.mapId : 'town',
     x: Number.isFinite(d.x) ? d.x : (MAPS.town.spawn.x + 0.5) * TILE,
     y: Number.isFinite(d.y) ? d.y : (MAPS.town.spawn.y + 0.5) * TILE,
@@ -1355,6 +1364,9 @@ export function newGame(name: string) {
     equipment: {
       weapon: { uid: uid(), itemId: 'wooden_stick', qty: 1, plus: 0 },
       armor: { uid: uid(), itemId: 'cloth_armor', qty: 1, plus: 0 },
+      shoes: null,
+      cloak: null,
+      accessory: null,
     },
     mapId: 'town',
     x: (town.spawn.x + 0.5) * TILE,

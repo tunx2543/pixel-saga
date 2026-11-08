@@ -278,6 +278,7 @@ export const JOBS: Record<string, JobDef> = {
 }
 
 export type ItemKind = 'consumable' | 'weapon' | 'armor' | 'material'
+export type EquipmentSlot = 'weapon' | 'armor' | 'shoes' | 'cloak' | 'accessory'
 
 export interface ItemDef {
   id: string
@@ -297,6 +298,7 @@ export interface ItemDef {
   asset?: string
   effect?: boolean
   gmOnly?: boolean
+  slot?: EquipmentSlot
 }
 
 const weapon = (
@@ -326,6 +328,7 @@ const armor = (id: string, name: string, def: number, price: number, tier: numbe
   id,
   name,
   kind: 'armor',
+  slot: 'armor',
   def,
   price,
   tier,
@@ -379,6 +382,7 @@ const catalogItems = Object.fromEntries(CATALOG_ASSETS.map((asset, index) => {
     id,
     name,
     kind: isEffect ? 'armor' : 'weapon',
+    slot: isEffect ? (['armor', 'shoes', 'cloak', 'accessory'][index % 4] as EquipmentSlot) : 'weapon',
     weaponType: isEffect ? undefined : weaponType,
     atk: isEffect ? undefined : atk,
     def: isEffect ? 20 + tier * 10 : undefined,

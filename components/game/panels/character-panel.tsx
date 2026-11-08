@@ -46,11 +46,11 @@ export function CharacterPanel() {
             ))}
           </dl>
           <div className="grid grid-cols-2 gap-2">
-            {(['weapon', 'armor'] as const).map((slot) => {
+            {(['weapon', 'armor', 'shoes', 'cloak', 'accessory'] as const).map((slot) => {
               const it = p.equipment[slot]
               return (
                 <div key={slot} className="flex flex-col items-center gap-1 border-2 border-border bg-muted p-2">
-                  <p className="text-[10px] text-muted-foreground">{slot === 'weapon' ? 'อาวุธ' : 'ชุดเกราะ'}</p>
+                  <p className="text-[10px] text-muted-foreground">{{ weapon: 'อาวุธ', armor: 'เกราะ', shoes: 'รองเท้า', cloak: 'ผ้าคลุม', accessory: 'เครื่องประดับ' }[slot]}</p>
                   <div className="w-12">
                     <ItemSlot item={it} label="ว่าง" />
                   </div>
