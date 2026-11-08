@@ -317,6 +317,7 @@ export function canEquip(it: InvItem): string | null {
   if (def.kind !== 'weapon' && def.kind !== 'armor') return 'ไอเทมนี้สวมใส่ไม่ได้'
   if ((def.reqLevel ?? 1) > p.level) return `ต้องการเลเวล ${def.reqLevel}`
   if (def.kind === 'weapon' && !currentJob().weaponTypes.includes(def.weaponType!)) return `อาชีพ ${currentJob().name} ใช้อาวุธนี้ไม่ได้`
+  if (def.allowedJobs?.length && !def.allowedJobs.includes(currentJob().id)) return `อาชีพ ${currentJob().name} สวมใส่ไอเทมนี้ไม่ได้`
   return null
 }
 

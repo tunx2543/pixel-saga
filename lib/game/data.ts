@@ -1,3 +1,5 @@
+import { WEAPON_CATALOG } from './weapon-catalog'
+
 export type WeaponType = 'stick' | 'sword' | 'staff' | 'bow' | 'dagger'
 
 export type SkillKind = 'single' | 'aoe-self' | 'aoe-target' | 'multi'
@@ -299,6 +301,7 @@ export interface ItemDef {
   effect?: boolean
   gmOnly?: boolean
   slot?: EquipmentSlot
+  allowedJobs?: string[]
 }
 
 const weapon = (
@@ -454,44 +457,44 @@ const IMAGE_READY_BASE_ITEMS: Record<string, ItemDef> = Object.fromEntries(
   ]),
 )
 
-const GM_NAME_PREFIXES = ['อัสนี', 'เงาจันทร์', 'เพลิงคราม', 'วายุเงิน', 'ดาราทอง', 'รัตติกาล', 'สุริยคราส', 'มายาพิภพ']
-const GM_NAME_SUFFIXES = ['คมดาบ', 'แกนพลัง', 'เขี้ยวอสูร', 'ตราผนึก', 'เศษดาว', 'หัวใจเวท', 'เกล็ดมังกร', 'มงกุฎนิรันดร์']
-const GM_NAME_ORDER = [37, 4, 58, 12, 45, 21, 63, 8, 30, 52, 16, 1, 41, 24, 56, 9, 34, 60, 6, 49, 19, 28, 54, 14, 43, 3, 62, 26, 11, 47, 32, 5, 22, 59, 17, 39, 7, 50, 29, 55, 13, 35, 61, 2, 44, 20, 53, 27, 10, 46, 31, 57, 15, 40, 23, 48, 0, 36, 18, 51, 25, 42, 33, 38]
-const GM_ITEM_NAMES = GM_NAME_ORDER.map((value) => {
-  const prefix = GM_NAME_PREFIXES[value % GM_NAME_PREFIXES.length]
-  const suffix = GM_NAME_SUFFIXES[Math.floor(value / GM_NAME_PREFIXES.length)]
-  return `${prefix}${suffix}`
-})
-const GM_ITEM_COUNT = 64
+const FILE_ITEMS: Record<string, ItemDef> = Object.fromEntries(
+  WEAPON_CATALOG.map((entry, index) => [
+    entry.id,
+    {
+      id: entry.id,
+      name: entry.name,
+      kind: entry.slot === 'weapon' ? 'weapon' : 'armor',
+      weaponType: entry.slot === 'weapon' ? (entry.job === 'mage' ? 'staff' : entry.job === 'archer' ? 'bow' : entry.job === 'assassin' ? 'dagger' : 'sword') : undefined,
+      slot: entry.slot,
+      atk: entry.slot === 'weapon' ? 18 + index * 7 : undefined,
+      def: entry.slot === 'weapon' ? undefined : 8 + index * 3,
+      price: 500 + index * 750,
+      tier: Math.min(6, 1 + Math.floor(index / 10)),
+      reqLevel: 1 + Math.floor(index / 5) * 5,
+      icon: entry.slot === 'weapon' ? 'sword' : entry.slot,
+      color: entry.job === 'mage' ? '#67e8f9' : entry.job === 'archer' ? '#86efac' : entry.job === 'assassin' ? '#c084fc' : '#fbbf24',
+      description: `${entry.name} จากไฟล์อาวุธตามอาชีพ`,
+      asset: entry.asset,
+      allowedJobs: entry.job === 'all' || entry.job === 'gm' ? undefined : [entry.job],
+      gmOnly: entry.job === 'gm',
+    },
+  ]),
+)
+
+const FILE_ITEM_IDS = Object.keys(FILE_ITEMS)
+const LEGACY_ITEM_ALIASES = Object.fromEntries(
+  Object.keys(BASE_ITEMS).map((id, index) => [id, FILE_ITEMS[FILE_ITEM_IDS[index % FILE_ITEM_IDS.length]]]),
+)
+
 export const GM_ITEMS: Record<string, ItemDef> = Object.fromEntries(
-  Array.from({ length: GM_ITEM_COUNT }, (_, index) => {
-    const number = String(index + 1).padStart(3, '0')
-    const id = `gm888_${number}`
-    const item: ItemDef = {
-      id,
-      name: GM_ITEM_NAMES[index],
-      kind: 'material',
-      price: 0,
-      icon: 'core',
-      color: '#f6c453',
-      asset: `/images/items/gm888/gm888_${number}.png`,
-      description: `ไอเทม GM 888 ลำดับ ${number} — สงวนสำหรับคำสั่งเสกของ GM เท่านั้น`,
-      gmOnly: true,
-    }
-    return [id, item]
-  }),
-) as Record<string, ItemDef>
+  FILE_ITEM_IDS.map((id) => [`gm888_${id.replace('weapon_', '')}`, { ...FILE_ITEMS[id], gmOnly: true }]),
+)
 
-export const ITEMS: Record<string, ItemDef> = { ...IMAGE_READY_BASE_ITEMS, ...GM_ITEMS }
+export const ITEMS: Record<string, ItemDef> = { ...LEGACY_ITEM_ALIASES, ...FILE_ITEMS, ...GM_ITEMS }
 
-export const SHOP_STOCK: string[] = [
-  'red_potion',
-  'orange_potion',
-  'white_potion',
-  'blue_potion',
-  'purple_potion',
-  'return_scroll',
-  'enhance_stone',
+export const SHOP_STOCK: string[] = FILE_ITEM_IDS.filter((id) => !ITEMS[id].gmOnly).slice(0, 24)
+/* Legacy consumables are intentionally no longer stocked; all visible item art comes from the weapons archive. */
+/*
   'wooden_stick',
   'oak_club',
   'short_sword',
@@ -504,7 +507,7 @@ export const SHOP_STOCK: string[] = [
   'kris',
   'cloth_armor',
   'leather_armor',
-]
+] */
 
 export type MonsterSprite = 'slime' | 'mushroom' | 'rabbit' | 'wolf' | 'goblin' | 'bat' | 'skeleton' | 'ghost' | 'golem' | 'demon' | 'gale_sentinel'
 
