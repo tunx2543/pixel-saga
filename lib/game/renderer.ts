@@ -456,17 +456,20 @@ const animation = game.attackAnim > 0 ? 'attack' : game.moving ? 'walk' : 'idle'
         ctx.shadowColor = colors[rebirthTier - 1]
         ctx.shadowBlur = 7 + rebirthTier * 2
         ctx.lineWidth = 1.2 + rebirthTier * 0.18
-        for (let bolt = 0; bolt < 2 + rebirthTier; bolt++) {
-          const angle = t * (1.2 + rebirthTier * 0.18) + bolt * (Math.PI * 2 / (2 + rebirthTier))
-          const startX = p.x + Math.cos(angle) * 8
-          const startY = p.y - 15 + Math.sin(angle) * 4
-          ctx.beginPath()
-          ctx.moveTo(startX, startY)
-          for (let step = 1; step <= 4; step++) {
-            const distance = step * 4
-            ctx.lineTo(startX + Math.cos(angle) * distance + Math.sin(t * 10 + step + bolt) * 2, startY + Math.sin(angle) * distance + (step % 2 ? -2 : 2))
-          }
-          ctx.stroke()
+        const radius = 9 + rebirthTier * 1.6
+        ctx.beginPath()
+        ctx.ellipse(p.x, p.y - 8, radius, 3.2 + rebirthTier * 0.35, t * 0.35, 0, Math.PI * 2)
+        ctx.stroke()
+        ctx.globalAlpha = pulse * 0.7
+        ctx.beginPath()
+        ctx.ellipse(p.x, p.y - 8, radius + 3, 2.2 + rebirthTier * 0.25, -t * 0.55, 0, Math.PI * 2)
+        ctx.stroke()
+        for (let spark = 0; spark < 4 + rebirthTier; spark++) {
+          const angle = t * 1.8 + spark * (Math.PI * 2 / (4 + rebirthTier))
+          const x = p.x + Math.cos(angle) * (radius + 2)
+          const y = p.y - 9 + Math.sin(angle) * (4 + rebirthTier * 0.5)
+          const size = 1 + (spark % 2)
+          ctx.fillRect(Math.round(x - size / 2), Math.round(y - size / 2), size, size)
         }
         ctx.restore()
       }
