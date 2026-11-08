@@ -49,15 +49,9 @@ export function ItemIcon({ itemId, size = 32, className }: { itemId: string; siz
     )
   }
 
-  return (
-    <span
-      aria-label={def.name}
-      className={cn('grid shrink-0 place-items-center rounded border border-border/70 bg-secondary/70 text-[10px] font-bold text-muted-foreground', className)}
-      style={{ width: size, height: size }}
-    >
-      {def.name.slice(0, 1)}
-    </span>
-  )
+  return def.asset ? (
+    <img src={def.asset} alt={def.name} width={size} height={size} className={cn('pixelated shrink-0 object-contain', className)} draggable={false} />
+  ) : null
 }
 
 export function ItemSlot({
