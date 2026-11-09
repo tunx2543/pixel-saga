@@ -16,7 +16,7 @@ const MONSTER_ART: Record<string, string> = {
   undead: '/images/monsters/sheets/undead-knight-sheet.png',
   demon: '/images/monsters/sheets/abyss-demon-sheet.png',
   demon_lord: '/images/monsters/sheets/abyss-demon-sheet.png',
-  gale_sentinel: '/images/monsters/gale-sentinel/south.png',
+  gale_sentinel: '/images/monsters/gale-sentinel/south.gif',
 }
 const artCache = new Map<string, HTMLImageElement>()
 const transparentArtCache = new Map<string, HTMLCanvasElement>()
@@ -256,7 +256,7 @@ function lavaBossArt(dir: string, walking: boolean) {
 
 function monsterArt(defId: string, flip = false) {
   const src = defId === 'gale_sentinel'
-    ? `/images/monsters/gale-sentinel/${flip ? 'west' : 'east'}.png`
+    ? `/images/monsters/gale-sentinel/${flip ? 'west' : 'east'}.gif`
     : MONSTER_ART[defId]
   if (!src) return null
   return loadArt(src)
@@ -369,7 +369,7 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         if (def.sprite === 'ghost') ctx.globalAlpha *= 0.8
         ctx.translate(m.x + lunge + attackBob, m.y - h / 2 + hover + walkBob)
         ctx.rotate(attackTilt)
-        ctx.scale(m.flip ? -squash : squash, stretch)
+        ctx.scale(isDirectionalAsset ? squash : (m.flip ? -squash : squash), stretch)
         if (asset && !isDirectionalAsset) {
           ctx.drawImage(img, frame * sourceWidth, 0, sourceWidth, sourceHeight, -w / 2, -h / 2, w, h)
         } else {
