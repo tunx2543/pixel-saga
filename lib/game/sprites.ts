@@ -61,6 +61,19 @@ function renderTemplate(rows: string[], palette: Record<string, string>, outline
 const cache = new Map<string, HTMLCanvasElement>()
 const gmOutfitCache = new Map<string, HTMLImageElement>()
 const npcSpriteCache = new Map<string, HTMLImageElement>()
+const rebirthAuraCache = new Map<string, HTMLImageElement>()
+
+export function rebirthAuraSprite(dir: Dir): HTMLImageElement | null {
+  const direction = dir === 'down' ? 'south' : dir === 'up' ? 'north' : dir === 'left' ? 'west' : 'east'
+  let image = rebirthAuraCache.get(direction)
+  if (!image) {
+    image = new Image()
+    image.crossOrigin = 'anonymous'
+    image.src = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ground-sigil-jQzDvfBW2V54R6DRMeDoP55hG7byck.gif'
+    rebirthAuraCache.set(direction, image)
+  }
+  return image.complete && image.naturalWidth > 0 ? image : null
+}
 
 export function npcSprite(id: string): HTMLImageElement | null {
   let image = npcSpriteCache.get(id)

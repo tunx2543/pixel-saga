@@ -37,12 +37,12 @@ export function InventoryPanel() {
           <PxButton onClick={() => drinkPotion('mp')}>ใช้ยา MP</PxButton>
         </div>
       )}
-      <div className="mb-4 grid grid-cols-2 gap-2">
-        {(['weapon', 'armor'] as const).map((slot) => {
+      <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {(['weapon', 'armor', 'shoes', 'cloak', 'accessory'] as const).map((slot) => {
           const item = p.equipment[slot]
           return (
             <div key={slot} className="rounded border border-border bg-secondary/60 p-2">
-              <p className="mb-1 text-[10px] text-muted-foreground">{slot === 'weapon' ? 'อาวุธ' : 'เกราะ'}</p>
+              <p className="mb-1 text-[10px] text-muted-foreground">{{ weapon: 'อาวุธ', armor: 'เกราะ', shoes: 'รองเท้า', cloak: 'ผ้าคลุม', accessory: 'เครื่องประดับ' }[slot]}</p>
               {item ? (
                 <div className="flex items-center justify-between gap-2">
                   <span className="truncate text-xs text-primary">{itemLabel(item)}</span>

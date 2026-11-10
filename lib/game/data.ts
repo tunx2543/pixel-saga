@@ -1,3 +1,5 @@
+import { WEAPON_CATALOG } from './weapon-catalog'
+
 export type WeaponType = 'stick' | 'sword' | 'staff' | 'bow' | 'dagger'
 
 export type SkillKind = 'single' | 'aoe-self' | 'aoe-target' | 'multi'
@@ -278,6 +280,7 @@ export const JOBS: Record<string, JobDef> = {
 }
 
 export type ItemKind = 'consumable' | 'weapon' | 'armor' | 'material'
+export type EquipmentSlot = 'weapon' | 'armor' | 'shoes' | 'cloak' | 'accessory'
 
 export interface ItemDef {
   id: string
@@ -296,6 +299,9 @@ export interface ItemDef {
   tier?: number
   asset?: string
   effect?: boolean
+  gmOnly?: boolean
+  slot?: EquipmentSlot
+  allowedJobs?: string[]
 }
 
 const weapon = (
@@ -325,6 +331,7 @@ const armor = (id: string, name: string, def: number, price: number, tier: numbe
   id,
   name,
   kind: 'armor',
+  slot: 'armor',
   def,
   price,
   tier,
@@ -378,6 +385,7 @@ const catalogItems = Object.fromEntries(CATALOG_ASSETS.map((asset, index) => {
     id,
     name,
     kind: isEffect ? 'armor' : 'weapon',
+    slot: isEffect ? (['armor', 'shoes', 'cloak', 'accessory'][index % 4] as EquipmentSlot) : 'weapon',
     weaponType: isEffect ? undefined : weaponType,
     atk: isEffect ? undefined : atk,
     def: isEffect ? 20 + tier * 10 : undefined,
@@ -393,7 +401,7 @@ const catalogItems = Object.fromEntries(CATALOG_ASSETS.map((asset, index) => {
   return [id, item]
 })) as Record<string, ItemDef>
 
-export const ITEMS: Record<string, ItemDef> = {
+const BASE_ITEMS: Record<string, ItemDef> = {
   ...catalogItems,
   red_potion: { id: 'red_potion', name: 'ยาแดง', kind: 'consumable', price: 30, heal: 60, icon: 'potion', color: '#e63946', description: 'ฟื้นฟู HP 60' },
   orange_potion: { id: 'orange_potion', name: 'ยาส้ม', kind: 'consumable', price: 120, heal: 220, icon: 'potion', color: '#f4a261', description: 'ฟื้นฟู HP 220' },
@@ -442,14 +450,51 @@ export const ITEMS: Record<string, ItemDef> = {
   dragon_armor: armor('dragon_armor', 'เกราะมังกร', 70, 24000, 4, 36, '#c1121f'),
 }
 
-export const SHOP_STOCK: string[] = [
-  'red_potion',
-  'orange_potion',
-  'white_potion',
-  'blue_potion',
-  'purple_potion',
-  'return_scroll',
-  'enhance_stone',
+const IMAGE_READY_BASE_ITEMS: Record<string, ItemDef> = Object.fromEntries(
+  Object.entries(BASE_ITEMS).map(([id, item], index) => [
+    id,
+    item.asset ? item : { ...item, asset: `/images/items/catalog/${CATALOG_ASSETS[index % CATALOG_ASSETS.length]}` },
+  ]),
+)
+
+const FILE_ITEMS: Record<string, ItemDef> = Object.fromEntries(
+  WEAPON_CATALOG.map((entry, index) => [
+    entry.id,
+    {
+      id: entry.id,
+      name: entry.name,
+      kind: entry.slot === 'weapon' ? 'weapon' : 'armor',
+      weaponType: entry.slot === 'weapon' ? (entry.job === 'mage' ? 'staff' : entry.job === 'archer' ? 'bow' : entry.job === 'assassin' ? 'dagger' : 'sword') : undefined,
+      slot: entry.slot,
+      atk: entry.slot === 'weapon' ? 18 + index * 7 : undefined,
+      def: entry.slot === 'weapon' ? undefined : 8 + index * 3,
+      price: 500 + index * 750,
+      tier: Math.min(6, 1 + Math.floor(index / 10)),
+      reqLevel: 1 + Math.floor(index / 5) * 5,
+      icon: entry.slot === 'weapon' ? 'sword' : entry.slot,
+      color: entry.job === 'mage' ? '#67e8f9' : entry.job === 'archer' ? '#86efac' : entry.job === 'assassin' ? '#c084fc' : '#fbbf24',
+      description: `${entry.name} จากไฟล์อาวุธตามอาชีพ`,
+      asset: entry.asset,
+      allowedJobs: entry.job === 'all' || entry.job === 'gm' ? undefined : [entry.job],
+      gmOnly: entry.job === 'gm',
+    },
+  ]),
+)
+
+const FILE_ITEM_IDS = Object.keys(FILE_ITEMS)
+const LEGACY_ITEM_ALIASES = Object.fromEntries(
+  Object.keys(BASE_ITEMS).map((id, index) => [id, FILE_ITEMS[FILE_ITEM_IDS[index % FILE_ITEM_IDS.length]]]),
+)
+
+export const GM_ITEMS: Record<string, ItemDef> = Object.fromEntries(
+  FILE_ITEM_IDS.map((id) => [`gm888_${id.replace('weapon_', '')}`, { ...FILE_ITEMS[id], gmOnly: true }]),
+)
+
+export const ITEMS: Record<string, ItemDef> = { ...LEGACY_ITEM_ALIASES, ...FILE_ITEMS, ...GM_ITEMS }
+
+export const SHOP_STOCK: string[] = FILE_ITEM_IDS.filter((id) => !ITEMS[id].gmOnly).slice(0, 24)
+/* Legacy consumables are intentionally no longer stocked; all visible item art comes from the weapons archive. */
+/*
   'wooden_stick',
   'oak_club',
   'short_sword',
@@ -462,9 +507,9 @@ export const SHOP_STOCK: string[] = [
   'kris',
   'cloth_armor',
   'leather_armor',
-]
+] */
 
-export type MonsterSprite = 'slime' | 'mushroom' | 'rabbit' | 'wolf' | 'goblin' | 'bat' | 'skeleton' | 'ghost' | 'golem' | 'demon'
+export type MonsterSprite = 'slime' | 'mushroom' | 'rabbit' | 'wolf' | 'goblin' | 'bat' | 'skeleton' | 'ghost' | 'golem' | 'demon' | 'gale_sentinel'
 
 export interface MonsterDef {
   id: string
@@ -501,6 +546,7 @@ export const MONSTERS: Record<string, MonsterDef> = {
   demon: { id: 'demon', name: 'ปีศาจ', level: 43, hp: 2800, atk: 190, def: 68, exp: 900, gold: [150, 300], speed: 48, aggro: 130, sprite: 'demon', color: '#9d0208', drops: [{ itemId: 'demon_horn', chance: 0.4 }, { itemId: 'flame_sword', chance: 0.008 }, { itemId: 'inferno_staff', chance: 0.008 }, { itemId: 'phoenix_bow', chance: 0.008 }, { itemId: 'demon_fang', chance: 0.008 }, { itemId: 'enhance_stone', chance: 0.12 }] },
   demon_lord: { id: 'demon_lord', name: 'ราชาปีศาจเพลิง', level: 50, hp: 15000, atk: 260, def: 90, exp: 6000, gold: [2000, 4000], speed: 42, aggro: 150, sprite: 'demon', color: '#370617', boss: true, drops: [{ itemId: 'dragon_armor', chance: 0.25 }, { itemId: 'flame_sword', chance: 0.1 }, { itemId: 'inferno_staff', chance: 0.1 }, { itemId: 'phoenix_bow', chance: 0.1 }, { itemId: 'demon_fang', chance: 0.1 }, { itemId: 'enhance_stone', chance: 1 }] },
   abyss_knight: { id: 'abyss_knight', name: 'อัศวินห้วงอเวจี', level: 54, hp: 5200, atk: 280, def: 105, exp: 1400, gold: [320, 620], speed: 38, aggro: 145, sprite: 'golem', color: '#5b21b6', drops: [{ itemId: 'abyss_crystal', chance: 0.22 }, { itemId: 'enhance_stone', chance: 0.2 }] },
+  gale_sentinel: { id: 'gale_sentinel', name: 'ผู้พิทักษ์สายลม', level: 68, hp: 8400, atk: 360, def: 125, exp: 2500, gold: [600, 1100], speed: 44, aggro: 165, sprite: 'gale_sentinel', color: '#8ee7ff', drops: [{ itemId: 'abyss_crystal', chance: 0.18 }, { itemId: 'enhance_stone', chance: 0.2 }] },
   abyss_dragon: { id: 'abyss_dragon', name: 'มังกรอเวจี', level: 60, hp: 32000, atk: 420, def: 150, exp: 12000, gold: [6000, 12000], speed: 46, aggro: 180, sprite: 'demon', color: '#24104f', boss: true, drops: [{ itemId: 'abyss_crystal', chance: 1 }, { itemId: 'dragon_armor', chance: 0.35 }, { itemId: 'flame_sword', chance: 0.2 }, { itemId: 'inferno_staff', chance: 0.2 }, { itemId: 'phoenix_bow', chance: 0.2 }, { itemId: 'demon_fang', chance: 0.2 }] },
 }
 

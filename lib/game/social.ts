@@ -52,12 +52,12 @@ export async function publishAnnouncement(body: string): Promise<SocialResult> {
   return error ? { ok: false, message: 'ประกาศไม่สำเร็จ: ต้องใช้สิทธิ์ GM ที่ยืนยันบนเซิร์ฟเวอร์' } : { ok: true, message: 'ประกาศ GM แล้ว' }
 }
 
-export async function createBan(targetUserId: string, durationMinutes: number | null, reason: string): Promise<SocialResult> {
+export async function createBan(targetUserId: string, durationSeconds: number | null, reason: string): Promise<SocialResult> {
   targetUserId = await resolveTargetId(targetUserId)
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false, message: 'กรุณาเข้าสู่ระบบก่อน' }
-  const expiresAt = durationMinutes && durationMinutes > 0 ? new Date(Date.now() + durationMinutes * 60_000).toISOString() : null
+  const expiresAt = durationSeconds && durationSeconds > 0 ? new Date(Date.now() + durationSeconds * 1_000).toISOString() : null
   const { error } = await supabase.rpc('ban_player', { target_id: targetUserId, ban_reason: reason.slice(0, 160), ban_expires_at: expiresAt })
-  return error ? { ok: false, message: 'แบนไม่สำเร็จ: ต้องใช้สิทธิ์ GM ที่ยืนยันบนเซิร์ฟเวอร์' } : { ok: true, message: expiresAt ? `แบน ${durationMinutes} นาทีแล้ว` : 'แบนถาวรแล้ว' }
+  return error ? { ok: false, message: 'แบนไม่สำเร็จ: ต้องใช้สิทธิ์ GM ที่ยืนยันบนเซิร์ฟเวอร์' } : { ok: true, message: expiresAt ? `แบน ${durationSeconds} วินาทีแล้ว` : 'แบนถาวรแล้ว' }
 }

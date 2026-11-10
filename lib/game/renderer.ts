@@ -16,6 +16,7 @@ const MONSTER_ART: Record<string, string> = {
   undead: '/images/monsters/sheets/undead-knight-sheet.png',
   demon: '/images/monsters/sheets/abyss-demon-sheet.png',
   demon_lord: '/images/monsters/sheets/abyss-demon-sheet.png',
+  gale_sentinel: '/images/monsters/gale-sentinel/south.gif',
 }
 const artCache = new Map<string, HTMLImageElement>()
 const transparentArtCache = new Map<string, HTMLCanvasElement>()
@@ -253,8 +254,10 @@ function lavaBossArt(dir: string, walking: boolean) {
   return loadArt(src)
 }
 
-function monsterArt(defId: string) {
-  const src = MONSTER_ART[defId]
+function monsterArt(defId: string, flip = false) {
+  const src = defId === 'gale_sentinel'
+    ? `/images/monsters/gale-sentinel/${flip ? 'west' : 'east'}.gif`
+    : MONSTER_ART[defId]
   if (!src) return null
   return loadArt(src)
 }
@@ -340,9 +343,9 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         const frame = Math.floor(m.animT * 3) % 4
         const bossWalking = Math.floor(m.animT * 3) % 2 === 0
         const lavaBoss = def.id === 'demon_lord' ? lavaBossArt(m.flip ? 'west' : 'east', bossWalking) : null
-        const asset = lavaBoss ?? monsterArt(m.defId)
+        const asset = lavaBoss ?? monsterArt(m.defId, m.flip)
         const rawImage = asset ?? monsterSprite(def.sprite, def.color, frame)
-        const isDirectionalAsset = lavaBoss !== null
+        const isDirectionalAsset = lavaBoss !== null || m.defId === 'gale_sentinel'
         const img = asset && !isDirectionalAsset ? removeLightBackground(`monsterSheet:${m.defId}`, rawImage) : rawImage
         const sourceWidth = asset && !isDirectionalAsset ? img.width / 4 : img.width
         const sourceHeight = asset && !isDirectionalAsset ? img.height / 4 : img.height
@@ -366,7 +369,7 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         if (def.sprite === 'ghost') ctx.globalAlpha *= 0.8
         ctx.translate(m.x + lunge + attackBob, m.y - h / 2 + hover + walkBob)
         ctx.rotate(attackTilt)
-        ctx.scale(m.flip ? -squash : squash, stretch)
+        ctx.scale(isDirectionalAsset ? squash : (m.flip ? -squash : squash), stretch)
         if (asset && !isDirectionalAsset) {
           ctx.drawImage(img, frame * sourceWidth, 0, sourceWidth, sourceHeight, -w / 2, -h / 2, w, h)
         } else {
@@ -442,6 +445,33 @@ const animation = game.attackAnim > 0 ? 'attack' : game.moving ? 'walk' : 'idle'
         ctx.beginPath()
         ctx.ellipse(p.x, p.y, 10, 4, 0, 0, Math.PI * 2)
         ctx.fill()
+      }
+      if ((p.rebirthCount ?? 0) > 0) {
+        ctx.save()
+        const rebirthTier = Math.min(6, p.rebirthCount ?? 1)
+        const pulse = 0.55 + Math.sin(t * (7 + rebirthTier)) * 0.2
+        const colors = ['#b9f6ff', '#8fe9ff', '#72c7ff', '#a78bfa', '#f0abfc', '#ffe08a']
+        ctx.globalAlpha = pulse
+        ctx.strokeStyle = colors[rebirthTier - 1]
+        ctx.shadowColor = colors[rebirthTier - 1]
+        ctx.shadowBlur = 7 + rebirthTier * 2
+        ctx.lineWidth = 1.2 + rebirthTier * 0.18
+        const radius = 9 + rebirthTier * 1.6
+        ctx.beginPath()
+        ctx.ellipse(p.x, p.y - 8, radius, 3.2 + rebirthTier * 0.35, t * 0.35, 0, Math.PI * 2)
+        ctx.stroke()
+        ctx.globalAlpha = pulse * 0.7
+        ctx.beginPath()
+        ctx.ellipse(p.x, p.y - 8, radius + 3, 2.2 + rebirthTier * 0.25, -t * 0.55, 0, Math.PI * 2)
+        ctx.stroke()
+        for (let spark = 0; spark < 4 + rebirthTier; spark++) {
+          const angle = t * 1.8 + spark * (Math.PI * 2 / (4 + rebirthTier))
+          const x = p.x + Math.cos(angle) * (radius + 2)
+          const y = p.y - 9 + Math.sin(angle) * (4 + rebirthTier * 0.5)
+          const size = 1 + (spark % 2)
+          ctx.fillRect(Math.round(x - size / 2), Math.round(y - size / 2), size, size)
+        }
+        ctx.restore()
       }
       ctx.drawImage(img, Math.round(p.x - img.width / 2 + ox), Math.round(p.y - img.height + bob + oy))
       ctx.globalAlpha = 1

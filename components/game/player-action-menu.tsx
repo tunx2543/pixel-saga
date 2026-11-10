@@ -20,7 +20,7 @@ export function PlayerActionMenu() {
       <div className="mb-2 flex items-center justify-between border-b border-border pb-2">
         <div className="min-w-0">
           <p className="truncate text-xs font-bold text-foreground">{target.displayName}</p>
-          <p className="text-[10px] text-primary">UID {String(target.uid).padStart(5, '0')}</p>
+          <p className="text-[10px] text-primary">พร้อมติดต่อ</p>
         </div>
         <button type="button" className="rounded px-1.5 py-0.5 text-muted-foreground hover:bg-secondary" aria-label="ปิดเมนู" onClick={() => { game.socialTargetId = null; notify() }}>×</button>
       </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { game } from '@/lib/game/engine'
+import { game, notify } from '@/lib/game/engine'
 import { updateTradeOffer } from '@/lib/game/social'
 import { useGame } from '@/lib/game/use-game'
 import { ITEMS } from '@/lib/game/data'
@@ -11,17 +11,24 @@ export function TradePanel() {
   const g = useGame()
   const [offered, setOffered] = useState<string[]>([])
   const [ready, setReady] = useState(false)
+  const [status, setStatus] = useState('เลือกไอเท็มเพื่อใส่ในรายการแลกเปลี่ยน')
   const target = game.remotePlayers.find((player) => player.userId === game.tradeTargetId)
   const inventory = useMemo(() => g.p?.inventory.filter((entry) => entry.qty > 0) ?? [], [g.p?.inventory])
 
   const sync = async (nextItems: string[], nextReady: boolean) => {
-    if (!game.tradeId) return
+    if (!game.tradeId) {
+      setStatus('ไม่พบรายการเทรด กรุณากดปุ่มแลกเปลี่ยนจากตัวละครอีกครั้ง')
+      return
+    }
+    setStatus('กำลังบันทึกรายการ...')
     const result = await updateTradeOffer(game.tradeId, { senderItems: nextItems, recipientItems: [], senderReady: nextReady, recipientReady: false })
+    setStatus(result.message)
     if (!result.ok) game.chat.push({ id: Date.now(), type: 'error', text: result.message })
+    notify()
   }
 
   return (
-    <PanelFrame title="แลกเปลี่ยนไอเท็ม" subtitle={target ? `กับ ${target.displayName} · UID ${String(target.uid).padStart(5, '0')}` : 'รอคำขอแลกเปลี่ยน'}>
+    <PanelFrame title="แลกเปลี่ยนไอเท็ม" subtitle={target ? `กับ ${target.displayName}` : 'รอคำขอแลกเปลี่ยน'}>
       <div className="grid gap-3 md:grid-cols-2">
         <section className="rounded-lg border border-primary/30 bg-primary/5 p-3">
           <h3 className="text-sm font-bold text-primary">ของที่คุณเสนอ</h3>
@@ -52,7 +59,8 @@ export function TradePanel() {
           </div>
         </section>
       </div>
-      <p className="mt-3 text-[10px] text-muted-foreground">เลือกไอเท็มที่ต้องการแลก แล้วกดพร้อมแลกเมื่อทั้งสองฝ่ายตรวจสอบรายการเรียบร้อย</p>
+      <p className="mt-3 text-[10px] text-primary" role="status">{status}</p>
+      <p className="mt-1 text-[10px] text-muted-foreground">เลือกไอเท็มที่ต้องการแลก แล้วกดพร้อมแลกเมื่อทั้งสองฝ่ายตรวจสอบรายการเรียบร้อย</p>
     </PanelFrame>
   )
 }

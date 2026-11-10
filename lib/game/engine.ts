@@ -1,4 +1,5 @@
 import {
+  GM_ITEMS,
   ITEMS,
   JOBS,
   MAX_LEVEL,
@@ -10,6 +11,7 @@ import {
   type ItemDef,
   type JobDef,
   type SkillDef,
+  type EquipmentSlot,
 } from './data'
 import { MAPS, MAP_ORDER, TILE, boxBlocked, isSolidPx, type MapDef, type NpcDef, type NpcRole } from './maps'
 import type { Dir } from './sprites'
@@ -40,7 +42,7 @@ export interface SaveData {
   inventory: InvItem[]
   storage: InvItem[]
   storageGold: number
-  equipment: { weapon: InvItem | null; armor: InvItem | null }
+  equipment: Record<EquipmentSlot, InvItem | null>
   mapId: string
   x: number
   y: number
@@ -55,6 +57,8 @@ export interface SaveData {
   statPoints?: number
   skillPoints?: number
   skillLevels?: Record<string, number>
+  rebirthCount?: number
+  rebirthBonus?: { maxHp: number; maxMp: number; atk: number; def: number }
 }
 
 export interface RemotePlayer {
@@ -129,7 +133,7 @@ interface Projectile {
   delay: number
 }
 
-export type PanelId = 'shop' | 'enhance' | 'job' | 'storage' | 'character' | 'gacha' | 'friends' | 'trade' | 'inventory' | 'gm-summon'
+export type PanelId = 'shop' | 'enhance' | 'job' | 'storage' | 'character' | 'gacha' | 'rebirth' | 'friends' | 'trade' | 'inventory' | 'gm-summon'
 export type ChatType = 'system' | 'player' | 'gm' | 'loot' | 'error' | 'npc'
 export interface ChatMsg {
   id: number
@@ -147,6 +151,7 @@ export const game = {
   projectiles: [] as Projectile[],
   chat: [] as ChatMsg[],
   panel: null as PanelId | null,
+  socialMenuOpen: false,
   keys: new Set<string>(),
   attackHeld: false,
   facing: 'down' as Dir,
@@ -157,6 +162,7 @@ export const game = {
   skillCd: {} as Record<string, number>,
   bubble: null as null | { text: string; until: number },
   announcement: null as null | { body: string; authorId: string; until: number },
+  lootToast: null as null | { itemId: string; until: number },
   socialTargetId: null as string | null,
   tradeTargetId: null as string | null,
   tradeId: null as number | null,
@@ -215,12 +221,12 @@ export function getStats(p: SaveData = game.p!) {
   const job = JOBS[p.jobId] ?? JOBS.novice
   const L = p.level
   const wAtk = itemPower(p.equipment.weapon)
-  const aDef = itemPower(p.equipment.armor)
+  const aDef = (['armor', 'shoes', 'cloak', 'accessory'] as const).reduce((total, slot) => total + itemPower(p.equipment[slot]), 0)
   return {
-    maxHp: Math.floor((80 + L * 22) * job.hpMul + aDef * 2),
-    maxMp: Math.floor((30 + L * 7) * job.mpMul),
-    atk: Math.floor((8 + L * 2.6 + wAtk) * job.atkMul),
-    def: Math.floor((3 + L * 1.4) * job.defMul + aDef),
+    maxHp: Math.floor((80 + L * 22) * job.hpMul + aDef * 2) + (p.rebirthBonus?.maxHp ?? 0),
+    maxMp: Math.floor((30 + L * 7) * job.mpMul) + (p.rebirthBonus?.maxMp ?? 0),
+    atk: Math.floor((8 + L * 2.6 + wAtk) * job.atkMul) + (p.rebirthBonus?.atk ?? 0),
+    def: Math.floor((3 + L * 1.4) * job.defMul + aDef) + (p.rebirthBonus?.def ?? 0),
     speed: 72 * job.speedMul * (p.speed || 1),
     crit: job.crit,
     attackSpeed: job.attackSpeed,
@@ -311,6 +317,7 @@ export function canEquip(it: InvItem): string | null {
   if (def.kind !== 'weapon' && def.kind !== 'armor') return 'ไอเทมนี้สวมใส่ไม่ได้'
   if ((def.reqLevel ?? 1) > p.level) return `ต้องการเลเวล ${def.reqLevel}`
   if (def.kind === 'weapon' && !currentJob().weaponTypes.includes(def.weaponType!)) return `อาชีพ ${currentJob().name} ใช้อาวุธนี้ไม่ได้`
+  if (def.allowedJobs?.length && !def.allowedJobs.includes(currentJob().id)) return `อาชีพ ${currentJob().name} สวมใส่ไอเทมนี้ไม่ได้`
   return null
 }
 
@@ -324,7 +331,7 @@ export function equip(id: string) {
     notify()
     return
   }
-  const slot = ITEMS[it.itemId].kind === 'weapon' ? 'weapon' : 'armor'
+  const slot: EquipmentSlot = ITEMS[it.itemId].slot ?? (ITEMS[it.itemId].kind === 'weapon' ? 'weapon' : 'armor')
   p.inventory = p.inventory.filter((i) => i.uid !== id)
   const prev = p.equipment[slot]
   if (prev) p.inventory.push(prev)
@@ -334,7 +341,7 @@ export function equip(id: string) {
   notify()
 }
 
-export function unequip(slot: 'weapon' | 'armor') {
+export function unequip(slot: EquipmentSlot) {
   const p = player()
   const it = p.equipment[slot]
   if (!it) return
@@ -537,19 +544,28 @@ function killMonster(m: Monster) {
   addFloat(m.x, m.y - 30, `+${gold}G`, '#f2c94c', 9)
   gainExp(def.exp)
 
-  const equipmentPool = Object.values(ITEMS).filter((item) => item.kind === 'weapon' || item.kind === 'armor')
-  const guaranteedPool = equipmentPool.filter((item) => (item.tier ?? 1) <= 3)
-  const effectPool = equipmentPool.filter((item) => (item.tier ?? 1) >= 4)
+  const equipmentPool = [...new Map(
+    Object.values(ITEMS)
+      .filter((item) => (item.kind === 'weapon' || item.kind === 'armor') && !item.gmOnly)
+      .map((item) => [item.id, item]),
+  ).values()]
   const dynamicDrops = def.boss
-    ? effectPool.map((item) => ({ itemId: item.id, chance: 0.1 }))
-    : guaranteedPool.map((item) => ({ itemId: item.id, chance: 0.01 }))
+    ? equipmentPool.map((item) => ({ itemId: item.id, chance: 0.001 }))
+    : []
+  const junkDrops = def.drops.filter((drop) => {
+    const item = ITEMS[drop.itemId]
+    return !item || (item.kind !== 'weapon' && item.kind !== 'armor')
+  })
   const seen = new Set<string>()
-  for (const d of [...def.drops, ...dynamicDrops]) {
+  for (const d of [...junkDrops, ...dynamicDrops]) {
     if (seen.has(d.itemId)) continue
     seen.add(d.itemId)
     if (Math.random() < d.chance) {
-      if (addItem(d.itemId, 1)) say('loot', `ได้รับ ${ITEMS[d.itemId].name}`)
-      else warn('กระเป๋าเต็ม! ไอเทมหล่นหาย')
+      if (addItem(d.itemId, 1)) {
+        game.lootToast = { itemId: d.itemId, until: game.time + 5 }
+        say('loot', `ได้รับ ${ITEMS[d.itemId].name}`)
+        notify()
+      } else warn('กระเป๋าเต็ม! ไอเทมหล่นหาย')
     }
   }
   if (def.boss) say('system', `★ ${p.name} ได้ปราบ ${def.name} สำเร็จ! ★`)
@@ -702,7 +718,7 @@ function die() {
 
 /* ---------------- NPC systems ---------------- */
 
-const ROLE_PANEL: Record<NpcRole, PanelId> = { shop: 'shop', enhance: 'enhance', job: 'job', storage: 'storage', gacha: 'gacha', rebirth: 'character' }
+const ROLE_PANEL: Record<NpcRole, PanelId> = { shop: 'shop', enhance: 'enhance', job: 'job', storage: 'storage', gacha: 'gacha', rebirth: 'rebirth' }
 
 export function interact() {
   const npc = game.nearNpc
@@ -710,6 +726,46 @@ export function interact() {
   game.keys.clear()
   game.panel = ROLE_PANEL[npc.role]
   say('npc', npc.greeting, npc.name)
+  notify()
+  return true
+}
+
+export function rebirth() {
+  const p = player()
+  if (p.level < MAX_LEVEL) {
+    say('error', `ต้องมีเลเวล ${MAX_LEVEL} จึงจะจุติได้`)
+    notify()
+    return false
+  }
+  if ((p.rebirthCount ?? 0) >= 6) {
+    say('error', 'จุติครบสูงสุด 6 ครั้งแล้ว')
+    notify()
+    return false
+  }
+  const before = getStats(p)
+  const baseHp = 80 + 22 + itemPower(p.equipment.armor) * 2
+  const baseMp = 30 + 7
+  const baseAtk = Math.floor(8 + 2.6 + itemPower(p.equipment.weapon))
+  const baseDef = Math.floor(3 + 1.4 + itemPower(p.equipment.armor))
+  p.rebirthBonus = {
+    maxHp: Math.max(0, before.maxHp - baseHp),
+    maxMp: Math.max(0, before.maxMp - baseMp),
+    atk: Math.max(0, before.atk - baseAtk),
+    def: Math.max(0, before.def - baseDef),
+  }
+  p.rebirthCount = (p.rebirthCount ?? 0) + 1
+  p.jobId = 'novice'
+  p.level = 1
+  p.exp = 0
+  p.hp = baseHp + p.rebirthBonus.maxHp
+  p.mp = baseMp + p.rebirthBonus.maxMp
+  const spawn = MAPS.town.spawn
+  changeMap('town', spawn.x, spawn.y)
+  game.effects.push({ type: 'levelup', x: p.x, y: p.y, r: 36, color: '#ffd60a', life: 3, max: 3 })
+  addFloat(p.x, p.y - 42, `REBIRTH ${p.rebirthCount}`, '#ffd60a', 15)
+  say('system', 'จุติสำเร็จ! กลับไปเลเวล 1 และคงค่าสเตตัสเดิมไว้')
+  saveGame()
+  game.panel = null
   notify()
   return true
 }
@@ -737,8 +793,8 @@ export function castGmSkill(skill: 'invisible' | 'summon' | 'immortal') {
 
 export function summonGmItem(itemId: string) {
   const p = player()
-  if (!p.gm || !ITEMS[itemId]) return
-  if (addItem(itemId, 1)) say('gm', `เสก ${ITEMS[itemId].name} สำเร็จ`)
+  if (!p.gm || !GM_ITEMS[itemId]) return
+  if (addItem(itemId, 1)) say('gm', `เสก ${GM_ITEMS[itemId].name} สำเร็จ`)
   else say('error', 'กระเป๋าเต็ม')
   saveGame()
   notify()
@@ -948,7 +1004,7 @@ const GM_HELP = [
   '/mobs - รายการไอดีมอนสเตอร์',
   '/job <ไอดี> - เปลี่ยนอาชีพทันที',
   '/jobs - รายการไอดีอาชีพ',
-  '/ban <UID> [นาที|permanent] [เหตุผล] - แบนผู้เล่น',
+  '/ban (UID)_(วินาที)_(เหตุผล) - แบนผู้เล่น เช่น /ban 00001_3600_ใช้บอท',
   '/gmchat <ข้อความ> - ประกาศแถบด้านบน',
   '/closegm - ปิดโหมด GM',
 ]
@@ -1046,8 +1102,8 @@ function runCommand(text: string) {
   saveGame()
   },
   '/items': () => {
-      const ids = Object.keys(ITEMS)
-      for (let i = 0; i < ids.length; i += 8) say('gm', ids.slice(i, i + 8).join(', '))
+  const ids = Object.keys(ITEMS)
+  for (let i = 0; i < ids.length; i += 8) say('gm', ids.slice(i, i + 8).join(', '))
     },
     '/stone': () => {
       const n = Math.max(1, Math.min(999, Math.floor(num(0, 10))))
@@ -1114,10 +1170,12 @@ function runCommand(text: string) {
     },
     '/jobs': () => say('gm', Object.keys(JOBS).join(', ')),
     '/ban': () => {
-      const target = args[0]
-      const duration = args[1]?.toLowerCase() === 'permanent' || args[1] === 'ถาวร' ? null : Number(args[1])
-      const reason = args.slice(2).join(' ') || 'ไม่ระบุเหตุผล'
-      if (!target || (duration !== null && (!Number.isFinite(duration) || duration <= 0))) return say('error', 'ใช้ /ban <UID> [นาที|permanent] [เหตุผล]')
+      const input = args.join(' ').trim()
+      const parts = input.split('_').map((part) => part.trim())
+      const target = parts[0]
+      const duration = parts[1]?.toLowerCase() === 'permanent' || parts[1] === 'ถาวร' ? null : Number(parts[1])
+      const reason = parts.slice(2).join('_').trim() || 'ไม่ระบุเหตุผล'
+      if (!target || (duration !== null && (!Number.isInteger(duration) || duration <= 0))) return say('error', 'ใช้ /ban (UID)_(วินาที)_(เหตุผล) เช่น /ban 00001_3600_ใช้บอท')
       void createBan(target, duration, reason).then((result) => { say(result.ok ? 'gm' : 'error', result.message); notify() })
     },
     '/gmchat': () => {
@@ -1250,8 +1308,16 @@ function startSession(p: SaveData, welcome: string, persist = false) {
 }
 
 export function loadGame(d: SaveData) {
-  const weapon = sanitizeList(d.equipment?.weapon ? [d.equipment.weapon] : [])[0] ?? null
-  const armor = sanitizeList(d.equipment?.armor ? [d.equipment.armor] : [])[0] ?? null
+  const sanitizeEquipment = (slot: EquipmentSlot, fallback: InvItem | null = null) => {
+    const item = d.equipment?.[slot] ?? (slot === 'armor' ? fallback : null)
+    return sanitizeList(item ? [item] : [])[0] ?? null
+  }
+  const legacyArmor = d.equipment?.armor ? sanitizeList([d.equipment.armor])[0] ?? null : null
+  const weapon = sanitizeEquipment('weapon')
+  const armor = sanitizeEquipment('armor', legacyArmor)
+  const shoes = sanitizeEquipment('shoes')
+  const cloak = sanitizeEquipment('cloak')
+  const accessory = sanitizeEquipment('accessory')
   const p: SaveData = {
     version: 1,
     name: d.name.slice(0, 16) || 'นักผจญภัย',
@@ -1264,7 +1330,7 @@ export function loadGame(d: SaveData) {
     inventory: sanitizeList(d.inventory),
     storage: sanitizeList(d.storage),
     storageGold: Math.max(0, Math.floor(d.storageGold || 0)),
-    equipment: { weapon, armor },
+    equipment: { weapon, armor, shoes, cloak, accessory },
     mapId: MAPS[d.mapId] ? d.mapId : 'town',
     x: Number.isFinite(d.x) ? d.x : (MAPS.town.spawn.x + 0.5) * TILE,
     y: Number.isFinite(d.y) ? d.y : (MAPS.town.spawn.y + 0.5) * TILE,
@@ -1276,6 +1342,13 @@ export function loadGame(d: SaveData) {
     playTime: d.playTime || 0,
     kills: d.kills || 0,
     savedAt: d.savedAt || Date.now(),
+    rebirthCount: Math.max(0, Math.floor(d.rebirthCount || 0)),
+    rebirthBonus: {
+      maxHp: Math.max(0, Math.floor(d.rebirthBonus?.maxHp || 0)),
+      maxMp: Math.max(0, Math.floor(d.rebirthBonus?.maxMp || 0)),
+      atk: Math.max(0, Math.floor(d.rebirthBonus?.atk || 0)),
+      def: Math.max(0, Math.floor(d.rebirthBonus?.def || 0)),
+    },
   }
   if (p.hp <= 0) p.hp = getStats(p).maxHp
   startSession(p, `ยินดีต้อนรับกลับ ${p.name}! โหลดความคืบหน้าล่าสุดแล้ว`, true)
@@ -1298,6 +1371,9 @@ export function newGame(name: string) {
     equipment: {
       weapon: { uid: uid(), itemId: 'wooden_stick', qty: 1, plus: 0 },
       armor: { uid: uid(), itemId: 'cloth_armor', qty: 1, plus: 0 },
+      shoes: null,
+      cloak: null,
+      accessory: null,
     },
     mapId: 'town',
     x: (town.spawn.x + 0.5) * TILE,
