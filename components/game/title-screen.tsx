@@ -21,10 +21,16 @@ export function TitleScreen() {
     }
 
     void loadCloud()
-    const { data } = createClient().auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN') void loadCloud()
-    })
-    return () => data.subscription.unsubscribe()
+
+    // Guest mode must still work when the optional account service is unavailable.
+    try {
+      const { data } = createClient().auth.onAuthStateChange((event) => {
+        if (event === 'SIGNED_IN') void loadCloud()
+      })
+      return () => data.subscription.unsubscribe()
+    } catch {
+      return () => {}
+    }
   }, [])
   const [mode, setMode] = useState<'menu' | 'new'>(save ? 'menu' : 'new')
   const [name, setName] = useState('')
