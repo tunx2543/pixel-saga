@@ -316,6 +316,23 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
 
   if (map.id === 'town') drawFountain(ctx, 20 * TILE, 14 * TILE, t)
 
+  for (const drop of game.groundDrops) {
+    const item = ITEMS[drop.itemId]
+    if (!item) continue
+    const bob = Math.sin(t * 5 + drop.x) * 1.5
+    ctx.fillStyle = 'rgba(0,0,0,0.35)'
+    ctx.fillRect(Math.round(drop.x - 4), Math.round(drop.y + 3), 9, 3)
+    ctx.fillStyle = item.color
+    ctx.fillRect(Math.round(drop.x - 3), Math.round(drop.y - 5 + bob), 7, 7)
+    ctx.strokeStyle = '#fff3b0'
+    ctx.strokeRect(Math.round(drop.x - 4), Math.round(drop.y - 6 + bob), 9, 9)
+    ctx.fillStyle = item.color
+    ctx.font = `6px ${font}`
+    ctx.textAlign = 'center'
+    ctx.fillText(`${item.name} x${drop.qty}`, drop.x, drop.y - 10 + bob)
+    ctx.textAlign = 'start'
+  }
+
   type Ent = { y: number; draw: () => void }
   const ents: Ent[] = []
 

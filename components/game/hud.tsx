@@ -69,6 +69,8 @@ export function Hud() {
             </div>
           )}
           <div className="mt-2 grid grid-cols-2 gap-1">
+            <button type="button" onClick={() => { game.autoFarm = !game.autoFarm; notify() }} className={`pixel-btn col-span-2 px-2 py-1 text-[10px] ${game.autoFarm ? 'bg-green-500/25 text-green-300' : 'bg-secondary text-muted-foreground'}`}>{game.autoFarm ? 'หยุดออโต้ฟาร์ม' : 'เริ่มออโต้ฟาร์ม'}</button>
+            <button type="button" disabled={!game.autoFarm} onClick={() => { game.autoSkills = !game.autoSkills; notify() }} className={`pixel-btn col-span-2 px-2 py-1 text-[10px] ${game.autoSkills ? 'bg-purple-500/25 text-purple-300' : 'bg-secondary text-muted-foreground'}`}>ออโต้สกิล: {game.autoSkills ? 'เปิด' : 'ปิด'}</button>
             <button type="button" onClick={() => openPanel('inventory')} className="pixel-btn bg-secondary px-2 py-1 text-[10px] text-foreground hover:bg-secondary/80">กระเป๋า</button>
             <button type="button" onClick={() => openPanel('gacha')} className="pixel-btn bg-primary/20 px-2 py-1 text-[10px] text-primary hover:bg-primary/30">เปิดตู้กาชา</button>
             <button type="button" onClick={() => { game.socialMenuOpen = !game.socialMenuOpen; game.panel = null; notify() }} className="pixel-btn grid place-items-center bg-accent/20 p-1.5 text-accent hover:bg-accent/30" aria-label="เปิดรายชื่อเพื่อน" title="รายชื่อเพื่อน"><UsersRound className="size-3.5" aria-hidden /></button>

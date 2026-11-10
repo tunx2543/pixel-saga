@@ -110,6 +110,16 @@ export interface FloatText {
   size: number
 }
 
+export interface GroundDrop {
+  uid: string
+  itemId: string
+  qty: number
+  x: number
+  y: number
+  ownerId: string
+  expiresAt: number
+}
+
 export interface Effect {
   type: 'slash' | 'ring' | 'burst' | 'levelup' | 'spark'
   x: number
@@ -145,8 +155,12 @@ export interface ChatMsg {
 export const game = {
   p: null as SaveData | null,
   monsters: [] as Monster[],
+  groundDrops: [] as GroundDrop[],
   remotePlayers: [] as RemotePlayer[],
   floats: [] as FloatText[],
+  autoFarm: false,
+  autoSkills: false,
+  autoSkillIndex: 0,
   effects: [] as Effect[],
   projectiles: [] as Projectile[],
   chat: [] as ChatMsg[],
@@ -531,6 +545,31 @@ function faceToward(x: number, y: number) {
   if (m.hp <= 0) killMonster(m)
 }
 
+function dropItem(itemId: string, qty: number, x: number, y: number) {
+  const p = player()
+  game.groundDrops.push({ uid: uid(), itemId, qty, x: x + rand(-5, 5), y: y + rand(-3, 3), ownerId: String(p.uid ?? p.name), expiresAt: game.time + 60 })
+}
+
+function collectGroundDrops() {
+  const p = player()
+  const ownerId = String(p.uid ?? p.name)
+  for (let i = game.groundDrops.length - 1; i >= 0; i--) {
+    const drop = game.groundDrops[i]
+    if (drop.expiresAt <= game.time) {
+      game.groundDrops.splice(i, 1)
+      continue
+    }
+    if (drop.ownerId !== ownerId || Math.hypot(drop.x - p.x, drop.y - p.y) > 22) continue
+    if (!addItem(drop.itemId, drop.qty)) {
+      warn('กระเป๋าเต็ม! เก็บไอเทมไม่ได้')
+      continue
+    }
+    game.groundDrops.splice(i, 1)
+    game.lootToast = { itemId: drop.itemId, until: game.time + 3 }
+    say('loot', `เก็บ ${ITEMS[drop.itemId].name} x${drop.qty}`)
+  }
+}
+
 function killMonster(m: Monster) {
   const p = player()
   const def = MONSTERS[m.defId]
@@ -561,11 +600,9 @@ function killMonster(m: Monster) {
     if (seen.has(d.itemId)) continue
     seen.add(d.itemId)
     if (Math.random() < d.chance) {
-      if (addItem(d.itemId, 1)) {
-        game.lootToast = { itemId: d.itemId, until: game.time + 5 }
-        say('loot', `ได้รับ ${ITEMS[d.itemId].name}`)
-        notify()
-      } else warn('กระเป๋าเต็ม! ไอเทมหล่นหาย')
+      dropItem(d.itemId, 1, m.x, m.y)
+      say('loot', `${ITEMS[d.itemId].name} ตกพื้น`)
+      notify()
     }
   }
   if (def.boss) say('system', `★ ${p.name} ได้ปราบ ${def.name} สำเร็จ! ★`)
@@ -1276,6 +1313,7 @@ function sanitizeList(list: unknown): InvItem[] {
 
 function resetRuntime() {
   game.monsters = []
+  game.groundDrops = []
   game.floats = []
   game.effects = []
   game.projectiles = []
@@ -1469,6 +1507,11 @@ export function update(dt: number) {
   }
 
   if (game.attackHeld) basicAttack()
+  if (game.autoFarm && !game.panel) {
+    if (game.autoSkills && currentJob().skills.length) castSkill(game.autoSkillIndex % currentJob().skills.length)
+    else basicAttack()
+  }
+  collectGroundDrops()
 
   updateMonsters(dt, map)
   updateProjectiles(dt)
