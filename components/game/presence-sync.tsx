@@ -26,58 +26,39 @@ export function PresenceSync() {
         const { data } = await supabase.auth.getUser()
         const player = game.p
         if (stopped || !data.user || !player) return
-        const { data: ban } = await supabase
-          .from('player_bans')
-          .select('expires_at, reason')
-          .eq('target_user_id', data.user.id)
-          .maybeSingle()
-        if (ban && (!ban.expires_at || Date.parse(ban.expires_at) > Date.now())) {
-          game.p = null
-          game.chat = []
-          notify()
-          return
-        }
         const isGm = data.user.email?.toLowerCase() === 'ffsmilepay53@gmail.com'
-        const { data: ownRow } = await supabase.from('game_players').select('uid').eq('user_id', data.user.id).maybeSingle()
-        player.uid = ownRow?.uid ?? player.uid ?? undefined
         player.gm = isGm
         const now = new Date().toISOString()
-        await supabase.from('game_players').upsert({
-          user_id: data.user.id,
-          display_name: player.name,
-          class_id: player.jobId,
-          save_data: { ...player, facing: game.facing, moving: game.moving, attackAnim: game.attackAnim },
+        const snapshot = {
+          userId: data.user.id,
+          displayName: player.name,
+          classId: player.jobId,
+          jobId: player.jobId,
+          mapId: player.mapId,
           x: player.x,
           y: player.y,
           level: player.level,
-          last_seen: now,
+          uid: player.uid ?? 1,
+          gm: isGm,
+          facing: game.facing,
+          moving: game.moving,
+          attackAnim: game.attackAnim,
+          lastSeen: Date.parse(now),
+        }
+        await supabase.from('game_rooms').upsert({
+          room_id: `global:${data.user.id}`,
+          host_id: data.user.id,
+          snapshot,
+          updated_at: now,
         })
         lastSync = Date.now()
         const { data: rows } = await supabase
-          .from('game_players')
-          .select('user_id, uid, display_name, class_id, save_data, x, y, level, last_seen')
-          .gt('last_seen', new Date(Date.now() - 30000).toISOString())
+          .from('game_rooms')
+          .select('host_id, snapshot, updated_at')
+          .like('room_id', 'global:%')
         game.remotePlayers = (rows ?? [])
-          .filter((row) => row.user_id !== data.user.id)
-          .map((row) => {
-            const save = (row.save_data ?? {}) as Record<string, unknown>
-            return {
-              userId: row.user_id,
-              uid: Number(row.uid),
-              displayName: row.display_name,
-              classId: row.class_id,
-              jobId: typeof save.jobId === 'string' ? save.jobId : row.class_id,
-              mapId: typeof save.mapId === 'string' ? save.mapId : 'town',
-              x: Number(row.x),
-              y: Number(row.y),
-              level: row.level,
-              gm: Number(row.uid) === 0,
-              facing: (typeof save.facing === 'string' ? save.facing : 'down') as 'up' | 'down' | 'left' | 'right',
-              moving: save.moving === true,
-              attackAnim: typeof save.attackAnim === 'number' ? save.attackAnim : 0,
-              lastSeen: Date.parse(row.last_seen),
-            }
-          })
+          .filter((row) => row.host_id !== data.user.id && Date.parse(row.updated_at) > Date.now() - 30000)
+          .map((row) => row.snapshot as NonNullable<typeof game.remotePlayers>[number])
         const { data: announcements } = await supabase
           .from('world_announcements')
           .select('author_id, body, created_at')
