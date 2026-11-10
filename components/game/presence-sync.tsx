@@ -8,7 +8,14 @@ let lastPrivateMessageId = 0
 
 export function PresenceSync() {
   useEffect(() => {
-    const supabase = createClient()
+    let supabase: ReturnType<typeof createClient>
+    try {
+      supabase = createClient()
+    } catch {
+      // Online presence is optional; Guest mode must continue without Supabase.
+      return
+    }
+
     let stopped = false
     let syncing = false
     let lastSync = 0

@@ -13,10 +13,14 @@ export function TitleScreen() {
 
   useEffect(() => {
     const loadCloud = async () => {
-      const cloud = await loadCloudGame()
-      if (cloud) {
-        setSave(cloud)
-        setMode('menu')
+      try {
+        const cloud = await loadCloudGame()
+        if (cloud) {
+          setSave(cloud)
+          setMode('menu')
+        }
+      } catch {
+        // Cloud saves are optional; never block Guest mode when Supabase is unavailable.
       }
     }
 
