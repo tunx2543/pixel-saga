@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { isPermanentGm } from '@/lib/game/permissions'
 import { game, notify, say, subscribe } from '@/lib/game/engine'
 
 let lastPrivateMessageId = 0
@@ -26,7 +27,7 @@ export function PresenceSync() {
         const { data } = await supabase.auth.getUser()
         const player = game.p
         if (stopped || !data.user || !player) return
-        const isGm = data.user.email?.toLowerCase() === 'ffsmilepay53@gmail.com'
+        const isGm = isPermanentGm(data.user.email)
         player.gm = isGm
         const now = new Date().toISOString()
         const snapshot = {
