@@ -34,7 +34,7 @@ export interface JobDef {
   range: number
   ranged: boolean
   weaponTypes: WeaponType[]
-  colors: { hair: string; body: string; legs: string; accent: string }
+  colors: { hair: string; body: string; legs: string; accent: string; skin?: string; hat?: string }
   skills: SkillDef[]
 }
 
