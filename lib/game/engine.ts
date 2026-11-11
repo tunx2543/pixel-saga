@@ -39,6 +39,7 @@ export interface SaveData {
   hp: number
   mp: number
   gold: number
+  diamonds: number
   inventory: InvItem[]
   storage: InvItem[]
   storageGold: number
@@ -1365,6 +1366,7 @@ export function loadGame(d: SaveData) {
     hp: d.hp || 1,
     mp: d.mp || 0,
     gold: Math.max(0, Math.floor(d.gold || 0)),
+    diamonds: Math.max(0, Math.floor(d.diamonds || 0)),
     inventory: sanitizeList(d.inventory),
     storage: sanitizeList(d.storage),
     storageGold: Math.max(0, Math.floor(d.storageGold || 0)),
@@ -1403,6 +1405,7 @@ export function newGame(name: string) {
     hp: 1,
     mp: 1,
     gold: 300,
+    diamonds: 0,
     inventory: [],
     storage: [],
     storageGold: 0,

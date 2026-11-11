@@ -7,7 +7,6 @@ import { deleteSave, loadGame, newGame, readSave, loadCloudGame } from '@/lib/ga
 import { MAPS } from '@/lib/game/maps'
 import { formatPlayTime } from './format'
 import { AccountPanel } from './account-panel'
-import { CheckinModal } from './checkin-modal'
 
 export function TitleScreen() {
   const [save, setSave] = useState(() => readSave())
@@ -39,7 +38,6 @@ export function TitleScreen() {
   }, [])
   const [mode, setMode] = useState<'menu' | 'new'>(save ? 'menu' : 'new')
   const [name, setName] = useState('')
-  const [showCheckin, setShowCheckin] = useState(true)
 
   const start = () => {
     if (save) deleteSave()
@@ -48,7 +46,6 @@ export function TitleScreen() {
 
   return (
     <div className="relative flex h-full w-full items-center justify-center overflow-hidden p-4">
-      {showCheckin && <CheckinModal onClose={() => setShowCheckin(false)} />}
       <img
         src="/images/title-bg.png"
         alt=""
