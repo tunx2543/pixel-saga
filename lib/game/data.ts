@@ -507,13 +507,6 @@ const BASE_ITEMS: Record<string, ItemDef> = {
   dragon_armor: armor('dragon_armor', 'เกราะมังกร', 70, 24000, 4, 36, '#c1121f'),
 }
 
-const IMAGE_READY_BASE_ITEMS: Record<string, ItemDef> = Object.fromEntries(
-  Object.entries(BASE_ITEMS).map(([id, item], index) => [
-    id,
-    item.asset ? item : { ...item, asset: `/images/items/catalog/${CATALOG_ASSETS[index % CATALOG_ASSETS.length]}` },
-  ]),
-)
-
 const FILE_ITEMS: Record<string, ItemDef> = Object.fromEntries(
   WEAPON_CATALOG.map((entry, index) => [
     entry.id,
@@ -544,7 +537,7 @@ export const GM_ITEMS: Record<string, ItemDef> = Object.fromEntries(
   FILE_ITEM_IDS.map((id) => [`gm888_${id.replace('weapon_', '')}`, { ...FILE_ITEMS[id], gmOnly: true }]),
 )
 
-export const ITEMS: Record<string, ItemDef> = { ...IMAGE_READY_BASE_ITEMS, ...FILE_ITEMS, ...GM_ITEMS }
+export const ITEMS: Record<string, ItemDef> = { ...BASE_ITEMS, ...FILE_ITEMS, ...GM_ITEMS }
 
 export const SHOP_STOCK: string[] = FILE_ITEM_IDS.filter((id) => !ITEMS[id].gmOnly).slice(0, 24)
 /* Legacy consumables are intentionally no longer stocked; all visible item art comes from the weapons archive. */
