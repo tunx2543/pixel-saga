@@ -1029,6 +1029,8 @@ const GM_HELP = [
   '/level <เลข> - ตั้งเลเวล',
   '/exp <เลข> - เพิ่ม EXP',
   '/gold <เลข> - เพิ่มเงิน',
+  '/gem <จำนวน 1-1,000,000> - เสกเพชร (GM เท่านั้น)',
+  '/เสกเพชร <จำนวน 1-1,000,000> - คำสั่งภาษาไทย (GM เท่านั้น)',
   '/item <ไอดี> [จำนวน] [บวก] - เสกไอเทม',
   '/allweapons - เสกอาวุธทั้งหมดที่อาชีพนี้ใช้ได้',
   '/items - รายการไอดีไอเทม',
@@ -1103,8 +1105,25 @@ function runCommand(text: string) {
     }
   }
 
+  const grantGems = () => {
+    const amount = Number(args[0])
+    const maxGrant = 1_000_000
+    const maxBalance = 1_000_000_000
+    if (!Number.isSafeInteger(amount) || amount < 1 || amount > maxGrant) {
+      return say('error', 'ใช้ /gem <จำนวนเต็ม 1-1,000,000>')
+    }
+    const currentBalance = Number.isSafeInteger(p.diamonds) ? Math.max(0, p.diamonds) : 0
+    if (currentBalance + amount > maxBalance) {
+      return say('error', `ยอดเพชรสูงสุดคือ ${maxBalance.toLocaleString()} เพชร`)
+    }
+    p.diamonds = currentBalance + amount
+    say('gm', `เสกเพชรสำเร็จ +${amount.toLocaleString()} | ยอดรวม ${p.diamonds.toLocaleString()} เพชร`)
+  }
+
   const gmCommands: Record<string, () => void> = {
     '/gm': () => GM_HELP.forEach((l) => say('gm', l)),
+    '/gem': grantGems,
+    '/เสกเพชร': grantGems,
     '/level': () => {
       const lv = Math.max(1, Math.min(MAX_LEVEL, Math.floor(num(0, p.level))))
       p.level = lv
