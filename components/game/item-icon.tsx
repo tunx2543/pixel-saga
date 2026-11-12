@@ -36,7 +36,7 @@ function potionIcon(itemId: string, size: number) {
 export function ItemIcon({ itemId, size = 32, className }: { itemId: string; size?: number; className?: string }) {
   const def = ITEMS[itemId]
   if (!def) return null
-  const isPotion = itemId.endsWith('_potion')
+  const isPotion = def.kind === 'consumable' && itemId.endsWith('_potion')
 
   if (isPotion) {
     return (

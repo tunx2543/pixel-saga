@@ -1452,9 +1452,20 @@ function startSession(p: SaveData, welcome: string, persist = false) {
 }
 
 export function loadGame(d: SaveData) {
+  const inventory = sanitizeList(d.inventory)
   const sanitizeEquipment = (slot: EquipmentSlot, fallback: InvItem | null = null) => {
     const item = d.equipment?.[slot] ?? (slot === 'armor' ? fallback : null)
-    return sanitizeList(item ? [item] : [])[0] ?? null
+    const candidate = sanitizeList(item ? [item] : [])[0] ?? null
+    if (!candidate) return null
+
+    const def = ITEMS[candidate.itemId]
+    const compatible = slot === 'weapon'
+      ? def.kind === 'weapon'
+      : def.kind === 'armor' && (def.slot ?? 'armor') === slot
+    if (compatible) return candidate
+
+    if (!inventory.some((entry) => entry.uid === candidate.uid)) inventory.push(candidate)
+    return null
   }
   const legacyArmor = d.equipment?.armor ? sanitizeList([d.equipment.armor])[0] ?? null : null
   const weapon = sanitizeEquipment('weapon')
@@ -1479,7 +1490,7 @@ export function loadGame(d: SaveData) {
     equippedGemCompanion: GEM_SHOP_ITEMS.some((item) => item.id === d.equippedGemCompanion && item.category === 'companions' && d.ownedGemItems?.includes(item.id)) ? d.equippedGemCompanion : null,
     lootMagnetUntil: Number.isFinite(d.lootMagnetUntil) ? Math.max(0, d.lootMagnetUntil) : 0,
     inventoryCapacityBonus: Math.max(0, Math.min(60, Math.floor((d.inventoryCapacityBonus || 0) / 20) * 20)),
-    inventory: sanitizeList(d.inventory),
+    inventory,
     storage: sanitizeList(d.storage),
     storageGold: Math.max(0, Math.floor(d.storageGold || 0)),
     equipment: { weapon, armor, shoes, cloak, accessory },
