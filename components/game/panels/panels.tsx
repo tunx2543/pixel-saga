@@ -8,6 +8,7 @@ import { formatNum } from '../format'
 import { CharacterPanel } from './character-panel'
 import { EnhancePanel } from './enhance-panel'
 import { GachaPanel } from './gacha-panel'
+import { GemShopPanel } from './gem-shop-panel'
 import { FriendsPanel } from './friends-panel'
 import { GmSummonPanel } from './gm-summon-panel'
 import { InventoryPanel } from './inventory-panel'
@@ -22,6 +23,8 @@ export function Panels() {
   switch (g.panel) {
     case 'shop':
       return <ShopPanel />
+    case 'gem-shop':
+      return <GemShopPanel />
     case 'enhance':
       return <EnhancePanel />
     case 'gacha':

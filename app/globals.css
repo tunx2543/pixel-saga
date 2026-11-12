@@ -120,6 +120,121 @@
     image-rendering: pixelated;
   }
 
+  .gem-art-wrap {
+    position: relative;
+    display: grid;
+    width: 76px;
+    height: 76px;
+    flex: 0 0 76px;
+    place-items: center;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 0.65rem;
+    image-rendering: pixelated;
+  }
+
+  .gem-art-wrap-large {
+    width: 136px;
+    height: 136px;
+    flex-basis: 136px;
+  }
+
+  .gem-art-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 0 9px rgba(255, 255, 255, 0.24));
+  }
+
+  .gem-art-pixel {
+    display: block;
+    image-rendering: pixelated;
+  }
+
+  .gem-art-sparkle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    animation: gem-sparkle 2.4s steps(2, end) infinite;
+  }
+
+  .gem-art-sparkle-one {
+    top: 18%;
+    right: 19%;
+  }
+
+  .gem-art-sparkle-two {
+    bottom: 18%;
+    left: 18%;
+    animation-delay: 1.2s;
+  }
+
+  .gem-art-orbit {
+    position: absolute;
+    width: 83%;
+    height: 34%;
+    border: 1px solid;
+    border-radius: 50%;
+    transform: rotate(-28deg);
+    animation: gem-orbit 5s linear infinite;
+  }
+
+  .gem-motion-float .gem-art-grid,
+  .gem-motion-bounce .gem-art-grid {
+    animation: gem-float 2.8s ease-in-out infinite;
+  }
+
+  .gem-motion-bounce .gem-art-grid {
+    animation-duration: 1.6s;
+  }
+
+  .gem-motion-pulse .gem-art-grid {
+    animation: gem-pulse 1.8s ease-in-out infinite;
+  }
+
+  .gem-motion-wings .gem-art-grid {
+    animation: gem-wings 1.4s steps(2, end) infinite;
+  }
+
+  .gem-motion-sparkle .gem-art-grid {
+    animation: gem-float 2.2s ease-in-out infinite;
+    filter: drop-shadow(0 0 5px rgba(253, 230, 138, 0.48));
+  }
+
+  @keyframes gem-float {
+    0%, 100% { transform: translateY(2px); }
+    50% { transform: translateY(-4px); }
+  }
+
+  @keyframes gem-pulse {
+    0%, 100% { transform: scale(0.96); filter: brightness(0.95) drop-shadow(0 0 6px rgba(251, 146, 60, 0.35)); }
+    50% { transform: scale(1.04); filter: brightness(1.2) drop-shadow(0 0 14px rgba(253, 230, 138, 0.65)); }
+  }
+
+  @keyframes gem-wings {
+    0%, 100% { transform: scaleX(0.96) translateY(1px); }
+    50% { transform: scaleX(1.04) translateY(-2px); }
+  }
+
+  @keyframes gem-sparkle {
+    0%, 100% { opacity: 0.2; transform: scale(0.7); }
+    50% { opacity: 1; transform: scale(1.4); }
+  }
+
+  @keyframes gem-orbit {
+    from { transform: rotate(-28deg); }
+    to { transform: rotate(332deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gem-art-wrap *,
+    .gem-art-orbit {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+    }
+  }
+
   .asset-no-bg {
     mix-blend-mode: normal;
     isolation: isolate;

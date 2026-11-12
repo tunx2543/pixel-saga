@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, UsersRound } from 'lucide-react'
+import { ChevronDown, ChevronUp, Gem, UsersRound } from 'lucide-react'
 import { useGame } from '@/lib/game/use-game'
 import { castGmSkill, currentJob, game, getStats, notify, openPanel } from '@/lib/game/engine'
 import { expToNext } from '@/lib/game/data'
@@ -73,6 +73,7 @@ export function Hud({ onOpenCheckin }: { onOpenCheckin?: () => void }) {
           )}
           <div className="mt-2 grid grid-cols-2 gap-1">
             {p.mapId === 'town' && onOpenCheckin && <button type="button" onClick={onOpenCheckin} className="pixel-btn col-span-2 border border-amber-300/40 bg-amber-300/15 px-2 py-1.5 text-[10px] font-semibold text-amber-200 hover:bg-amber-300/25">เช็คอินรับรางวัลประจำวัน</button>}
+            {p.mapId === 'town' && <button type="button" onClick={() => openPanel('gem-shop')} className="pixel-btn col-span-2 flex items-center justify-center gap-1.5 border border-cyan-300/40 bg-cyan-300/10 px-2 py-1.5 text-[10px] font-semibold text-cyan-100 hover:bg-cyan-300/20"><Gem className="size-3.5" aria-hidden /> ร้านค้าเพชร</button>}
             <button type="button" onClick={() => { game.autoFarm = !game.autoFarm; notify() }} className={`pixel-btn col-span-2 px-2 py-1 text-[10px] ${game.autoFarm ? 'bg-green-500/25 text-green-300' : 'bg-secondary text-muted-foreground'}`}>{game.autoFarm ? 'หยุดออโต้ฟาร์ม' : 'เริ่มออโต้ฟาร์ม'}</button>
             <button type="button" disabled={!game.autoFarm} onClick={() => { game.autoSkills = !game.autoSkills; notify() }} className={`pixel-btn col-span-2 px-2 py-1 text-[10px] ${game.autoSkills ? 'bg-purple-500/25 text-purple-300' : 'bg-secondary text-muted-foreground'}`}>ออโต้สกิล: {game.autoSkills ? 'เปิด' : 'ปิด'}</button>
             <button type="button" onClick={() => openPanel('inventory')} className="pixel-btn bg-secondary px-2 py-1 text-[10px] text-foreground hover:bg-secondary/80">กระเป๋า</button>
