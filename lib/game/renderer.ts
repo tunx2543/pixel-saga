@@ -686,7 +686,7 @@ const animation = game.attackAnim > 0 ? 'attack' : game.moving ? 'walk' : 'idle'
 
   {
     const [x, y] = toS(p.x, p.y - 24)
-    text(`${p.name} [${String(p.uid ?? 1).padStart(5, '0')}]`, x, y, p.gm ? '#ffd60a' : '#ffffff', 10)
+    text(`${p.name} [${p.uid === undefined ? 'Guest' : String(p.uid).padStart(5, '0')}]`, x, y, p.gm ? '#ffd60a' : '#ffffff', 10)
     if (p.gm) text('[GM]', x, y - 12 * dpr, '#ffd60a', 8)
     if (game.bubble) {
       ctx.font = `${Math.round(11 * dpr * (zoom / 3) * 1.2)}px ${font}`

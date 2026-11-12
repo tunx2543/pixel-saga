@@ -10,36 +10,54 @@ import { AccountPanel } from './account-panel'
 
 export function TitleScreen() {
   const [save, setSave] = useState(() => readSave())
+  const [mode, setMode] = useState<'menu' | 'new'>(save ? 'menu' : 'new')
+  const [name, setName] = useState('')
+  const [isLoadingSave, setIsLoadingSave] = useState(true)
 
   useEffect(() => {
-    const loadCloud = async () => {
+    let active = true
+    let requestId = 0
+    const loadAccountSave = async () => {
+      const currentRequestId = ++requestId
       try {
-        const cloud = await loadCloudGame()
-        if (cloud) {
-          setSave(cloud)
-          setMode('menu')
-        }
+        const accountSave = await loadCloudGame()
+        if (!active || currentRequestId !== requestId) return
+        setSave(accountSave)
+        setMode(accountSave ? 'menu' : 'new')
       } catch {
-        // Cloud saves are optional; never block Guest mode when Supabase is unavailable.
+        const fallbackSave = readSave()
+        if (!active || currentRequestId !== requestId) return
+        setSave(fallbackSave)
+        setMode(fallbackSave ? 'menu' : 'new')
+      } finally {
+        if (active && currentRequestId === requestId) setIsLoadingSave(false)
       }
     }
 
-    void loadCloud()
+    void loadAccountSave()
 
-    // Guest mode must still work when the optional account service is unavailable.
     try {
       const { data } = createClient().auth.onAuthStateChange((event) => {
-        if (event === 'SIGNED_IN') void loadCloud()
+        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+          setIsLoadingSave(true)
+          void loadAccountSave()
+        }
       })
-      return () => data.subscription.unsubscribe()
+      return () => {
+        active = false
+        requestId += 1
+        data.subscription.unsubscribe()
+      }
     } catch {
-      return () => {}
+      return () => {
+        active = false
+        requestId += 1
+      }
     }
   }, [])
-  const [mode, setMode] = useState<'menu' | 'new'>(save ? 'menu' : 'new')
-  const [name, setName] = useState('')
 
   const start = () => {
+    if (isLoadingSave) return
     if (save) deleteSave()
     newGame(name)
   }
@@ -62,7 +80,9 @@ export function TitleScreen() {
         </div>
 
         <div className="pixel-panel w-full p-5">
-          {mode === 'menu' && save ? (
+          {isLoadingSave ? (
+            <p role="status" className="py-8 text-center text-sm text-muted-foreground">กำลังโหลดเซฟของบัญชี...</p>
+          ) : mode === 'menu' && save ? (
             <div className="flex flex-col gap-4">
               <div className="border-2 border-border bg-muted p-3">
                 <p className="text-xs text-muted-foreground">ความคืบหน้าที่บันทึกไว้</p>
@@ -119,7 +139,7 @@ export function TitleScreen() {
                 type="submit"
                 className="pixel-btn bg-primary px-4 py-3 text-lg text-primary-foreground hover:brightness-110"
               >
-                เข้าเล่นแบบ Guest
+                เริ่มตัวละคร
               </button>
               {save && (
                 <button
@@ -137,7 +157,7 @@ export function TitleScreen() {
         <AccountPanel />
 
         <p className="text-center text-xs text-foreground/80 drop-shadow-[1px_1px_0_#1a1423]">
-          เล่นแบบผู้มาเยือนได้ทันที ข้อมูลจะถูกแยกตามเครื่อง • เข้าสู่ระบบเพื่อซิงค์ตัวละครและพบผู้เล่นอื่น
+          เซฟ Guest แยกตามเครื่อง ส่วนตัวละครที่ล็อกอินจะผูกกับบัญชีและซิงค์ข้ามเครื่องได้
         </p>
       </div>
     </div>

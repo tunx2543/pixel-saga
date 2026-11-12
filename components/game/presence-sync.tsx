@@ -2,8 +2,8 @@
 
 import { useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { isPermanentGm, PERMANENT_GM_UID } from '@/lib/game/permissions'
-import { game, notify, say, subscribe } from '@/lib/game/engine'
+import { PERMANENT_GM_UID } from '@/lib/game/permissions'
+import { game, notify, resolveGameUid, saveGame, say, setGameAccountIdentity, subscribe } from '@/lib/game/engine'
 
 let lastPrivateMessageId = 0
 
@@ -20,16 +20,17 @@ export function PresenceSync() {
     let stopped = false
     let syncing = false
     let lastSync = 0
+    let boundUserId: string | null = null
     const sync = async (force = false) => {
       if (syncing || (!force && Date.now() - lastSync < 1000)) return
       syncing = true
       try {
         const { data } = await supabase.auth.getUser()
-        const player = game.p
+        let player = game.p
         if (stopped || !player) return
         if (!data.user) {
-          const hadPrivileges = player.gm || player.uid === PERMANENT_GM_UID || player.god || player.invisible || player.speed !== 1 || player.jobId === 'gm'
-          if (player.uid === PERMANENT_GM_UID) player.uid = undefined
+          const hadPrivileges = player.gm || player.uid !== undefined || player.god || player.invisible || player.speed !== 1 || player.jobId === 'gm'
+          player.uid = undefined
           player.gm = false
           player.god = false
           player.invisible = false
@@ -38,18 +39,44 @@ export function PresenceSync() {
           if (hadPrivileges) notify()
           return
         }
-        const isGm = isPermanentGm(data.user.email)
-        if (isGm) {
-          player.uid = PERMANENT_GM_UID
-          player.gm = true
-        } else {
-          if (player.uid === PERMANENT_GM_UID) player.uid = undefined
+        if (boundUserId && boundUserId !== data.user.id) {
+          player.uid = undefined
           player.gm = false
           player.god = false
           player.invisible = false
           player.speed = 1
           if (player.jobId === 'gm') player.jobId = 'novice'
+          notify()
+          return
         }
+        boundUserId = data.user.id
+        setGameAccountIdentity(data.user.id)
+        const uid = await resolveGameUid(data.user.id)
+        const { data: currentAuth } = await supabase.auth.getUser()
+        if (stopped || currentAuth.user?.id !== data.user.id) return
+        player = game.p
+        if (!player) return
+        if (uid === undefined) {
+          player.uid = undefined
+          player.gm = false
+          player.god = false
+          player.invisible = false
+          player.speed = 1
+          if (player.jobId === 'gm') player.jobId = 'novice'
+          notify()
+          return
+        }
+        const isGm = uid === PERMANENT_GM_UID
+        const identityChanged = player.uid !== uid || player.gm !== isGm
+        player.uid = uid
+        player.gm = isGm
+        if (!isGm) {
+          player.god = false
+          player.invisible = false
+          player.speed = 1
+          if (player.jobId === 'gm') player.jobId = 'novice'
+        }
+        if (identityChanged) saveGame()
         const now = new Date().toISOString()
         const snapshot = {
           userId: data.user.id,
@@ -60,7 +87,7 @@ export function PresenceSync() {
           x: player.x,
           y: player.y,
           level: player.level,
-          uid: player.uid ?? 1,
+          uid,
           gm: isGm,
           facing: game.facing,
           moving: game.moving,

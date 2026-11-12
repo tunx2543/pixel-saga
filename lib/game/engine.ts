@@ -22,6 +22,66 @@ import { PERMANENT_GM_UID } from './permissions'
 
 export const SAVE_KEY = 'pixel-rpg-save-v1'
 const GM_UNLOCK = '/openmodgm24156'
+
+let activeAccountUserId: string | null = null
+let activeAccountUid: number | undefined
+let pendingGameUid: { userId: string; promise: Promise<number | undefined> } | null = null
+
+function localSaveKey() {
+  return activeAccountUserId ? `${SAVE_KEY}:user:${activeAccountUserId}` : SAVE_KEY
+}
+
+function claimLegacySave(userId: string): SaveData | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const accountKey = `${SAVE_KEY}:user:${userId}`
+    const claimedByKey = `${SAVE_KEY}:legacy-claimed-by`
+    const claimedBy = localStorage.getItem(claimedByKey)
+    if (claimedBy && claimedBy !== userId) return null
+    if (localStorage.getItem(accountKey)) return readSave()
+
+    const raw = localStorage.getItem(SAVE_KEY)
+    if (!raw) return null
+    const legacySave = JSON.parse(raw) as SaveData
+    if (!legacySave || legacySave.version !== 1 || typeof legacySave.name !== 'string') return null
+
+    localStorage.setItem(accountKey, raw)
+    localStorage.setItem(claimedByKey, userId)
+    return legacySave
+  } catch {
+    return null
+  }
+}
+
+export function setGameAccountIdentity(userId: string | null, uid?: number) {
+  if (activeAccountUserId !== userId) activeAccountUid = undefined
+  activeAccountUserId = userId
+  if (uid !== undefined) activeAccountUid = uid
+}
+
+export async function resolveGameUid(userId: string): Promise<number | undefined> {
+  setGameAccountIdentity(userId)
+  if (activeAccountUid !== undefined) return activeAccountUid
+  if (pendingGameUid?.userId === userId) return pendingGameUid.promise
+
+  const promise = (async () => {
+    try {
+      const { data, error } = await createClient().rpc('get_or_create_game_uid')
+      if (error || typeof data !== 'number' || !Number.isSafeInteger(data) || data < 0) return undefined
+      if (activeAccountUserId === userId) activeAccountUid = data
+      return data
+    } catch {
+      return undefined
+    }
+  })()
+  pendingGameUid = { userId, promise }
+
+  try {
+    return await promise
+  } finally {
+    if (pendingGameUid?.promise === promise) pendingGameUid = null
+  }
+}
 export const INV_SIZE = 40
 export const STORAGE_SIZE = 60
 
@@ -1349,7 +1409,7 @@ export function saveGame() {
   if (!p || !game.persist || typeof window === 'undefined') return
   p.savedAt = Date.now()
   try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(p))
+    localStorage.setItem(localSaveKey(), JSON.stringify(p))
     game.lastSavedAt = Date.now()
     void saveCloudGame(p)
   } catch {
@@ -1361,10 +1421,20 @@ export function saveGame() {
 async function saveCloudGame(p: SaveData) {
   try {
     const supabase = createClient()
-    const { data } = await supabase.auth.getUser()
-    if (!data.user) return
+    const { data: auth } = await supabase.auth.getUser()
+    if (!auth.user) return
+
+    if (activeAccountUserId && activeAccountUserId !== auth.user.id) return
+    const uid = await resolveGameUid(auth.user.id)
+    const { data: currentAuth } = await supabase.auth.getUser()
+    if (uid === undefined || currentAuth.user?.id !== auth.user.id) return
+
+    setGameAccountIdentity(auth.user.id, uid)
+    p.uid = uid
+    p.gm = uid === PERMANENT_GM_UID
+    localStorage.setItem(localSaveKey(), JSON.stringify(p))
     await supabase.from('game_players').upsert({
-      user_id: data.user.id,
+      user_id: auth.user.id,
       display_name: p.name,
       class_id: p.jobId,
       save_data: p,
@@ -1382,22 +1452,37 @@ export async function loadCloudGame() {
   try {
     const supabase = createClient()
     const { data: auth } = await supabase.auth.getUser()
-    if (!auth.user) return null
-    const { data } = await supabase
+    if (!auth.user) {
+      setGameAccountIdentity(null)
+      return readSave()
+    }
+
+    setGameAccountIdentity(auth.user.id)
+    const uid = await resolveGameUid(auth.user.id)
+    const { data: currentAuth } = await supabase.auth.getUser()
+    if (currentAuth.user?.id !== auth.user.id) return null
+    const { data, error } = await supabase
       .from('game_players')
       .select('save_data')
       .eq('user_id', auth.user.id)
       .maybeSingle()
-    return data?.save_data && typeof data.save_data === 'object' ? (data.save_data as SaveData) : null
+    if (data?.save_data && typeof data.save_data === 'object') {
+      return { ...(data.save_data as SaveData), uid, gm: uid === PERMANENT_GM_UID }
+    }
+
+    const accountSave = readSave()
+    if (accountSave) return accountSave
+    if (error) return null
+    return claimLegacySave(auth.user.id)
   } catch {
-    return null
+    return readSave()
   }
 }
 
 export function readSave(): SaveData | null {
   if (typeof window === 'undefined') return null
   try {
-    const raw = localStorage.getItem(SAVE_KEY)
+    const raw = localStorage.getItem(localSaveKey())
     if (!raw) return null
     const d = JSON.parse(raw) as SaveData
     if (!d || d.version !== 1 || typeof d.name !== 'string') return null
@@ -1408,7 +1493,7 @@ export function readSave(): SaveData | null {
 }
 
 export function deleteSave() {
-  localStorage.removeItem(SAVE_KEY)
+  localStorage.removeItem(localSaveKey())
 }
 
 function sanitizeList(list: unknown): InvItem[] {
@@ -1498,8 +1583,8 @@ export function loadGame(d: SaveData) {
     mapId: MAPS[d.mapId] ? d.mapId : 'town',
     x: Number.isFinite(d.x) ? d.x : (MAPS.town.spawn.x + 0.5) * TILE,
     y: Number.isFinite(d.y) ? d.y : (MAPS.town.spawn.y + 0.5) * TILE,
-    uid: undefined,
-    gm: false,
+    uid: activeAccountUid,
+    gm: activeAccountUid === PERMANENT_GM_UID,
     god: false,
     invisible: false,
     speed: 1,
@@ -1548,7 +1633,8 @@ export function newGame(name: string) {
     mapId: 'town',
     x: (town.spawn.x + 0.5) * TILE,
     y: (town.spawn.y + 0.5) * TILE,
-    gm: false,
+    gm: activeAccountUid === PERMANENT_GM_UID,
+    uid: activeAccountUid,
     god: false,
     invisible: false,
     speed: 1,
