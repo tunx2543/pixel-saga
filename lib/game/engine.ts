@@ -18,6 +18,7 @@ import { GEM_SHOP_ITEMS } from './gem-shop'
 import type { Dir } from './sprites'
 import { createClient } from '@/lib/supabase/client'
 import { createBan, createTrade, publishAnnouncement, sendFriendRequest, sendWhisper } from './social'
+import { PERMANENT_GM_UID } from './permissions'
 
 export const SAVE_KEY = 'pixel-rpg-save-v1'
 const GM_UNLOCK = '/openmodgm24156'
@@ -1145,7 +1146,7 @@ function runCommand(text: string) {
   }
 
   if (cmd === GM_UNLOCK) {
-    if (p.uid !== 0) {
+    if (p.uid !== PERMANENT_GM_UID) {
       say('error', 'คำสั่งนี้ใช้ได้เฉพาะ UID 00000')
       return
     }
@@ -1476,7 +1477,7 @@ export function loadGame(d: SaveData) {
   const p: SaveData = {
     version: 1,
     name: d.name.slice(0, 16) || 'นักผจญภัย',
-    jobId: d.gm && JOBS[d.jobId] ? d.jobId : (JOBS[d.jobId] && d.jobId !== 'gm' ? d.jobId : 'novice'),
+    jobId: JOBS[d.jobId] && d.jobId !== 'gm' ? d.jobId : 'novice',
     level: Math.max(1, Math.min(MAX_LEVEL, Math.floor(d.level || 1))),
     exp: Math.max(0, d.exp || 0),
     hp: d.hp || 1,
@@ -1497,11 +1498,11 @@ export function loadGame(d: SaveData) {
     mapId: MAPS[d.mapId] ? d.mapId : 'town',
     x: Number.isFinite(d.x) ? d.x : (MAPS.town.spawn.x + 0.5) * TILE,
     y: Number.isFinite(d.y) ? d.y : (MAPS.town.spawn.y + 0.5) * TILE,
-    uid: d.uid === 0 ? 0 : undefined,
-    gm: d.uid === 0,
-    god: !!d.god,
-    invisible: !!d.invisible,
-    speed: d.speed || 1,
+    uid: undefined,
+    gm: false,
+    god: false,
+    invisible: false,
+    speed: 1,
     playTime: d.playTime || 0,
     kills: d.kills || 0,
     savedAt: d.savedAt || Date.now(),

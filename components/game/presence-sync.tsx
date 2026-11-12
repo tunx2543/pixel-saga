@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { isPermanentGm } from '@/lib/game/permissions'
+import { isPermanentGm, PERMANENT_GM_UID } from '@/lib/game/permissions'
 import { game, notify, say, subscribe } from '@/lib/game/engine'
 
 let lastPrivateMessageId = 0
@@ -26,9 +26,30 @@ export function PresenceSync() {
       try {
         const { data } = await supabase.auth.getUser()
         const player = game.p
-        if (stopped || !data.user || !player) return
+        if (stopped || !player) return
+        if (!data.user) {
+          const hadPrivileges = player.gm || player.uid === PERMANENT_GM_UID || player.god || player.invisible || player.speed !== 1 || player.jobId === 'gm'
+          if (player.uid === PERMANENT_GM_UID) player.uid = undefined
+          player.gm = false
+          player.god = false
+          player.invisible = false
+          player.speed = 1
+          if (player.jobId === 'gm') player.jobId = 'novice'
+          if (hadPrivileges) notify()
+          return
+        }
         const isGm = isPermanentGm(data.user.email)
-        player.gm = isGm
+        if (isGm) {
+          player.uid = PERMANENT_GM_UID
+          player.gm = true
+        } else {
+          if (player.uid === PERMANENT_GM_UID) player.uid = undefined
+          player.gm = false
+          player.god = false
+          player.invisible = false
+          player.speed = 1
+          if (player.jobId === 'gm') player.jobId = 'novice'
+        }
         const now = new Date().toISOString()
         const snapshot = {
           userId: data.user.id,
