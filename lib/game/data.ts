@@ -469,6 +469,7 @@ const BASE_ITEMS: Record<string, ItemDef> = {
   bone: { id: 'bone', name: 'กระดูก', kind: 'material', price: 90, icon: 'bone', color: '#e9e3d5', description: 'ของดรอปจากโครงกระดูก ขายได้' },
   ectoplasm: { id: 'ectoplasm', name: 'วิญญาณหลอน', kind: 'material', price: 130, icon: 'gel', color: '#caf0f8', description: 'ของดรอปจากผี ขายได้' },
   ember_core: { id: 'ember_core', name: 'แกนเพลิง', kind: 'material', price: 220, icon: 'core', color: '#ff6b35', description: 'ของดรอปจากภูเขาไฟ ขายได้' },
+  earth_core: { id: 'earth_core', name: 'แก่นปฐพี', kind: 'material', price: 1200, icon: 'core', color: '#b08954', description: 'แก่นพลังที่ได้จากผู้พิทักษ์ปฐพี' },
   demon_horn: { id: 'demon_horn', name: 'เขาปีศาจ', kind: 'material', price: 350, icon: 'fang', color: '#9d0208', description: 'ของดรอปจากปีศาจ ขายได้' },
   torn_cloth: { id: 'torn_cloth', name: 'ผ้าขาดจากมอน', kind: 'material', price: 3, icon: 'junk', color: '#a78b72', description: 'เศษผ้าสกปรกจากมอนสเตอร์ ขายให้พ่อค้าได้' },
   cracked_claw: { id: 'cracked_claw', name: 'กรงเล็บแตกร้าว', kind: 'material', price: 6, icon: 'junk', color: '#c08457', description: 'กรงเล็บเก่าที่แตกแล้วจากมอนสเตอร์' },
@@ -562,7 +563,7 @@ export const SHOP_STOCK: string[] = FILE_ITEM_IDS.filter((id) => !ITEMS[id].gmOn
   'leather_armor',
 ] */
 
-export type MonsterSprite = 'slime' | 'mushroom' | 'rabbit' | 'wolf' | 'goblin' | 'bat' | 'skeleton' | 'ghost' | 'golem' | 'demon' | 'gale_sentinel'
+export type MonsterSprite = 'slime' | 'mushroom' | 'rabbit' | 'wolf' | 'goblin' | 'bat' | 'skeleton' | 'ghost' | 'golem' | 'demon' | 'gale_sentinel' | 'earth_golem'
 
 export interface MonsterDef {
   id: string
@@ -596,6 +597,7 @@ export const MONSTERS: Record<string, MonsterDef> = {
   ghost: { id: 'ghost', name: 'วิญญาณหลอน', level: 31, hp: 1200, atk: 115, def: 38, exp: 390, gold: [70, 140], speed: 44, aggro: 120, sprite: 'ghost', color: '#caf0f8', drops: [{ itemId: 'ectoplasm', chance: 0.45 }, { itemId: 'crystal_staff', chance: 0.012 }, { itemId: 'hunter_bow', chance: 0.012 }, { itemId: 'shadow_dagger', chance: 0.012 }, { itemId: 'enhance_stone', chance: 0.08 }] },
 
   fire_golem: { id: 'fire_golem', name: 'โกเลมเพลิง', level: 37, hp: 2000, atk: 150, def: 55, exp: 620, gold: [100, 200], speed: 34, aggro: 120, sprite: 'golem', color: '#e85d04', drops: [{ itemId: 'ember_core', chance: 0.4 }, { itemId: 'white_potion', chance: 0.1 }, { itemId: 'enhance_stone', chance: 0.1 }] },
+  earth_golem: { id: 'earth_golem', name: 'ผู้พิทักษ์ปฐพี', level: 34, hp: 9800, atk: 205, def: 118, exp: 3200, gold: [900, 1800], speed: 27, aggro: 165, sprite: 'earth_golem', color: '#8c6b3f', boss: true, drops: [{ itemId: 'earth_core', chance: 1 }, { itemId: 'enhance_stone', chance: 1 }] },
   demon: { id: 'demon', name: 'ปีศาจ', level: 43, hp: 2800, atk: 190, def: 68, exp: 900, gold: [150, 300], speed: 48, aggro: 130, sprite: 'demon', color: '#9d0208', drops: [{ itemId: 'demon_horn', chance: 0.4 }, { itemId: 'flame_sword', chance: 0.008 }, { itemId: 'inferno_staff', chance: 0.008 }, { itemId: 'phoenix_bow', chance: 0.008 }, { itemId: 'demon_fang', chance: 0.008 }, { itemId: 'enhance_stone', chance: 0.12 }] },
   demon_lord: { id: 'demon_lord', name: 'ราชาปีศาจเพลิง', level: 50, hp: 15000, atk: 260, def: 90, exp: 6000, gold: [2000, 4000], speed: 42, aggro: 150, sprite: 'demon', color: '#370617', boss: true, drops: [{ itemId: 'dragon_armor', chance: 0.25 }, { itemId: 'flame_sword', chance: 0.1 }, { itemId: 'inferno_staff', chance: 0.1 }, { itemId: 'phoenix_bow', chance: 0.1 }, { itemId: 'demon_fang', chance: 0.1 }, { itemId: 'enhance_stone', chance: 1 }] },
   abyss_knight: { id: 'abyss_knight', name: 'อัศวินห้วงอเวจี', level: 54, hp: 5200, atk: 280, def: 105, exp: 1400, gold: [320, 620], speed: 38, aggro: 145, sprite: 'golem', color: '#5b21b6', drops: [{ itemId: 'abyss_crystal', chance: 0.22 }, { itemId: 'enhance_stone', chance: 0.2 }] },
