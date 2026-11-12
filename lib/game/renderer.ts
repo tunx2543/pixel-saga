@@ -1,4 +1,5 @@
 import { ITEMS, JOBS, MONSTERS } from './data'
+import { GEM_SHOP_ITEMS, type GemShopItem } from './gem-shop'
 import { currentMap, game } from './engine'
 import { TILE } from './maps'
 import { gmOutfitSprite, humanSprite, mapCanvas, monsterSprite, npcSprite } from './sprites'
@@ -20,6 +21,19 @@ const MONSTER_ART: Record<string, string> = {
 }
 const artCache = new Map<string, HTMLImageElement>()
 const transparentArtCache = new Map<string, HTMLCanvasElement>()
+
+function drawGemItemPixels(ctx: CanvasRenderingContext2D, item: GemShopItem, x: number, y: number, cellSize = 1) {
+  const colors = { '1': item.colors.primary, '2': item.colors.secondary, '3': item.colors.accent }
+  ctx.save()
+  item.pixels.forEach((row, rowIndex) => {
+    Array.from(row.padEnd(8, '.').slice(0, 8)).forEach((pixel, columnIndex) => {
+      if (pixel === '.') return
+      ctx.fillStyle = colors[pixel as keyof typeof colors]
+      ctx.fillRect(Math.round(x + columnIndex * cellSize), Math.round(y + rowIndex * cellSize), cellSize, cellSize)
+    })
+  })
+  ctx.restore()
+}
 const ASSASSIN_ART: Record<string, string> = {
   down: '/images/characters/assassin/south.png',
   up: '/images/characters/assassin/north.png',
@@ -437,6 +451,8 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
 
   const job = JOBS[p.jobId]
   const weapon = p.equipment.weapon ? ITEMS[p.equipment.weapon.itemId] : null
+  const gemFashion = GEM_SHOP_ITEMS.find((item) => item.id === p.equippedGemFashion)
+  const gemCompanion = GEM_SHOP_ITEMS.find((item) => item.id === p.equippedGemCompanion)
   ents.push({
     y: p.y,
     draw: () => {
@@ -490,10 +506,54 @@ const animation = game.attackAnim > 0 ? 'attack' : game.moving ? 'walk' : 'idle'
         }
         ctx.restore()
       }
+      if (gemFashion?.id === 'nebula_dragon_wings') {
+        ctx.save()
+        ctx.globalAlpha = p.invisible ? 0.14 : 0.86
+        const wingBob = Math.sin(t * 5) * 0.7
+        drawGemItemPixels(ctx, gemFashion, p.x - 8, p.y - img.height + 2 + bob + wingBob, 2)
+        ctx.restore()
+      }
       ctx.drawImage(img, Math.round(p.x - img.width / 2 + ox), Math.round(p.y - img.height + bob + oy))
+      if (gemFashion?.id === 'aurora_cat_hood') {
+        drawGemItemPixels(ctx, gemFashion, p.x - 5, p.y - img.height - 4 + bob, 1.25)
+      }
+      if (gemFashion?.id === 'sunfire_aura') {
+        ctx.save()
+        ctx.globalAlpha = p.invisible ? 0.12 : 0.72
+        ctx.strokeStyle = gemFashion.colors.primary
+        ctx.shadowColor = gemFashion.colors.accent
+        ctx.shadowBlur = 7
+        ctx.lineWidth = 1.5
+        ctx.beginPath()
+        ctx.ellipse(p.x, p.y - 7, 12 + Math.sin(t * 4) * 1.5, 8, t * 0.3, 0, Math.PI * 2)
+        ctx.stroke()
+        ctx.fillStyle = gemFashion.colors.accent
+        for (let spark = 0; spark < 4; spark++) {
+          const angle = t * 2 + spark * (Math.PI / 2)
+          ctx.fillRect(Math.round(p.x + Math.cos(angle) * 13), Math.round(p.y - 8 + Math.sin(angle) * 9), 2, 2)
+        }
+        ctx.restore()
+      }
       ctx.globalAlpha = 1
     },
   })
+
+  if (gemCompanion) {
+    const petOffsetX = game.facing === 'left' ? 12 : game.facing === 'right' ? -12 : -14
+    const petX = p.x + petOffsetX + Math.sin(t * 2.5) * 1.5
+    const petY = p.y - 8 + Math.sin(t * 4) * 2
+    const petScale = gemCompanion.id === 'aurora_cloud_dragon' ? 2 : 1.5
+    ents.push({
+      y: petY,
+      draw: () => {
+        ctx.save()
+        ctx.globalAlpha = p.invisible ? 0.18 : 1
+        shadow(ctx, petX, petY + 1, gemCompanion.id === 'aurora_cloud_dragon' ? 6 : 4)
+        drawGemItemPixels(ctx, gemCompanion, petX - 4 * petScale, petY - 6 * petScale, petScale)
+        ctx.restore()
+      },
+    })
+  }
 
   ents.sort((a, b) => a.y - b.y)
   for (const e of ents) e.draw()

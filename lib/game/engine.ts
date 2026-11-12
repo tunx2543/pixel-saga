@@ -14,6 +14,7 @@ import {
   type EquipmentSlot,
 } from './data'
 import { MAPS, MAP_ORDER, TILE, boxBlocked, isSolidPx, type MapDef, type NpcDef, type NpcRole } from './maps'
+import { GEM_SHOP_ITEMS } from './gem-shop'
 import type { Dir } from './sprites'
 import { createClient } from '@/lib/supabase/client'
 import { createBan, createTrade, publishAnnouncement, sendFriendRequest, sendWhisper } from './social'
@@ -40,6 +41,11 @@ export interface SaveData {
   mp: number
   gold: number
   diamonds: number
+  ownedGemItems: string[]
+  equippedGemFashion: string | null
+  equippedGemCompanion: string | null
+  lootMagnetUntil: number
+  inventoryCapacityBonus: number
   inventory: InvItem[]
   storage: InvItem[]
   storageGold: number
@@ -242,7 +248,7 @@ export function getStats(p: SaveData = game.p!) {
     maxMp: Math.floor((30 + L * 7) * job.mpMul) + (p.rebirthBonus?.maxMp ?? 0),
     atk: Math.floor((8 + L * 2.6 + wAtk) * job.atkMul) + (p.rebirthBonus?.atk ?? 0),
     def: Math.floor((3 + L * 1.4) * job.defMul + aDef) + (p.rebirthBonus?.def ?? 0),
-    speed: 72 * job.speedMul * (p.speed || 1),
+    speed: 72 * job.speedMul * (p.speed || 1) * (p.equippedGemCompanion === 'aurora_cloud_dragon' ? 1.2 : 1),
     crit: job.crit,
     attackSpeed: job.attackSpeed,
   }
@@ -268,9 +274,15 @@ function stackable(def: ItemDef) {
   return def.kind === 'consumable' || def.kind === 'material'
 }
 
-export function addItem(itemId: string, qty = 1, plus = 0, list?: InvItem[], cap = INV_SIZE): boolean {
+export function getInventoryCapacity(p: SaveData) {
+  const bonus = Math.max(0, Math.min(60, Math.floor((p.inventoryCapacityBonus ?? 0) / 20) * 20))
+  return INV_SIZE + bonus
+}
+
+export function addItem(itemId: string, qty = 1, plus = 0, list?: InvItem[], cap?: number): boolean {
   const p = player()
   const target = list ?? p.inventory
+  const maxSlots = cap ?? (target === p.inventory ? getInventoryCapacity(p) : INV_SIZE)
   const def = ITEMS[itemId]
   if (!def || qty <= 0) return false
   if (stackable(def)) {
@@ -279,12 +291,12 @@ export function addItem(itemId: string, qty = 1, plus = 0, list?: InvItem[], cap
       s.qty += qty
       return true
     }
-    if (target.length >= cap) return false
+    if (target.length >= maxSlots) return false
     target.push({ uid: uid(), itemId, qty, plus: 0 })
     return true
   }
   for (let i = 0; i < qty; i++) {
-    if (target.length >= cap) return false
+    if (target.length >= maxSlots) return false
     target.push({ uid: uid(), itemId, qty: 1, plus })
   }
   return true
@@ -360,7 +372,7 @@ export function unequip(slot: EquipmentSlot) {
   const p = player()
   const it = p.equipment[slot]
   if (!it) return
-  if (p.inventory.length >= INV_SIZE) {
+  if (p.inventory.length >= getInventoryCapacity(p)) {
     say('error', 'กระเป๋าเต็ม')
     notify()
     return
@@ -383,6 +395,29 @@ export function consumeItem(id: string) {
   const def = ITEMS[it.itemId]
   if (def.kind === 'weapon' || def.kind === 'armor') return equip(id)
   if (def.kind !== 'consumable') return
+
+  if (def.id === 'starlight_loot_magnet') {
+    p.lootMagnetUntil = Math.max(Date.now(), p.lootMagnetUntil ?? 0) + 5 * 60 * 1000
+    removeUid(p.inventory, id, 1)
+    say('system', 'แม่เหล็กแสงดาวทำงาน 5 นาที — เก็บดรอปของคุณในระยะ 120 px')
+    saveGame()
+    notify()
+    return
+  }
+
+  if (def.id === 'astral_bag_expansion') {
+    if (p.inventoryCapacityBonus >= 60) {
+      say('error', 'กระเป๋าเพิ่มช่องถึงขีดจำกัด +60 แล้ว')
+      return notify()
+    }
+    removeUid(p.inventory, id, 1)
+    p.inventoryCapacityBonus = Math.min(60, p.inventoryCapacityBonus + 20)
+    say('system', `กระเป๋าเพิ่มเป็น ${getInventoryCapacity(p)} ช่องถาวร`)
+    saveGame()
+    notify()
+    return
+  }
+
   const s = getStats()
   if (def.heal) {
     p.hp = Math.min(s.maxHp, p.hp + def.heal)
@@ -393,10 +428,11 @@ export function consumeItem(id: string) {
     addFloat(p.x, p.y - 22, `+${def.mana}`, '#4cc9f0')
   }
   removeUid(p.inventory, id, 1)
-  if (def.id === 'return_scroll') {
+  if (def.id === 'return_scroll' || def.id === 'town_warp_tome') {
     const town = MAPS.town
     changeMap('town', town.spawn.x, town.spawn.y)
   }
+  saveGame()
   notify()
 }
 
@@ -560,7 +596,9 @@ function collectGroundDrops() {
       game.groundDrops.splice(i, 1)
       continue
     }
-    if (drop.ownerId !== ownerId || Math.hypot(drop.x - p.x, drop.y - p.y) > 22) continue
+    const petRange = p.equippedGemCompanion === 'moonlight_firefly' ? 34 : p.equippedGemCompanion === 'gem_raccoon' ? 52 : p.equippedGemCompanion === 'aurora_cloud_dragon' ? 68 : 22
+    const magnetRange = p.lootMagnetUntil > Date.now() ? 120 : 22
+    if (drop.ownerId !== ownerId || Math.hypot(drop.x - p.x, drop.y - p.y) > Math.max(petRange, magnetRange)) continue
     if (!addItem(drop.itemId, drop.qty)) {
       warn('กระเป๋าเต็ม! เก็บไอเทมไม่ได้')
       continue
@@ -859,7 +897,7 @@ export function buyItem(itemId: string, qty: number) {
     say('error', 'เงินไม่พอ')
     return notify()
   }
-  const free = INV_SIZE - p.inventory.length
+  const free = getInventoryCapacity(p) - p.inventory.length
   if (!stackable(def) && free < qty) {
     say('error', 'กระเป๋าเต็ม')
     return notify()
@@ -870,6 +908,54 @@ export function buyItem(itemId: string, qty: number) {
   }
   p.gold -= cost
   say('loot', `ซื้อ ${def.name} x${qty} (-${cost.toLocaleString()}G)`)
+  notify()
+}
+
+export function buyGemShopItem(itemId: string) {
+  const p = player()
+  const shopItem = GEM_SHOP_ITEMS.find((item) => item.id === itemId)
+  if (!shopItem) return
+
+  if (shopItem.category !== 'utility' && p.ownedGemItems.includes(itemId)) {
+    say('error', 'คุณมีไอเทมชิ้นนี้แล้ว')
+    return notify()
+  }
+  if (shopItem.id === 'astral_bag_expansion' && p.inventoryCapacityBonus >= 60) {
+    say('error', 'กระเป๋าเพิ่มช่องถึงขีดจำกัด +60 แล้ว')
+    return notify()
+  }
+  if (p.diamonds < shopItem.price) {
+    say('error', 'เพชรไม่พอ')
+    return notify()
+  }
+  if (shopItem.category === 'utility') {
+    if (!shopItem.inventoryItemId || !addItem(shopItem.inventoryItemId)) {
+      say('error', 'กระเป๋าเต็ม')
+      return notify()
+    }
+  } else {
+    p.ownedGemItems.push(itemId)
+  }
+
+  p.diamonds -= shopItem.price
+  say('loot', `ซื้อ ${shopItem.name} สำเร็จ (-${shopItem.price.toLocaleString()} เพชร)`)
+  saveGame()
+  notify()
+}
+
+export function equipGemShopItem(itemId: string) {
+  const p = player()
+  const shopItem = GEM_SHOP_ITEMS.find((item) => item.id === itemId)
+  if (!shopItem || shopItem.category === 'utility' || !p.ownedGemItems.includes(itemId)) return
+
+  if (shopItem.category === 'fashion') {
+    p.equippedGemFashion = p.equippedGemFashion === itemId ? null : itemId
+  } else {
+    p.equippedGemCompanion = p.equippedGemCompanion === itemId ? null : itemId
+  }
+  const equipped = p.equippedGemFashion === itemId || p.equippedGemCompanion === itemId
+  say('system', equipped ? `สวมใส่ ${shopItem.name} แล้ว` : `ถอด ${shopItem.name} แล้ว`)
+  saveGame()
   notify()
 }
 
@@ -985,7 +1071,7 @@ export function withdraw(id: string) {
   if (!it) return
   const def = ITEMS[it.itemId]
   const canStack = stackable(def) && p.inventory.some((s) => s.itemId === it.itemId)
-  if (!canStack && p.inventory.length >= INV_SIZE) return say('error', 'กระเป๋าเต็ม'), notify()
+  if (!canStack && p.inventory.length >= getInventoryCapacity(p)) return say('error', 'กระเป๋าเต็ม'), notify()
   p.storage = p.storage.filter((i) => i.uid !== id)
   if (canStack) p.inventory.find((s) => s.itemId === it.itemId)!.qty += it.qty
   else p.inventory.push(it)
@@ -1386,6 +1472,13 @@ export function loadGame(d: SaveData) {
     mp: d.mp || 0,
     gold: Math.max(0, Math.floor(d.gold || 0)),
     diamonds: Math.max(0, Math.floor(d.diamonds || 0)),
+    ownedGemItems: Array.isArray(d.ownedGemItems)
+      ? [...new Set(d.ownedGemItems.filter((id): id is string => typeof id === 'string' && GEM_SHOP_ITEMS.some((item) => item.id === id && item.category !== 'utility')))]
+      : [],
+    equippedGemFashion: GEM_SHOP_ITEMS.some((item) => item.id === d.equippedGemFashion && item.category === 'fashion' && d.ownedGemItems?.includes(item.id)) ? d.equippedGemFashion : null,
+    equippedGemCompanion: GEM_SHOP_ITEMS.some((item) => item.id === d.equippedGemCompanion && item.category === 'companions' && d.ownedGemItems?.includes(item.id)) ? d.equippedGemCompanion : null,
+    lootMagnetUntil: Number.isFinite(d.lootMagnetUntil) ? Math.max(0, d.lootMagnetUntil) : 0,
+    inventoryCapacityBonus: Math.max(0, Math.min(60, Math.floor((d.inventoryCapacityBonus || 0) / 20) * 20)),
     inventory: sanitizeList(d.inventory),
     storage: sanitizeList(d.storage),
     storageGold: Math.max(0, Math.floor(d.storageGold || 0)),
@@ -1425,6 +1518,11 @@ export function newGame(name: string) {
     mp: 1,
     gold: 300,
     diamonds: 0,
+    ownedGemItems: [],
+    equippedGemFashion: null,
+    equippedGemCompanion: null,
+    lootMagnetUntil: 0,
+    inventoryCapacityBonus: 0,
     inventory: [],
     storage: [],
     storageGold: 0,
