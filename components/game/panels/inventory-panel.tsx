@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { ITEMS, JOBS } from '@/lib/game/data'
-import { closePanel, drinkPotion, equip, itemLabel, unequip } from '@/lib/game/engine'
+import { closePanel, consumeItem, drinkPotion, equip, getInventoryCapacity, itemLabel, unequip } from '@/lib/game/engine'
 import { useGame } from '@/lib/game/use-game'
 import { ItemIcon } from '../item-icon'
 import { PanelFrame, PxButton } from './panels'
@@ -26,7 +26,7 @@ export function InventoryPanel() {
     : ITEMS[item.itemId]?.kind === 'consumable')
 
   return (
-    <PanelFrame title="กระเป๋าและอุปกรณ์" subtitle={`${p.inventory.length} ช่องที่ใช้ / 30 ช่อง`}>
+    <PanelFrame title="กระเป๋าและอุปกรณ์" subtitle={`${p.inventory.length} / ${getInventoryCapacity(p)} ช่องที่ใช้`}>
       <div className="mb-3 grid grid-cols-2 gap-1">
         <PxButton variant={tab === 'items' ? 'primary' : 'secondary'} onClick={() => setTab('items')}>อุปกรณ์</PxButton>
         <PxButton variant={tab === 'use' ? 'primary' : 'secondary'} onClick={() => setTab('use')}>ใช้ไอเทม</PxButton>
@@ -70,11 +70,12 @@ export function InventoryPanel() {
                 </div>
               </div>
               {equipable && <PxButton className="w-full" onClick={() => equip(item.uid)}>สวมใส่</PxButton>}
+              {def.kind === 'consumable' && <PxButton className="w-full" onClick={() => consumeItem(item.uid)}>ใช้ 1 ชิ้น</PxButton>}
             </div>
           )
         })}
       </div>
-      {p.inventory.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">กระเป๋ายังว่างอยู่</p>}
+      {visibleItems.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">ไม่มีไอเทมในหมวดนี้</p>}
       {selectedItem && selectedMeta && (
         <div className="mt-4 rounded border border-primary/50 bg-primary/10 p-3">
           <div className="mb-2 flex items-center justify-between">

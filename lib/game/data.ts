@@ -34,7 +34,7 @@ export interface JobDef {
   range: number
   ranged: boolean
   weaponTypes: WeaponType[]
-  colors: { hair: string; body: string; legs: string; accent: string }
+  colors: { hair: string; body: string; legs: string; accent: string; skin?: string; hat?: string }
   skills: SkillDef[]
 }
 
@@ -409,6 +409,9 @@ const BASE_ITEMS: Record<string, ItemDef> = {
   blue_potion: { id: 'blue_potion', name: 'ยาฟ้า', kind: 'consumable', price: 60, mana: 50, icon: 'potion', color: '#4895ef', description: 'ฟื้นฟู MP 50' },
   purple_potion: { id: 'purple_potion', name: 'ยาม่วง', kind: 'consumable', price: 280, mana: 200, icon: 'potion', color: '#9d4edd', description: 'ฟื้นฟู MP 200' },
   return_scroll: { id: 'return_scroll', name: 'ม้วนคัมภีร์กลับเมือง', kind: 'consumable', price: 50, icon: 'scroll', color: '#f4d35e', description: 'วาร์ปกลับเมืองทันที' },
+  town_warp_tome: { id: 'town_warp_tome', name: 'คัมภีร์วาร์ปกลับเมือง', kind: 'consumable', price: 0, icon: 'scroll', color: '#c4b5fd', description: 'ใช้เพื่อวาร์ปกลับเมืองทันที' },
+  starlight_loot_magnet: { id: 'starlight_loot_magnet', name: 'แม่เหล็กดูดของแสงดาว', kind: 'consumable', price: 0, icon: 'core', color: '#38bdf8', description: 'ดูดดรอปของคุณในระยะ 120 px นาน 5 นาที' },
+  astral_bag_expansion: { id: 'astral_bag_expansion', name: 'กระเป๋าดวงดาว +20 ช่อง', kind: 'consumable', price: 0, icon: 'ticket', color: '#f59e0b', description: 'เพิ่มช่องกระเป๋าถาวร 20 ช่อง สูงสุด +60 ช่อง' },
   enhance_stone: { id: 'enhance_stone', name: 'หินตีบวก', kind: 'material', price: 500, icon: 'stone', color: '#4cc9f0', description: 'ใช้ตีบวกอุปกรณ์ที่ช่างตีบวก' },
   slime_gel: { id: 'slime_gel', name: 'เจลสไลม์', kind: 'material', price: 8, icon: 'gel', color: '#80ed99', description: 'ของดรอปจากสไลม์ ขายได้' },
   mushroom_cap: { id: 'mushroom_cap', name: 'หมวกเห็ด', kind: 'material', price: 15, icon: 'gel', color: '#e76f51', description: 'ของดรอปจากเห็ด ขายได้' },
@@ -418,6 +421,10 @@ const BASE_ITEMS: Record<string, ItemDef> = {
   ectoplasm: { id: 'ectoplasm', name: 'วิญญาณหลอน', kind: 'material', price: 130, icon: 'gel', color: '#caf0f8', description: 'ของดรอปจากผี ขายได้' },
   ember_core: { id: 'ember_core', name: 'แกนเพลิง', kind: 'material', price: 220, icon: 'core', color: '#ff6b35', description: 'ของดรอปจากภูเขาไฟ ขายได้' },
   demon_horn: { id: 'demon_horn', name: 'เขาปีศาจ', kind: 'material', price: 350, icon: 'fang', color: '#9d0208', description: 'ของดรอปจากปีศาจ ขายได้' },
+  torn_cloth: { id: 'torn_cloth', name: 'ผ้าขาดจากมอน', kind: 'material', price: 3, icon: 'junk', color: '#a78b72', description: 'เศษผ้าสกปรกจากมอนสเตอร์ ขายให้พ่อค้าได้' },
+  cracked_claw: { id: 'cracked_claw', name: 'กรงเล็บแตกร้าว', kind: 'material', price: 6, icon: 'junk', color: '#c08457', description: 'กรงเล็บเก่าที่แตกแล้วจากมอนสเตอร์' },
+  monster_scrap: { id: 'monster_scrap', name: 'เศษซากมอนสเตอร์', kind: 'material', price: 12, icon: 'junk', color: '#64748b', description: 'เศษซากไร้ค่า แต่ขายรวมกันแล้วได้เงิน' },
+  name_change_ticket: { id: 'name_change_ticket', name: 'บัตรเปลี่ยนชื่อ', kind: 'consumable', price: 2500, icon: 'ticket', color: '#f8c537', description: 'ใช้เปลี่ยนชื่อตัวละครของคุณได้ 1 ครั้ง', effect: true },
 
   wooden_stick: weapon('wooden_stick', 'ไม้พลอง', 'stick', 6, 50, 1, 1, '#a47148'),
   oak_club: weapon('oak_club', 'กระบองโอ๊ค', 'stick', 14, 400, 2, 5, '#7f5539'),
@@ -482,15 +489,12 @@ const FILE_ITEMS: Record<string, ItemDef> = Object.fromEntries(
 )
 
 const FILE_ITEM_IDS = Object.keys(FILE_ITEMS)
-const LEGACY_ITEM_ALIASES = Object.fromEntries(
-  Object.keys(BASE_ITEMS).map((id, index) => [id, FILE_ITEMS[FILE_ITEM_IDS[index % FILE_ITEM_IDS.length]]]),
-)
 
 export const GM_ITEMS: Record<string, ItemDef> = Object.fromEntries(
   FILE_ITEM_IDS.map((id) => [`gm888_${id.replace('weapon_', '')}`, { ...FILE_ITEMS[id], gmOnly: true }]),
 )
 
-export const ITEMS: Record<string, ItemDef> = { ...LEGACY_ITEM_ALIASES, ...FILE_ITEMS, ...GM_ITEMS }
+export const ITEMS: Record<string, ItemDef> = { ...IMAGE_READY_BASE_ITEMS, ...FILE_ITEMS, ...GM_ITEMS }
 
 export const SHOP_STOCK: string[] = FILE_ITEM_IDS.filter((id) => !ITEMS[id].gmOnly).slice(0, 24)
 /* Legacy consumables are intentionally no longer stocked; all visible item art comes from the weapons archive. */
@@ -529,17 +533,17 @@ export interface MonsterDef {
 }
 
 export const MONSTERS: Record<string, MonsterDef> = {
-  slime: { id: 'slime', name: 'สไลม์', level: 1, hp: 30, atk: 6, def: 1, exp: 8, gold: [2, 6], speed: 22, aggro: 0, sprite: 'slime', color: '#57cc99', drops: [{ itemId: 'slime_gel', chance: 0.5 }, { itemId: 'red_potion', chance: 0.1 }] },
-  pink_slime: { id: 'pink_slime', name: 'สไลม์ชมพู', level: 4, hp: 65, atk: 11, def: 3, exp: 18, gold: [5, 12], speed: 26, aggro: 50, sprite: 'slime', color: '#ff8fab', drops: [{ itemId: 'slime_gel', chance: 0.6 }, { itemId: 'red_potion', chance: 0.15 }] },
-  mushroom: { id: 'mushroom', name: 'เห็ดพิษ', level: 6, hp: 110, atk: 16, def: 5, exp: 30, gold: [8, 18], speed: 24, aggro: 60, sprite: 'mushroom', color: '#e76f51', drops: [{ itemId: 'mushroom_cap', chance: 0.5 }, { itemId: 'blue_potion', chance: 0.1 }, { itemId: 'enhance_stone', chance: 0.02 }] },
+  slime: { id: 'slime', name: 'สไลม์', level: 1, hp: 30, atk: 6, def: 1, exp: 8, gold: [2, 6], speed: 22, aggro: 0, sprite: 'slime', color: '#57cc99', drops: [{ itemId: 'slime_gel', chance: 0.5 }, { itemId: 'torn_cloth', chance: 0.35 }, { itemId: 'red_potion', chance: 0.1 }] },
+  pink_slime: { id: 'pink_slime', name: 'สไลม์ชมพู', level: 4, hp: 65, atk: 11, def: 3, exp: 18, gold: [5, 12], speed: 26, aggro: 50, sprite: 'slime', color: '#ff8fab', drops: [{ itemId: 'slime_gel', chance: 0.6 }, { itemId: 'torn_cloth', chance: 0.45 }, { itemId: 'red_potion', chance: 0.15 }] },
+  mushroom: { id: 'mushroom', name: 'เห็ดพิษ', level: 6, hp: 110, atk: 16, def: 5, exp: 30, gold: [8, 18], speed: 24, aggro: 60, sprite: 'mushroom', color: '#e76f51', drops: [{ itemId: 'mushroom_cap', chance: 0.5 }, { itemId: 'torn_cloth', chance: 0.25 }, { itemId: 'blue_potion', chance: 0.1 }, { itemId: 'enhance_stone', chance: 0.02 }] },
   rabbit: { id: 'rabbit', name: 'กระต่ายป่า', level: 8, hp: 150, atk: 20, def: 6, exp: 42, gold: [10, 22], speed: 40, aggro: 70, sprite: 'rabbit', color: '#e9d8a6', drops: [{ itemId: 'red_potion', chance: 0.2 }, { itemId: 'enhance_stone', chance: 0.03 }] },
 
-  wolf: { id: 'wolf', name: 'หมาป่า', level: 11, hp: 260, atk: 32, def: 10, exp: 70, gold: [15, 35], speed: 46, aggro: 90, sprite: 'wolf', color: '#8d99ae', drops: [{ itemId: 'wolf_fang', chance: 0.45 }, { itemId: 'orange_potion', chance: 0.08 }, { itemId: 'enhance_stone', chance: 0.04 }] },
-  goblin: { id: 'goblin', name: 'ก๊อบลิน', level: 14, hp: 380, atk: 42, def: 14, exp: 105, gold: [25, 50], speed: 38, aggro: 90, sprite: 'goblin', color: '#6a994e', drops: [{ itemId: 'goblin_ear', chance: 0.45 }, { itemId: 'steel_sword', chance: 0.01 }, { itemId: 'kris', chance: 0.01 }, { itemId: 'enhance_stone', chance: 0.05 }] },
+  wolf: { id: 'wolf', name: 'หมาป่า', level: 11, hp: 260, atk: 32, def: 10, exp: 70, gold: [15, 35], speed: 46, aggro: 90, sprite: 'wolf', color: '#8d99ae', drops: [{ itemId: 'wolf_fang', chance: 0.45 }, { itemId: 'cracked_claw', chance: 0.35 }, { itemId: 'orange_potion', chance: 0.08 }, { itemId: 'enhance_stone', chance: 0.04 }] },
+  goblin: { id: 'goblin', name: 'ก๊อบลิน', level: 14, hp: 380, atk: 42, def: 14, exp: 105, gold: [25, 50], speed: 38, aggro: 90, sprite: 'goblin', color: '#6a994e', drops: [{ itemId: 'goblin_ear', chance: 0.45 }, { itemId: 'monster_scrap', chance: 0.4 }, { itemId: 'steel_sword', chance: 0.01 }, { itemId: 'kris', chance: 0.01 }, { itemId: 'enhance_stone', chance: 0.05 }] },
   goblin_chief: { id: 'goblin_chief', name: 'หัวหน้าก๊อบลิน', level: 18, hp: 1400, atk: 60, def: 20, exp: 420, gold: [120, 260], speed: 36, aggro: 110, sprite: 'goblin', color: '#386641', boss: true, drops: [{ itemId: 'long_bow', chance: 0.1 }, { itemId: 'oak_staff', chance: 0.1 }, { itemId: 'leather_armor', chance: 0.15 }, { itemId: 'enhance_stone', chance: 0.4 }] },
 
   bat: { id: 'bat', name: 'ค้างคาว', level: 21, hp: 620, atk: 70, def: 22, exp: 190, gold: [35, 70], speed: 55, aggro: 110, sprite: 'bat', color: '#5a189a', drops: [{ itemId: 'orange_potion', chance: 0.15 }, { itemId: 'enhance_stone', chance: 0.06 }] },
-  skeleton: { id: 'skeleton', name: 'โครงกระดูก', level: 26, hp: 900, atk: 92, def: 32, exp: 280, gold: [50, 100], speed: 40, aggro: 110, sprite: 'skeleton', color: '#e9e3d5', drops: [{ itemId: 'bone', chance: 0.45 }, { itemId: 'knight_blade', chance: 0.012 }, { itemId: 'chain_mail', chance: 0.012 }, { itemId: 'enhance_stone', chance: 0.07 }] },
+  skeleton: { id: 'skeleton', name: 'โครงกระดูก', level: 26, hp: 900, atk: 92, def: 32, exp: 280, gold: [50, 100], speed: 40, aggro: 110, sprite: 'skeleton', color: '#e9e3d5', drops: [{ itemId: 'bone', chance: 0.45 }, { itemId: 'monster_scrap', chance: 0.45 }, { itemId: 'knight_blade', chance: 0.012 }, { itemId: 'chain_mail', chance: 0.012 }, { itemId: 'enhance_stone', chance: 0.07 }] },
   ghost: { id: 'ghost', name: 'วิญญาณหลอน', level: 31, hp: 1200, atk: 115, def: 38, exp: 390, gold: [70, 140], speed: 44, aggro: 120, sprite: 'ghost', color: '#caf0f8', drops: [{ itemId: 'ectoplasm', chance: 0.45 }, { itemId: 'crystal_staff', chance: 0.012 }, { itemId: 'hunter_bow', chance: 0.012 }, { itemId: 'shadow_dagger', chance: 0.012 }, { itemId: 'enhance_stone', chance: 0.08 }] },
 
   fire_golem: { id: 'fire_golem', name: 'โกเลมเพลิง', level: 37, hp: 2000, atk: 150, def: 55, exp: 620, gold: [100, 200], speed: 34, aggro: 120, sprite: 'golem', color: '#e85d04', drops: [{ itemId: 'ember_core', chance: 0.4 }, { itemId: 'white_potion', chance: 0.1 }, { itemId: 'enhance_stone', chance: 0.1 }] },

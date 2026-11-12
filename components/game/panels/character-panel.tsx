@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { ITEMS } from '@/lib/game/data'
-import { INV_SIZE, canEquip, consumeItem, currentJob, getStats, itemLabel, itemPower, unequip } from '@/lib/game/engine'
+import { canEquip, consumeItem, currentJob, getInventoryCapacity, getStats, itemLabel, itemPower, unequip } from '@/lib/game/engine'
 import { useGame } from '@/lib/game/use-game'
 import { formatNum, formatPlayTime } from '../format'
 import { ItemIcon, ItemSlot } from '../item-icon'
@@ -73,10 +73,10 @@ export function CharacterPanel() {
 
         <div className="flex flex-col gap-3">
           <p className="text-xs text-muted-foreground">
-            กระเป๋า ({p.inventory.length}/{INV_SIZE})
+            กระเป๋า ({p.inventory.length}/{getInventoryCapacity(p)})
           </p>
           <div className="grid grid-cols-6 gap-1 sm:grid-cols-8">
-            {Array.from({ length: INV_SIZE }).map((_, i) => {
+            {Array.from({ length: getInventoryCapacity(p) }).map((_, i) => {
               const it = p.inventory[i] ?? null
               return (
                 <ItemSlot

@@ -13,18 +13,28 @@ export function TitleScreen() {
 
   useEffect(() => {
     const loadCloud = async () => {
-      const cloud = await loadCloudGame()
-      if (cloud) {
-        setSave(cloud)
-        setMode('menu')
+      try {
+        const cloud = await loadCloudGame()
+        if (cloud) {
+          setSave(cloud)
+          setMode('menu')
+        }
+      } catch {
+        // Cloud saves are optional; never block Guest mode when Supabase is unavailable.
       }
     }
 
     void loadCloud()
-    const { data } = createClient().auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN') void loadCloud()
-    })
-    return () => data.subscription.unsubscribe()
+
+    // Guest mode must still work when the optional account service is unavailable.
+    try {
+      const { data } = createClient().auth.onAuthStateChange((event) => {
+        if (event === 'SIGNED_IN') void loadCloud()
+      })
+      return () => data.subscription.unsubscribe()
+    } catch {
+      return () => {}
+    }
   }, [])
   const [mode, setMode] = useState<'menu' | 'new'>(save ? 'menu' : 'new')
   const [name, setName] = useState('')

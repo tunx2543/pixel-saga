@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { INV_SIZE, STORAGE_SIZE, deposit, moveGold, withdraw } from '@/lib/game/engine'
+import { STORAGE_SIZE, deposit, getInventoryCapacity, moveGold, withdraw } from '@/lib/game/engine'
 import { useGame } from '@/lib/game/use-game'
 import { formatNum } from '../format'
 import { ItemSlot } from '../item-icon'
@@ -45,7 +45,7 @@ export function StoragePanel() {
       <div className="grid gap-4 md:grid-cols-2">
         <div>
           <p className="mb-1.5 text-xs text-muted-foreground">
-            กระเป๋า ({p.inventory.length}/{INV_SIZE}) — คลิกเพื่อฝาก
+            กระเป๋า ({p.inventory.length}/{getInventoryCapacity(p)}) — คลิกเพื่อฝาก
           </p>
           <div className="grid grid-cols-8 gap-1">
             {p.inventory.map((it) => (

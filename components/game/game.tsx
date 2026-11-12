@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useGame } from '@/lib/game/use-game'
 import { game } from '@/lib/game/engine'
 import { ChatBox } from './chat-box'
@@ -14,6 +15,7 @@ import { PlayerActionMenu } from './player-action-menu'
 import { SocialNotifications } from './social-notifications'
 import { SocialPopover } from './social-popover'
 import { ITEMS } from '@/lib/game/data'
+import { CheckinModal } from './checkin-modal'
 
 function LootToast() {
   const loot = game.lootToast
@@ -29,13 +31,14 @@ function LootToast() {
 
 export function Game() {
   const g = useGame()
+  const [showCheckin, setShowCheckin] = useState(false)
   if (!g.p) return <TitleScreen />
   return (
     <div className="relative h-full w-full select-none overflow-hidden">
       <GameCanvas />
       <div className="game-ui pointer-events-none absolute inset-0">
         <TouchControls />
-        <Hud />
+        <Hud onOpenCheckin={() => setShowCheckin(true)} />
         <WorldBanner />
         <PlayerActionMenu />
         <SocialNotifications />
@@ -44,6 +47,7 @@ export function Game() {
         <ChatBox />
         <PresenceSync />
         <Panels />
+        {showCheckin && <CheckinModal onClose={() => setShowCheckin(false)} />}
       </div>
     </div>
   )

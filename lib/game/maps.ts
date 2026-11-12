@@ -483,13 +483,13 @@ export const MAPS: Record<string, MapDef> = {
     spawns: [{ monsterId: 'gale_sentinel', count: 8 }, { monsterId: 'abyss_knight', count: 8 }, { monsterId: 'demon_lord', count: 3 }],
   }),
   crystal_vale: buildWild({
-    id: 'crystal_vale', name: 'หุบเขาคริสตัล', levelLabel: 'Lv.70-80', theme: 'cave', seed: 77, base: T.CAVEFLOOR, wall: T.CAVEWALL,
+    id: 'crystal_vale', name: 'หุบเขาคริสตัล', levelLabel: 'Lv.70-80', theme: 'cave', seed: 77, base: T.CAVEFLOOR, wall: T.CAVEWALL, pathTile: null,
     obstacles: [{ tile: T.CRYSTAL, chance: 0.05 }, { tile: T.ROCK, chance: 0.03 }], blobs: [{ tile: T.CRYSTAL, count: 5, r: [1, 3] }], decor: [{ tile: T.CRYSTAL, chance: 0.03 }],
     west: { to: 'sky_ruins', tx: 44, ty: 17, label: 'ซากฟ้าลอยฟ้า Lv.60+' }, east: { to: 'frost_peak', tx: 3, ty: 17, label: 'ยอดเขาเหมันต์ Lv.80+' },
     spawns: [{ monsterId: 'ghost', count: 10 }, { monsterId: 'abyss_dragon', count: 2 }],
   }),
   frost_peak: buildWild({
-    id: 'frost_peak', name: 'ยอดเขาเหมันต์', levelLabel: 'Lv.80-90', theme: 'forest', seed: 88, base: T.DARKGRASS, wall: T.PINE,
+    id: 'frost_peak', name: 'ยอดเขาเหมันต์', levelLabel: 'Lv.80-90', theme: 'forest', seed: 88, base: T.DARKGRASS, wall: T.PINE, pathTile: null,
     obstacles: [{ tile: T.PINE, chance: 0.08 }, { tile: T.ROCK, chance: 0.025 }], blobs: [{ tile: T.WATER, count: 3, r: [1, 2] }], decor: [{ tile: T.BONES, chance: 0.02 }],
     west: { to: 'crystal_vale', tx: 44, ty: 17, label: 'หุบเขาคริสตัล Lv.70+' }, east: { to: 'dream_garden', tx: 3, ty: 17, label: 'สวนฝันนิรันดร์ Lv.90+' },
     spawns: [{ monsterId: 'demon', count: 10 }, { monsterId: 'demon_lord', count: 2 }],
@@ -501,7 +501,7 @@ export const MAPS: Record<string, MapDef> = {
     spawns: [{ monsterId: 'fire_golem', count: 8 }, { monsterId: 'abyss_knight', count: 4 }],
   }),
   celestial_colosseum: buildWild({
-    id: 'celestial_colosseum', name: 'โคลอสเซียมสวรรค์', levelLabel: 'Lv.100+ เขตบอส', theme: 'volcano', seed: 110, base: T.VOLCFLOOR, wall: T.CAVEWALL,
+    id: 'celestial_colosseum', name: 'โคลอสเซียมสวรรค์', levelLabel: 'Lv.100+ เขตบอส', theme: 'volcano', seed: 110, base: T.VOLCFLOOR, wall: T.CAVEWALL, pathTile: null,
     obstacles: [{ tile: T.ROCK, chance: 0.05 }], blobs: [{ tile: T.LAVA, count: 4, r: [1, 2] }], decor: [{ tile: T.BONES, chance: 0.03 }],
     west: { to: 'dream_garden', tx: 44, ty: 17, label: 'สวนฝันนิรันดร์ Lv.90+' }, east: null,
     spawns: [{ monsterId: 'demon_lord', count: 6 }, { monsterId: 'abyss_dragon', count: 2 }],
