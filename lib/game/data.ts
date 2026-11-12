@@ -2,7 +2,7 @@ import { WEAPON_CATALOG } from './weapon-catalog'
 
 export type WeaponType = 'stick' | 'sword' | 'staff' | 'bow' | 'dagger'
 
-export type SkillKind = 'single' | 'aoe-self' | 'aoe-target' | 'multi'
+export type SkillKind = 'single' | 'aoe-self' | 'aoe-target' | 'multi' | 'heal'
 
 export interface SkillDef {
   id: string
@@ -181,6 +181,30 @@ export const JOBS: Record<string, JobDef> = {
       { id: 'holy', name: 'ดาบศักดิ์สิทธิ์', mp: 40, mult: 4.5, cooldown: 8, kind: 'aoe-target', radius: 40, color: '#fff3b0' },
     ],
   },
+  paladin: {
+    id: 'paladin',
+    name: 'พาลาดิน',
+    tier: 2,
+    from: 'swordsman',
+    reqLevel: 30,
+    cost: 10000,
+    description: 'อัศวินศักดิ์สิทธิ์ ผู้ยืนหยัดแนวหน้าและพิทักษ์พวกพ้อง',
+    hpMul: 1.85,
+    mpMul: 1.1,
+    atkMul: 1.45,
+    defMul: 1.7,
+    speedMul: 0.95,
+    attackSpeed: 0.55,
+    crit: 0.1,
+    range: 26,
+    ranged: false,
+    weaponTypes: ['sword'],
+    colors: { hair: '#d4a017', body: '#d9e2ec', legs: '#526174', accent: '#f4d35e' },
+    skills: [
+      { id: 'holy-strike', name: 'ฟันศักดิ์สิทธิ์', mp: 12, mult: 2.8, cooldown: 2.2, kind: 'single', color: '#ffe08a' },
+      { id: 'light-judgment', name: 'พิพากษาแห่งแสง', mp: 35, mult: 2.1, cooldown: 6, kind: 'aoe-target', radius: 52, color: '#fff3b0' },
+    ],
+  },
   wizard: {
     id: 'wizard',
     name: 'จอมเวท',
@@ -204,6 +228,31 @@ export const JOBS: Record<string, JobDef> = {
       { id: 'firebolt', name: 'ลูกไฟ', mp: 10, mult: 3, cooldown: 1.2, kind: 'single', color: '#ff7b39' },
       { id: 'meteor', name: 'อุกกาบาต', mp: 26, mult: 2.6, cooldown: 5, kind: 'aoe-target', radius: 60, color: '#ff4d2e' },
       { id: 'blizzard', name: 'พายุหิมะ', mp: 50, mult: 3.2, cooldown: 9, kind: 'aoe-self', radius: 90, color: '#bde0fe' },
+    ],
+  },
+  cleric: {
+    id: 'cleric',
+    name: 'เครลิค',
+    tier: 2,
+    from: 'mage',
+    reqLevel: 30,
+    cost: 10000,
+    description: 'นักบวชแห่งแสง ใช้เวทโจมตีและฟื้นฟูพลังชีวิต',
+    hpMul: 1.25,
+    mpMul: 2.15,
+    atkMul: 1.3,
+    defMul: 1.1,
+    speedMul: 1,
+    attackSpeed: 0.82,
+    crit: 0.07,
+    range: 100,
+    ranged: true,
+    weaponTypes: ['staff'],
+    colors: { hair: '#e8d4a2', body: '#f1ead5', legs: '#b58b56', accent: '#f4d35e' },
+    skills: [
+      { id: 'grace-heal', name: 'แสงเยียวยา', mp: 25, mult: 0.3, cooldown: 5, kind: 'heal', color: '#80ed99' },
+      { id: 'holy-bolt', name: 'ศรแห่งแสง', mp: 15, mult: 2.5, cooldown: 2.2, kind: 'single', color: '#b7f7c4' },
+      { id: 'sanctuary', name: 'เขตศักดิ์สิทธิ์', mp: 35, mult: 1.4, cooldown: 7, kind: 'aoe-self', radius: 62, color: '#b7f7c4' },
     ],
   },
   hunter: {

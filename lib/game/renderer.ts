@@ -119,12 +119,50 @@ const SWORD_ATTACK_ART = Object.fromEntries(
   Object.entries(SWORD_ART).map(([direction, src]) => [direction, src.replace('/idle/', '/attack/')]),
 )
 
+const CLASS_DIRECTIONS: Record<string, string> = {
+  down: 'south',
+  'down-right': 'south-east',
+  right: 'east',
+  'up-right': 'north-east',
+  up: 'north',
+  'up-left': 'north-west',
+  left: 'west',
+  'down-left': 'south-west',
+}
+
+function cachedArt(src: string) {
+  const cached = artCache.get(src)
+  if (cached) return cached.complete && cached.naturalWidth > 0 ? cached : null
+  const image = new Image()
+  image.crossOrigin = 'anonymous'
+  image.src = src
+  artCache.set(src, image)
+  return null
+}
+
+function classProfessionArt(dir: string, jobId: 'paladin' | 'cleric', walking: boolean, attacking: boolean, frame: number) {
+  const direction = CLASS_DIRECTIONS[dir] ?? 'south'
+  const cardinal = dir.includes('down') ? 'south' : dir.includes('up') ? 'north' : dir.includes('left') ? 'west' : 'east'
+  const src = jobId === 'paladin'
+    ? attacking
+      ? `/images/characters/paladin/attack/${cardinal}.gif`
+      : walking
+        ? `/images/characters/paladin/walk/${cardinal}.gif`
+        : `/images/characters/paladin/idle/${direction}.png`
+    : walking && !attacking
+      ? `/images/characters/cleric/walk/${cardinal}/${String(frame % 15).padStart(3, '0')}.png`
+      : `/images/characters/cleric/idle/${direction}.png`
+  return cachedArt(src)
+}
+
 function professionArt(
   dir: string,
   jobId: string,
   walking = false,
   attacking = false,
+  frame = 0,
 ) {
+  if (jobId === 'paladin' || jobId === 'cleric') return classProfessionArt(dir, jobId, walking, attacking, frame)
   const maps = jobId === 'mage'
     ? [MAGE_ART, MAGE_WALK_ART, MAGE_ATTACK_ART]
     : [SWORD_ART, SWORD_WALK_ART, SWORD_ATTACK_ART]
@@ -417,8 +455,11 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
       y: other.y,
       draw: () => {
         shadow(ctx, other.x, other.y, 6)
+        const customClass = other.classId === 'paladin' || other.classId === 'cleric'
+          ? professionArt(other.facing, other.classId, other.moving, other.attackAnim > 0, Math.floor(t * 10))
+          : null
         const assassin = other.classId === 'assassin' ? assassinArt('down') : null
-        const img = assassin ?? humanSprite(otherJob.colors, 'down', 0)
+        const img = customClass ?? assassin ?? humanSprite(otherJob.colors, 'down', 0)
         ctx.globalAlpha = 0.92
         ctx.drawImage(img, Math.round(other.x - img.width / 2), Math.round(other.y - img.height))
         ctx.globalAlpha = 1
@@ -432,7 +473,7 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
     const remoteFrame = other.moving ? Math.floor(t * 8) % 4 : 0
     const remoteAnimation = other.attackAnim > 0 ? 'attack' : other.moving ? 'walk' : 'idle'
     const remoteImg = (other.gm ? gmOutfitSprite(other.facing, remoteAnimation) : null)
-      ?? professionArt(other.facing, other.jobId, other.moving, other.attackAnim > 0)
+      ?? professionArt(other.facing, other.jobId, other.moving, other.attackAnim > 0, Math.floor(t * 10))
       ?? humanSprite(remoteJob.colors, other.facing, remoteFrame)
     ents.push({
       y: other.y,
@@ -458,10 +499,13 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
     draw: () => {
       shadow(ctx, p.x, p.y, 6)
       const frame = game.moving ? Math.floor(game.walkT * 8) % 4 : 0
-      const walkingPose = game.moving && frame % 2 === 0
 const animation = game.attackAnim > 0 ? 'attack' : game.moving ? 'walk' : 'idle'
-    const customArt = p.gm ? gmOutfitSprite(game.facing, animation) : null
-  const img = customArt ?? humanSprite(job.colors, game.facing, frame, weapon?.weaponType ?? null, weapon?.color)
+    const customArt = p.gm
+        ? gmOutfitSprite(game.facing, animation)
+        : p.jobId === 'paladin' || p.jobId === 'cleric'
+          ? professionArt(game.facing, p.jobId, game.moving, game.attackAnim > 0, Math.floor(game.walkT * 10))
+          : null
+      const img = customArt ?? humanSprite(job.colors, game.facing, frame, weapon?.weaponType ?? null, weapon?.color)
       let ox = 0
       let oy = 0
       if (game.attackAnim > 0) {
