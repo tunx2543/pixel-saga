@@ -789,6 +789,23 @@ export function castSkill(index: number) {
     warn('MP ไม่พอ!')
     return
   }
+  if (skill.kind === 'heal') {
+    const stats = getStats(p)
+    if (p.hp >= stats.maxHp) {
+      warn('HP เต็มแล้ว!')
+      return
+    }
+    const recovered = Math.min(Math.floor(stats.maxHp * skillMult), stats.maxHp - p.hp)
+    p.hp += recovered
+    p.mp -= skill.mp
+    game.skillCd[skill.id] = skill.cooldown
+    game.attackAnim = 0.22
+    addEffect({ type: 'ring', x: p.x, y: p.y - 6, r: 38, color: skill.color, max: 0.55 })
+    addFloat(p.x, p.y - 30, `+${recovered} HP`, skill.color)
+    say('system', `${skill.name} ฟื้นฟู HP ${recovered}`)
+    notify()
+    return
+  }
   const range = job.ranged ? job.range + 12 : skill.kind === 'aoe-target' ? 90 : job.range + 12
   if (skill.kind === 'aoe-self') {
     const r = skill.radius ?? 40

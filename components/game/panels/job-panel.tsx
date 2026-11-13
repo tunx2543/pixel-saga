@@ -38,14 +38,18 @@ function JobTree() {
   return (
     <div className="grid grid-cols-2 gap-1.5 text-[11px] md:grid-cols-4">
       {roots.map((j) => {
-        const next = Object.values(JOBS).find((n) => n.from === j.id)
+        const nextJobs = Object.values(JOBS).filter((nextJob) => nextJob.from === j.id)
         return (
           <div key={j.id} className="border-2 border-border bg-background p-1.5 text-center">
             <p className="text-foreground">{j.name}</p>
             <p className="text-muted-foreground">Lv.{j.reqLevel}</p>
-            <p className="text-primary">↓</p>
-            <p className="text-foreground">{next?.name}</p>
-            <p className="text-muted-foreground">Lv.{next?.reqLevel}</p>
+            {nextJobs.length > 0 && <p className="text-primary">↓</p>}
+            {nextJobs.map((nextJob) => (
+              <div key={nextJob.id}>
+                <p className="text-foreground">{nextJob.name}</p>
+                <p className="text-muted-foreground">Lv.{nextJob.reqLevel}</p>
+              </div>
+            ))}
           </div>
         )
       })}

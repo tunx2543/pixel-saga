@@ -2,6 +2,7 @@
 
 import { ITEMS } from '@/lib/game/data'
 import type { InvItem } from '@/lib/game/engine'
+import { itemIconUrl } from '@/lib/game/sprites'
 import { cn } from '@/lib/utils'
 
 const POTION_ROWS: Record<string, number> = {
@@ -49,9 +50,20 @@ export function ItemIcon({ itemId, size = 32, className }: { itemId: string; siz
     )
   }
 
-  return def.asset ? (
-    <img src={def.asset} alt={def.name} width={size} height={size} className={cn('pixelated shrink-0 object-contain', className)} draggable={false} />
-  ) : null
+  return (
+    <img
+      src={def.asset ?? itemIconUrl(def.icon, def.color)}
+      onError={(event) => {
+        event.currentTarget.onerror = null
+        event.currentTarget.src = itemIconUrl(def.icon, def.color)
+      }}
+      alt={def.name}
+      width={size}
+      height={size}
+      className={cn('pixelated shrink-0 object-contain', className)}
+      draggable={false}
+    />
+  )
 }
 
 export function ItemSlot({

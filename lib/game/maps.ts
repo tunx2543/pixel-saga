@@ -430,6 +430,7 @@ export const MAPS: Record<string, MapDef> = {
       { monsterId: 'bat', count: 11 },
       { monsterId: 'skeleton', count: 10 },
       { monsterId: 'ghost', count: 8 },
+      { monsterId: 'earth_golem', count: 1 },
     ],
   }),
   volcano: buildWild({

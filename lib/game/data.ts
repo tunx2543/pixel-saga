@@ -2,7 +2,7 @@ import { WEAPON_CATALOG } from './weapon-catalog'
 
 export type WeaponType = 'stick' | 'sword' | 'staff' | 'bow' | 'dagger'
 
-export type SkillKind = 'single' | 'aoe-self' | 'aoe-target' | 'multi'
+export type SkillKind = 'single' | 'aoe-self' | 'aoe-target' | 'multi' | 'heal'
 
 export interface SkillDef {
   id: string
@@ -181,6 +181,30 @@ export const JOBS: Record<string, JobDef> = {
       { id: 'holy', name: 'ดาบศักดิ์สิทธิ์', mp: 40, mult: 4.5, cooldown: 8, kind: 'aoe-target', radius: 40, color: '#fff3b0' },
     ],
   },
+  paladin: {
+    id: 'paladin',
+    name: 'พาลาดิน',
+    tier: 2,
+    from: 'swordsman',
+    reqLevel: 30,
+    cost: 10000,
+    description: 'อัศวินศักดิ์สิทธิ์ ผู้ยืนหยัดแนวหน้าและพิทักษ์พวกพ้อง',
+    hpMul: 1.85,
+    mpMul: 1.1,
+    atkMul: 1.45,
+    defMul: 1.7,
+    speedMul: 0.95,
+    attackSpeed: 0.55,
+    crit: 0.1,
+    range: 26,
+    ranged: false,
+    weaponTypes: ['sword'],
+    colors: { hair: '#d4a017', body: '#d9e2ec', legs: '#526174', accent: '#f4d35e' },
+    skills: [
+      { id: 'holy-strike', name: 'ฟันศักดิ์สิทธิ์', mp: 12, mult: 2.8, cooldown: 2.2, kind: 'single', color: '#ffe08a' },
+      { id: 'light-judgment', name: 'พิพากษาแห่งแสง', mp: 35, mult: 2.1, cooldown: 6, kind: 'aoe-target', radius: 52, color: '#fff3b0' },
+    ],
+  },
   wizard: {
     id: 'wizard',
     name: 'จอมเวท',
@@ -204,6 +228,31 @@ export const JOBS: Record<string, JobDef> = {
       { id: 'firebolt', name: 'ลูกไฟ', mp: 10, mult: 3, cooldown: 1.2, kind: 'single', color: '#ff7b39' },
       { id: 'meteor', name: 'อุกกาบาต', mp: 26, mult: 2.6, cooldown: 5, kind: 'aoe-target', radius: 60, color: '#ff4d2e' },
       { id: 'blizzard', name: 'พายุหิมะ', mp: 50, mult: 3.2, cooldown: 9, kind: 'aoe-self', radius: 90, color: '#bde0fe' },
+    ],
+  },
+  cleric: {
+    id: 'cleric',
+    name: 'เครลิค',
+    tier: 2,
+    from: 'mage',
+    reqLevel: 30,
+    cost: 10000,
+    description: 'นักบวชแห่งแสง ใช้เวทโจมตีและฟื้นฟูพลังชีวิต',
+    hpMul: 1.25,
+    mpMul: 2.15,
+    atkMul: 1.3,
+    defMul: 1.1,
+    speedMul: 1,
+    attackSpeed: 0.82,
+    crit: 0.07,
+    range: 100,
+    ranged: true,
+    weaponTypes: ['staff'],
+    colors: { hair: '#e8d4a2', body: '#f1ead5', legs: '#b58b56', accent: '#f4d35e' },
+    skills: [
+      { id: 'grace-heal', name: 'แสงเยียวยา', mp: 25, mult: 0.3, cooldown: 5, kind: 'heal', color: '#80ed99' },
+      { id: 'holy-bolt', name: 'ศรแห่งแสง', mp: 15, mult: 2.5, cooldown: 2.2, kind: 'single', color: '#b7f7c4' },
+      { id: 'sanctuary', name: 'เขตศักดิ์สิทธิ์', mp: 35, mult: 1.4, cooldown: 7, kind: 'aoe-self', radius: 62, color: '#b7f7c4' },
     ],
   },
   hunter: {
@@ -420,6 +469,7 @@ const BASE_ITEMS: Record<string, ItemDef> = {
   bone: { id: 'bone', name: 'กระดูก', kind: 'material', price: 90, icon: 'bone', color: '#e9e3d5', description: 'ของดรอปจากโครงกระดูก ขายได้' },
   ectoplasm: { id: 'ectoplasm', name: 'วิญญาณหลอน', kind: 'material', price: 130, icon: 'gel', color: '#caf0f8', description: 'ของดรอปจากผี ขายได้' },
   ember_core: { id: 'ember_core', name: 'แกนเพลิง', kind: 'material', price: 220, icon: 'core', color: '#ff6b35', description: 'ของดรอปจากภูเขาไฟ ขายได้' },
+  earth_core: { id: 'earth_core', name: 'แก่นปฐพี', kind: 'material', price: 1200, icon: 'core', color: '#b08954', description: 'แก่นพลังที่ได้จากผู้พิทักษ์ปฐพี' },
   demon_horn: { id: 'demon_horn', name: 'เขาปีศาจ', kind: 'material', price: 350, icon: 'fang', color: '#9d0208', description: 'ของดรอปจากปีศาจ ขายได้' },
   torn_cloth: { id: 'torn_cloth', name: 'ผ้าขาดจากมอน', kind: 'material', price: 3, icon: 'junk', color: '#a78b72', description: 'เศษผ้าสกปรกจากมอนสเตอร์ ขายให้พ่อค้าได้' },
   cracked_claw: { id: 'cracked_claw', name: 'กรงเล็บแตกร้าว', kind: 'material', price: 6, icon: 'junk', color: '#c08457', description: 'กรงเล็บเก่าที่แตกแล้วจากมอนสเตอร์' },
@@ -457,13 +507,6 @@ const BASE_ITEMS: Record<string, ItemDef> = {
   dragon_armor: armor('dragon_armor', 'เกราะมังกร', 70, 24000, 4, 36, '#c1121f'),
 }
 
-const IMAGE_READY_BASE_ITEMS: Record<string, ItemDef> = Object.fromEntries(
-  Object.entries(BASE_ITEMS).map(([id, item], index) => [
-    id,
-    item.asset ? item : { ...item, asset: `/images/items/catalog/${CATALOG_ASSETS[index % CATALOG_ASSETS.length]}` },
-  ]),
-)
-
 const FILE_ITEMS: Record<string, ItemDef> = Object.fromEntries(
   WEAPON_CATALOG.map((entry, index) => [
     entry.id,
@@ -494,7 +537,7 @@ export const GM_ITEMS: Record<string, ItemDef> = Object.fromEntries(
   FILE_ITEM_IDS.map((id) => [`gm888_${id.replace('weapon_', '')}`, { ...FILE_ITEMS[id], gmOnly: true }]),
 )
 
-export const ITEMS: Record<string, ItemDef> = { ...IMAGE_READY_BASE_ITEMS, ...FILE_ITEMS, ...GM_ITEMS }
+export const ITEMS: Record<string, ItemDef> = { ...BASE_ITEMS, ...FILE_ITEMS, ...GM_ITEMS }
 
 export const SHOP_STOCK: string[] = FILE_ITEM_IDS.filter((id) => !ITEMS[id].gmOnly).slice(0, 24)
 /* Legacy consumables are intentionally no longer stocked; all visible item art comes from the weapons archive. */
@@ -513,7 +556,7 @@ export const SHOP_STOCK: string[] = FILE_ITEM_IDS.filter((id) => !ITEMS[id].gmOn
   'leather_armor',
 ] */
 
-export type MonsterSprite = 'slime' | 'mushroom' | 'rabbit' | 'wolf' | 'goblin' | 'bat' | 'skeleton' | 'ghost' | 'golem' | 'demon' | 'gale_sentinel'
+export type MonsterSprite = 'slime' | 'mushroom' | 'rabbit' | 'wolf' | 'goblin' | 'bat' | 'skeleton' | 'ghost' | 'golem' | 'demon' | 'gale_sentinel' | 'earth_golem'
 
 export interface MonsterDef {
   id: string
@@ -547,6 +590,7 @@ export const MONSTERS: Record<string, MonsterDef> = {
   ghost: { id: 'ghost', name: 'วิญญาณหลอน', level: 31, hp: 1200, atk: 115, def: 38, exp: 390, gold: [70, 140], speed: 44, aggro: 120, sprite: 'ghost', color: '#caf0f8', drops: [{ itemId: 'ectoplasm', chance: 0.45 }, { itemId: 'crystal_staff', chance: 0.012 }, { itemId: 'hunter_bow', chance: 0.012 }, { itemId: 'shadow_dagger', chance: 0.012 }, { itemId: 'enhance_stone', chance: 0.08 }] },
 
   fire_golem: { id: 'fire_golem', name: 'โกเลมเพลิง', level: 37, hp: 2000, atk: 150, def: 55, exp: 620, gold: [100, 200], speed: 34, aggro: 120, sprite: 'golem', color: '#e85d04', drops: [{ itemId: 'ember_core', chance: 0.4 }, { itemId: 'white_potion', chance: 0.1 }, { itemId: 'enhance_stone', chance: 0.1 }] },
+  earth_golem: { id: 'earth_golem', name: 'ผู้พิทักษ์ปฐพี', level: 34, hp: 9800, atk: 205, def: 118, exp: 3200, gold: [900, 1800], speed: 27, aggro: 165, sprite: 'earth_golem', color: '#8c6b3f', boss: true, drops: [{ itemId: 'earth_core', chance: 1 }, { itemId: 'enhance_stone', chance: 1 }] },
   demon: { id: 'demon', name: 'ปีศาจ', level: 43, hp: 2800, atk: 190, def: 68, exp: 900, gold: [150, 300], speed: 48, aggro: 130, sprite: 'demon', color: '#9d0208', drops: [{ itemId: 'demon_horn', chance: 0.4 }, { itemId: 'flame_sword', chance: 0.008 }, { itemId: 'inferno_staff', chance: 0.008 }, { itemId: 'phoenix_bow', chance: 0.008 }, { itemId: 'demon_fang', chance: 0.008 }, { itemId: 'enhance_stone', chance: 0.12 }] },
   demon_lord: { id: 'demon_lord', name: 'ราชาปีศาจเพลิง', level: 50, hp: 15000, atk: 260, def: 90, exp: 6000, gold: [2000, 4000], speed: 42, aggro: 150, sprite: 'demon', color: '#370617', boss: true, drops: [{ itemId: 'dragon_armor', chance: 0.25 }, { itemId: 'flame_sword', chance: 0.1 }, { itemId: 'inferno_staff', chance: 0.1 }, { itemId: 'phoenix_bow', chance: 0.1 }, { itemId: 'demon_fang', chance: 0.1 }, { itemId: 'enhance_stone', chance: 1 }] },
   abyss_knight: { id: 'abyss_knight', name: 'อัศวินห้วงอเวจี', level: 54, hp: 5200, atk: 280, def: 105, exp: 1400, gold: [320, 620], speed: 38, aggro: 145, sprite: 'golem', color: '#5b21b6', drops: [{ itemId: 'abyss_crystal', chance: 0.22 }, { itemId: 'enhance_stone', chance: 0.2 }] },
