@@ -144,6 +144,9 @@ export interface RemotePlayer {
   moving: boolean
   attackAnim: number
   lastSeen: number
+  previousX?: number
+  previousY?: number
+  receivedAt?: number
 }
 
 export interface Monster {
