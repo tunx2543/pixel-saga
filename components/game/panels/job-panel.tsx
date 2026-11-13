@@ -38,7 +38,7 @@ function JobTree() {
   return (
     <div className="grid grid-cols-2 gap-1.5 text-[11px] md:grid-cols-4">
       {roots.map((j) => {
-        const nextJobs = Object.values(JOBS).filter((nextJob) => nextJob.from === j.id)
+        const nextJobs = Object.values(JOBS).filter((nextJob) => nextJob.from === j.id && nextJob.id !== 'paladin')
         return (
           <div key={j.id} className="border-2 border-border bg-background p-1.5 text-center">
             <p className="text-foreground">{j.name}</p>

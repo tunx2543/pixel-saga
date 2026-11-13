@@ -17,7 +17,7 @@ import { MAPS, MAP_ORDER, TILE, boxBlocked, isSolidPx, type MapDef, type NpcDef,
 import { GEM_SHOP_ITEMS } from './gem-shop'
 import type { Dir } from './sprites'
 import { createClient } from '@/lib/supabase/client'
-import { createBan, createTrade, publishAnnouncement, sendFriendRequest, sendWhisper } from './social'
+import { cancelTradeRequest, createBan, createTrade, publishAnnouncement, sendFriendRequest, sendWhisper } from './social'
 import { PERMANENT_GM_UID } from './permissions'
 
 export const SAVE_KEY = 'pixel-rpg-save-v1'
@@ -143,6 +143,7 @@ export interface RemotePlayer {
   facing: Dir
   moving: boolean
   attackAnim: number
+  invisible: boolean
   lastSeen: number
   previousX?: number
   previousY?: number
@@ -965,6 +966,16 @@ export function openPanel(id: PanelId) {
 
 export function closePanel() {
   if (!game.panel) return
+  if (game.panel === 'trade' && game.tradeId !== null) {
+    const tradeId = game.tradeId
+    game.tradeId = null
+    game.tradeTargetId = null
+    void cancelTradeRequest(tradeId).then((result) => {
+      if (result.ok) return
+      game.chat.push({ id: Date.now(), type: 'error', text: result.message })
+      notify()
+    })
+  }
   game.panel = null
   saveGame()
   notify()
@@ -1101,7 +1112,7 @@ export function enhance(id: string): EnhanceResult {
 
 export function availableJobs() {
   const p = player()
-  return Object.values(JOBS).filter((j) => j.from === p.jobId)
+  return Object.values(JOBS).filter((j) => j.from === p.jobId && j.id !== 'paladin')
 }
 
 export function changeJob(jobId: string) {
@@ -1797,7 +1808,7 @@ function updateMonsters(dt: number, map: MapDef) {
     const dx = p.x - m.x
     const dy = p.y - m.y
     const d = Math.hypot(dx, dy)
-    const aggro = (m.provoked || (def.aggro > 0 && d < def.aggro)) && d < 260
+    const aggro = !p.invisible && (m.provoked || (def.aggro > 0 && d < def.aggro)) && d < 260
     if (aggro) {
       m.provoked = true
       m.flip = dx < 0

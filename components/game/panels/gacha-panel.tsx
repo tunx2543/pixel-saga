@@ -3,18 +3,18 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { ITEMS } from '@/lib/game/data'
-import { addItem, closePanel, player } from '@/lib/game/engine'
+import { addItem, closePanel, notify, player, saveGame } from '@/lib/game/engine'
 import { PanelFrame, PxButton } from './panels'
 
 const RATES = [
-  { itemId: 'flame_sword', rate: 1, label: 'ตำนาน' },
-  { itemId: 'crystal_staff', rate: 3, label: 'อีปิค' },
-  { itemId: 'catalog_assassin', rate: 6, label: 'อาวุธอาคม' },
-  { itemId: 'catalog_pix', rate: 10, label: 'ดาบพิเศษ' },
-  { itemId: 'catalog_pixellab_object_03b36157', rate: 15, label: 'คฑาอาคม' },
-  { itemId: 'steel_sword', rate: 20, label: 'หายาก' },
-  { itemId: 'red_potion', rate: 20, label: 'ทั่วไป' },
-  { itemId: 'enhance_stone', rate: 25, label: 'วัสดุ' },
+  { itemId: 'weapon_059', rate: 3, rarity: 'แรร์' },
+  { itemId: 'weapon_039', rate: 5, rarity: 'แรร์' },
+  { itemId: 'weapon_028', rate: 7, rarity: 'แรร์' },
+  { itemId: 'weapon_023', rate: 10, rarity: 'แรร์' },
+  { itemId: 'weapon_001', rate: 15, rarity: 'ธรรมดา' },
+  { itemId: 'weapon_005', rate: 18, rarity: 'ธรรมดา' },
+  { itemId: 'weapon_010', rate: 20, rarity: 'ธรรมดา' },
+  { itemId: 'weapon_018', rate: 22, rarity: 'ธรรมดา' },
 ]
 const COST = 500
 
@@ -32,8 +32,14 @@ export function GachaPanel() {
         cursor += entry.rate
         return roll <= cursor
       }) ?? RATES[RATES.length - 1]
+      if (!addItem(picked.itemId)) {
+        setResult('กระเป๋าเต็ม — ยังไม่ได้ใช้ Gold')
+        setRolling(false)
+        return
+      }
       player().gold -= COST
-      addItem(picked.itemId)
+      saveGame()
+      notify()
       void (async () => {
         const supabase = createClient()
         const { data } = await supabase.auth.getUser()
@@ -52,7 +58,7 @@ export function GachaPanel() {
           })
         }
       })()
-      setResult(`${ITEMS[picked.itemId].name} (${picked.label})`)
+      setResult(`${ITEMS[picked.itemId].name} (${picked.rarity})`)
       setRolling(false)
     }, 420)
   }
@@ -66,10 +72,10 @@ export function GachaPanel() {
             return (
               <div key={entry.itemId} className="border-2 border-border bg-muted/60 p-2 text-center">
                 <div className="mx-auto mb-2 grid size-12 place-items-center overflow-hidden rounded-lg border-2 border-white/20 bg-card text-2xl" style={{ color: item.color }}>
-                  {item.asset ? <img src={item.asset} alt={item.name} className="pixelated size-full object-contain" /> : <span aria-hidden="true">{entry.label.slice(0, 1)}</span>}
+                  {item.asset ? <img src={item.asset} alt={item.name} className="pixelated size-full object-contain" /> : <span aria-hidden="true">{entry.rarity.slice(0, 1)}</span>}
                 </div>
                 <p className="truncate text-xs text-foreground">{item.name}</p>
-                <p className="mt-1 text-xs text-primary">{entry.rate}%</p>
+                <p className={`mt-1 text-xs ${entry.rarity === 'แรร์' ? 'text-accent' : 'text-primary'}`}>{entry.rarity} · {entry.rate}%</p>
               </div>
             )
           })}

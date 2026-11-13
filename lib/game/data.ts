@@ -534,7 +534,10 @@ const FILE_ITEMS: Record<string, ItemDef> = Object.fromEntries(
 const FILE_ITEM_IDS = Object.keys(FILE_ITEMS)
 
 export const GM_ITEMS: Record<string, ItemDef> = Object.fromEntries(
-  FILE_ITEM_IDS.map((id) => [`gm888_${id.replace('weapon_', '')}`, { ...FILE_ITEMS[id], gmOnly: true }]),
+  FILE_ITEM_IDS.map((id) => {
+    const gmId = `gm888_${id.replace('weapon_', '')}`
+    return [gmId, { ...FILE_ITEMS[id], id: gmId, gmOnly: true }]
+  }),
 )
 
 export const ITEMS: Record<string, ItemDef> = { ...BASE_ITEMS, ...FILE_ITEMS, ...GM_ITEMS }

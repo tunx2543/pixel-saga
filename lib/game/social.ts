@@ -9,6 +9,10 @@ export type TradeOfferSnapshot = {
   recipientItems: string[]
   senderDisplay: InvItem[]
   recipientDisplay: InvItem[]
+  senderGold: number
+  recipientGold: number
+  senderGemItems: string[]
+  recipientGemItems: string[]
   senderReady: boolean
   recipientReady: boolean
 }
@@ -63,10 +67,33 @@ export async function createTrade(targetUserId: string): Promise<SocialResult & 
   return error ? { ok: false, message: 'ส่งคำขอแลกเปลี่ยนไม่สำเร็จ' } : { ok: true, message: 'ส่งคำขอแลกเปลี่ยนแล้ว', tradeId: Number(data) }
 }
 
-export async function updateTradeOffer(tradeId: number, itemUids: string[], ready: boolean): Promise<TradeUpdate> {
+export async function updateTradeOffer(
+  tradeId: number,
+  itemUids: string[],
+  offeredGold: number,
+  gemItemIds: string[],
+  ready: boolean,
+): Promise<TradeUpdate> {
   const supabase = createClient()
-  const { data, error } = await supabase.rpc('update_trade_offer', { trade_id: tradeId, item_uids: itemUids, is_ready: ready })
-  if (error) return { ok: false, message: error.message.includes('inventory is full') ? 'กระเป๋าฝ่ายรับเต็ม กรุณานำไอเท็มออกก่อน' : 'อัปเดตรายการแลกเปลี่ยนไม่สำเร็จ' }
+  const { data, error } = await supabase.rpc('update_trade_offer', {
+    p_trade_id: tradeId,
+    p_item_uids: itemUids,
+    p_offered_gold: offeredGold,
+    p_gem_item_ids: gemItemIds,
+    p_is_ready: ready,
+  })
+  if (error) {
+    const message = error.message.includes('inventory is full')
+      ? 'กระเป๋าฝ่ายรับเต็ม กรุณานำไอเท็มออกก่อน'
+      : error.message.includes('insufficient gold')
+        ? 'Gold ที่เสนอมีไม่พอ'
+        : error.message.includes('already owns')
+          ? 'อีกฝ่ายมีไอเท็มร้านเพชรชิ้นนี้แล้ว'
+          : error.message.includes('no longer owned')
+            ? 'ไอเท็มร้านเพชรที่เลือกไม่ได้เป็นของคุณแล้ว'
+            : 'อัปเดตรายการแลกเปลี่ยนไม่สำเร็จ'
+    return { ok: false, message }
+  }
   const result = data as { status?: string; offer?: TradeOfferSnapshot; saveData?: SaveData } | null
   return {
     ok: true,
@@ -74,6 +101,17 @@ export async function updateTradeOffer(tradeId: number, itemUids: string[], read
     offer: result?.offer,
     completed: result?.status === 'completed',
     saveData: result?.saveData,
+  }
+}
+
+export async function cancelTradeRequest(tradeId: number): Promise<SocialResult> {
+  try {
+    const { error } = await createClient().rpc('cancel_trade_request', { p_trade_id: tradeId })
+    return error
+      ? { ok: false, message: 'ปิดการแลกเปลี่ยนกับอีกฝ่ายไม่สำเร็จ กรุณาลองอีกครั้ง' }
+      : { ok: true, message: 'ปิดการแลกเปลี่ยนแล้ว' }
+  } catch {
+    return { ok: false, message: 'ปิดการแลกเปลี่ยนกับอีกฝ่ายไม่สำเร็จ กรุณาลองอีกครั้ง' }
   }
 }
 
