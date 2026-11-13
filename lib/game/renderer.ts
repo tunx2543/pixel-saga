@@ -502,25 +502,10 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
   }
 
   for (const other of game.remotePlayers) {
-    const otherJob = JOBS[other.classId] ?? JOBS.novice
-    ents.push({
-      y: other.y,
-      draw: () => {
-        shadow(ctx, other.x, other.y, 6)
-        const customClass = other.classId === 'paladin' || other.classId === 'cleric'
-          ? professionArt(other.facing, other.classId, other.moving, other.attackAnim > 0, Math.floor(t * 10))
-          : null
-        const assassin = other.classId === 'assassin' ? assassinArt('down') : null
-        const img = customClass ?? assassin ?? humanSprite(otherJob.colors, 'down', 0)
-        ctx.globalAlpha = 0.92
-        ctx.drawImage(img, Math.round(other.x - img.width / 2), Math.round(other.y - img.height))
-        ctx.globalAlpha = 1
-      },
-    })
-  }
-
-  for (const other of game.remotePlayers) {
     if (other.mapId !== map.id) continue
+    const networkBlend = other.receivedAt ? Math.min(1, (Date.now() - other.receivedAt) / 100) : 1
+    const remoteX = (other.previousX ?? other.x) + (other.x - (other.previousX ?? other.x)) * networkBlend
+    const remoteY = (other.previousY ?? other.y) + (other.y - (other.previousY ?? other.y)) * networkBlend
     const remoteJob = JOBS[other.jobId] ?? JOBS.novice
     const remoteFrame = other.moving ? Math.floor(t * 8) % 4 : 0
     const remoteAnimation = other.attackAnim > 0 ? 'attack' : other.moving ? 'walk' : 'idle'
@@ -528,16 +513,16 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
       ?? professionArt(other.facing, other.jobId, other.moving, other.attackAnim > 0, Math.floor(t * 10))
       ?? humanSprite(remoteJob.colors, other.facing, remoteFrame)
     ents.push({
-      y: other.y,
+      y: remoteY,
       draw: () => {
-        shadow(ctx, other.x, other.y, 6)
+        shadow(ctx, remoteX, remoteY, 6)
         if (other.gm) {
           ctx.fillStyle = `rgba(255, 214, 10, ${0.18 + Math.sin(t * 5) * 0.08})`
           ctx.beginPath()
-          ctx.ellipse(other.x, other.y, 10, 4, 0, 0, Math.PI * 2)
+          ctx.ellipse(remoteX, remoteY, 10, 4, 0, 0, Math.PI * 2)
           ctx.fill()
         }
-        ctx.drawImage(remoteImg, Math.round(other.x - remoteImg.width / 2), Math.round(other.y - remoteImg.height))
+        ctx.drawImage(remoteImg, Math.round(remoteX - remoteImg.width / 2), Math.round(remoteY - remoteImg.height))
       },
     })
   }
@@ -775,7 +760,10 @@ const animation = game.attackAnim > 0 ? 'attack' : game.moving ? 'walk' : 'idle'
 
   for (const other of game.remotePlayers) {
     if (other.mapId !== map.id) continue
-    const [x, y] = toS(other.x, other.y - 24)
+    const networkBlend = other.receivedAt ? Math.min(1, (Date.now() - other.receivedAt) / 100) : 1
+    const remoteX = (other.previousX ?? other.x) + (other.x - (other.previousX ?? other.x)) * networkBlend
+    const remoteY = (other.previousY ?? other.y) + (other.y - (other.previousY ?? other.y)) * networkBlend
+    const [x, y] = toS(remoteX, remoteY - 24)
     if (other.gm) text('[GM]', x, y - 12 * dpr, '#ffd60a', 8)
     text(`${other.displayName} [${String(other.uid).padStart(5, '0')}] Lv.${other.level}`, x, y, other.gm ? '#ffd60a' : '#8be9fd', 9)
   }
