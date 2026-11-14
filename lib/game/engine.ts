@@ -1112,7 +1112,7 @@ export function enhance(id: string): EnhanceResult {
 
 export function availableJobs() {
   const p = player()
-  return Object.values(JOBS).filter((j) => j.from === p.jobId && j.id !== 'paladin')
+  return Object.values(JOBS).filter((j) => j.from === p.jobId)
 }
 
 export function changeJob(jobId: string) {
