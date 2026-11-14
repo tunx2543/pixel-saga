@@ -44,6 +44,13 @@ export function PresenceSync() {
       ) return
       const current = remotePlayers.get(snapshot.userId)
       if (current && current.lastSeen > snapshot.lastSeen) return
+      if (snapshot.invisible) {
+        if (current) {
+          remotePlayers.delete(snapshot.userId)
+          publishRemotePlayers()
+        }
+        return
+      }
       remotePlayers.set(snapshot.userId, {
         ...snapshot,
         previousX: current?.mapId === snapshot.mapId ? current.x : snapshot.x,
@@ -89,6 +96,7 @@ export function PresenceSync() {
         facing: game.facing,
         moving: game.moving,
         attackAnim: game.attackAnim,
+        invisible: Boolean(player.invisible),
         lastSeen: Date.now(),
       }
     }
