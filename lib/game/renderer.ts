@@ -455,11 +455,11 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
     ents.push({
       y: m.y,
       draw: () => {
-        const frame = Math.floor(m.animT * 3) % 4
-        const bossWalking = Math.floor(m.animT * 3) % 2 === 0
+        const walking = m.moving
+        const frame = walking ? Math.floor(m.animT * 8) % 4 : Math.floor(m.animT * 2) % 2
         const direction = directionTowardPlayer(m.x, m.y)
-        const customArt = customMonsterArt(m.defId, direction, Math.hypot(m.vx, m.vy) > 1)
-        const lavaBoss = def.id === 'demon_lord' ? lavaBossArt(m.flip ? 'west' : 'east', bossWalking) : null
+        const customArt = customMonsterArt(m.defId, direction, walking)
+        const lavaBoss = def.id === 'demon_lord' ? lavaBossArt(direction, walking) : null
         const asset = customArt ?? lavaBoss ?? monsterArt(m.defId, m.flip)
         const rawImage = asset ?? monsterSprite(def.sprite, def.color, frame)
         const isDirectionalAsset = customArt !== null || lavaBoss !== null || m.defId === 'gale_sentinel'
@@ -477,24 +477,36 @@ export function render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dp
         const h = sourceHeight * scale
         shadow(ctx, m.x, m.y, 5 * scale)
         const flying = def.sprite === 'bat' || def.sprite === 'ghost'
+        const stride = walking ? Math.sin(m.animT * 13) : Math.sin(m.animT * 2)
         const hover = flying ? Math.round(Math.sin(m.animT * 3) * 2) - 4 : 0
-        const walkBob = flying ? 0 : Math.round(Math.sin(m.animT * (def.boss ? 5 : 8)) * (def.boss ? 1.4 : 0.8))
-        const attackBob = m.lunge > 0 ? (m.flip ? -3 : 3) : 0
-        const lunge = m.lunge > 0 ? (m.flip ? -2 : 2) : 0
-        const stride = Math.sin(m.animT * (def.boss ? 5 : 9))
-        const squash = 1 + stride * (def.boss ? 0.035 : 0.06)
-        const stretch = 1 - stride * (def.boss ? 0.035 : 0.06)
-        const attackTilt = m.lunge > 0 ? (m.flip ? -0.12 : 0.12) : stride * 0.025
+        const walkBob = flying
+          ? 0
+          : Math.round(stride * (walking ? (def.boss ? 2.4 : 1.8) : 0.4))
+        const faceX = direction === 'west' ? -1 : direction === 'east' ? 1 : 0
+        const faceY = direction === 'north' ? -1 : direction === 'south' ? 1 : 0
+        const attackProgress = m.lunge > 0 ? 1 - m.lunge / 0.15 : 0
+        const attackReach = m.lunge > 0 ? Math.sin(Math.min(1, attackProgress) * Math.PI / 2) * (def.boss ? 5 : 3.5) : 0
+        const squash = 1 + stride * (walking ? (def.boss ? 0.065 : 0.1) : 0.012)
+        const stretch = 1 - stride * (walking ? (def.boss ? 0.065 : 0.1) : 0.012)
+        const attackTilt = m.lunge > 0 ? (faceX * 0.18 + faceY * 0.08) : stride * 0.025
         ctx.save()
         if (m.hitFlash > 0) ctx.globalAlpha = 0.5
         if (def.sprite === 'ghost') ctx.globalAlpha *= 0.8
-        ctx.translate(m.x + lunge + attackBob, m.y - h / 2 + hover + walkBob)
+        ctx.translate(m.x + faceX * attackReach, m.y + faceY * attackReach - h / 2 + hover + walkBob)
         ctx.rotate(attackTilt)
         ctx.scale(isDirectionalAsset ? squash : (m.flip ? -squash : squash), stretch)
         if (asset && !isDirectionalAsset) {
           ctx.drawImage(img, frame * sourceWidth, 0, sourceWidth, sourceHeight, -w / 2, -h / 2, w, h)
         } else {
           ctx.drawImage(img, -w / 2, -h / 2, w, h)
+        }
+        if (m.lunge > 0) {
+          ctx.globalAlpha *= Math.min(1, m.lunge / 0.08)
+          ctx.strokeStyle = '#fff1ad'
+          ctx.lineWidth = 2
+          ctx.beginPath()
+          ctx.arc(0, 0, Math.max(w, h) * 0.72, Math.atan2(faceY, faceX) - 0.82, Math.atan2(faceY, faceX) + 0.82)
+          ctx.stroke()
         }
         ctx.restore()
       },

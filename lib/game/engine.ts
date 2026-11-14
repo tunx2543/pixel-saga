@@ -169,6 +169,7 @@ export interface Monster {
   vy: number
   wanderT: number
   flip: boolean
+  moving: boolean
   animT: number
 }
 
@@ -572,8 +573,22 @@ function makeMonster(defId: string, x: number, y: number): Monster {
     vy: 0,
     wanderT: rand(0, 2),
     flip: false,
+    moving: false,
     animT: rand(0, 2),
   }
+}
+
+function earthBossSpawnPoint(map: MapDef) {
+  for (let attempt = 0; attempt < 300; attempt++) {
+    const tx = randInt(8, 10)
+    const ty = randInt(7, map.height - 7)
+    const x = (tx + 0.5) * TILE
+    const y = (ty + 0.7) * TILE
+    if (boxBlocked(map, x, y, 6, 6)) continue
+    const nearPortal = map.portals.some((portal) => Math.hypot(portal.x + portal.w / 2 - tx, portal.y + portal.h / 2 - ty) < 8)
+    if (!nearPortal) return { x, y }
+  }
+  return randomSpawnPoint(map)
 }
 
 function populateMap() {
@@ -581,7 +596,9 @@ function populateMap() {
   game.monsters = []
   for (const s of map.spawns)
     for (let i = 0; i < s.count; i++) {
-      const pt = randomSpawnPoint(map)
+      const pt = map.id === 'cave' && s.monsterId === 'earth_golem'
+        ? earthBossSpawnPoint(map)
+        : randomSpawnPoint(map)
       game.monsters.push(makeMonster(s.monsterId, pt.x, pt.y))
     }
 }
@@ -1794,8 +1811,10 @@ function updateMonsters(dt: number, map: MapDef) {
   for (const m of game.monsters) {
     if (m.dead) {
       if (game.time >= m.respawnAt) {
-        const pt = randomSpawnPoint(map)
-        Object.assign(m, { x: pt.x, y: pt.y, homeX: pt.x, homeY: pt.y, hp: m.maxHp, dead: false, provoked: false })
+        const pt = map.id === 'cave' && m.defId === 'earth_golem'
+          ? earthBossSpawnPoint(map)
+          : randomSpawnPoint(map)
+        Object.assign(m, { x: pt.x, y: pt.y, homeX: pt.x, homeY: pt.y, hp: m.maxHp, dead: false, provoked: false, moving: false })
       }
       continue
     }
@@ -1803,7 +1822,10 @@ function updateMonsters(dt: number, map: MapDef) {
     m.hitFlash -= dt
     m.attackCd -= dt
     m.lunge = Math.max(0, m.lunge - dt)
+    m.moving = false
     if (map.safe) continue
+    const previousX = m.x
+    const previousY = m.y
     const def = MONSTERS[m.defId]
     const dx = p.x - m.x
     const dy = p.y - m.y
@@ -1846,6 +1868,7 @@ function updateMonsters(dt: number, map: MapDef) {
       if (m.vx) m.flip = m.vx < 0
       moveEntity(map, m, m.vx * def.speed * 0.45 * dt, m.vy * def.speed * 0.45 * dt, 5, 4)
     }
+    m.moving = Math.hypot(m.x - previousX, m.y - previousY) > 0.05
   }
 }
 
